@@ -94,7 +94,7 @@ func ring(pos: Vector3, col: Color, size := 1.0) -> void:
 	tm.rings = 20
 	tm.ring_segments = 4
 	mi.mesh = tm
-	var m := _unshaded(Color(col.r, col.g, col.b, 0.8))
+	var m := _unshaded(Color(col.r, col.g, col.b, 0.45))
 	mi.material_override = m
 	mi.position = pos
 	mi.rotation.x = PI * 0.5
@@ -103,7 +103,7 @@ func ring(pos: Vector3, col: Color, size := 1.0) -> void:
 	add_child(mi)
 	var tw := create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(mi, "scale", Vector3.ONE * 2.2 * size, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tw.tween_property(mi, "scale", Vector3.ONE * 1.3 * size, 0.25).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tw.tween_property(m, "albedo_color:a", 0.0, 0.3)
 	tw.chain().tween_callback(mi.queue_free)
 
@@ -139,15 +139,20 @@ func dust(x: float) -> void:
 	p.initial_velocity_max = 2.5
 	p.gravity = Vector3(0, -1, 0)
 	var q := SphereMesh.new()
-	q.radius = 0.08
-	q.height = 0.16
+	q.radius = 0.05
+	q.height = 0.1
 	q.radial_segments = 6
 	q.rings = 3
 	var m := StandardMaterial3D.new()
-	m.albedo_color = Color(0.8, 0.75, 0.65, 0.6)
+	m.albedo_color = Color(0.8, 0.75, 0.65, 0.5)
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	q.material = m
 	p.mesh = q
+	var sc := Curve.new()
+	sc.add_point(Vector2(0, 1))
+	sc.add_point(Vector2(1, 0))
+	p.scale_amount_curve = sc
 	p.position = Vector3(x, 0.1, 0)
 	add_child(p)
 	get_tree().create_timer(1.0).timeout.connect(p.queue_free)

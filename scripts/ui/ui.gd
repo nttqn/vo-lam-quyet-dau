@@ -148,3 +148,24 @@ static func fmt(n: float) -> String:
 		if c % 3 == 0 and i > 0 and s[i - 1] != "-":
 			out = "." + out
 	return out
+
+## Soft dark vignette over the 3D view (put it under the HUD).
+static func vignette(strength := 0.55) -> TextureRect:
+	var g := Gradient.new()
+	g.set_color(0, Color(0, 0, 0, 0))
+	g.set_color(1, Color(0, 0, 0, strength))
+	g.add_point(0.55, Color(0, 0, 0, 0))
+	var gt := GradientTexture2D.new()
+	gt.gradient = g
+	gt.fill = GradientTexture2D.FILL_RADIAL
+	gt.fill_from = Vector2(0.5, 0.5)
+	gt.fill_to = Vector2(1.05, 1.05)
+	gt.width = 256
+	gt.height = 256
+	var tr := TextureRect.new()
+	tr.texture = gt
+	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tr.stretch_mode = TextureRect.STRETCH_SCALE
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tr.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	return tr

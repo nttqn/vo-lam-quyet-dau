@@ -141,6 +141,13 @@ func _build() -> void:
 	scale = Vector3(hsc, hsc, hsc)
 	_face_scale = Appearance.FACE_SCALE[clampi(int(look.get("face", 0)), 0, Appearance.FACE_SCALE.size() - 1)]
 	_extras(acc)
+	_stylise()
+	var rl: float = look.get("robe_len", 0.5)
+	if rl > 0.0:
+		var robe_node := Robe.new()
+		rl = maxf(rl, 0.62)
+		robe_node.setup(skel, rl, look.get("robe", Color(0.4, 0.5, 0.7)), look.get("trim", Color(0.9, 0.85, 0.7)))
+		add_child(robe_node)
 	# weapon + strike markers
 	var w: String = look.get("weapon", "none")
 	var hr := _bone_att("hand_r")
@@ -203,6 +210,7 @@ func _attach_hair(name: String) -> void:
 	var h: Node = load(HAIR_DIR + name + ".gltf").instantiate()
 	for m in h.find_children("*", "MeshInstance3D", true, false):
 		var mi := m as MeshInstance3D
+		mi.owner = null
 		mi.get_parent().remove_child(mi)
 		skel.add_child(mi)
 		mi.skeleton = NodePath("..")
@@ -400,3 +408,32 @@ func _skin_mat(src: StandardMaterial3D, lip_amt: float, lip_rect: Vector4) -> Sh
 	sm.set_shader_parameter("lip_rect", lip_rect)
 	_shaders.append(sm)
 	return sm
+
+static var _outline: ShaderMaterial
+
+## Ink outline + rim light on every character surface (not eyes/brows).
+func _stylise() -> void:
+	if _outline == null:
+		_outline = ShaderMaterial.new()
+		_outline.shader = preload("res://assets/shaders/outline.gdshader")
+	var ow: float = look.get("outline", 0.007)
+	for mi in skel.find_children("*", "MeshInstance3D", true, false):
+		var m3 := mi as MeshInstance3D
+		var nm := String(m3.name)
+		if nm.begins_with("Eye") or not m3.visible:
+			continue
+		for s in m3.mesh.get_surface_count():
+			var mat := m3.get_surface_override_material(s)
+			if mat == null:
+				mat = m3.mesh.surface_get_material(s)
+				if mat == null:
+					continue
+				mat = mat.duplicate()
+				m3.set_surface_override_material(s, mat)
+			if mat is StandardMaterial3D:
+				var sm := mat as StandardMaterial3D
+				sm.rim_enabled = true
+				sm.rim = 0.3
+				sm.rim_tint = 0.35
+			if ow > 0.0 and not nm.begins_with("Hair_B") and mat.next_pass == null:
+				mat.next_pass = _outline

@@ -17,6 +17,8 @@ func _init_ui(theme_3d := "") -> void:
 	ui.theme = UI.theme()
 	ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(ui)
+	if show:
+		ui.add_child(UI.vignette(0.45))
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:

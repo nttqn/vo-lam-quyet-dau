@@ -23,5 +23,7 @@ void fragment() {
 	ALBEDO = col;
 	NORMAL_MAP = texture(nrm, UV).rgb;
 	ROUGHNESS = 0.62;
+	RIM = 0.35;
+	RIM_TINT = 0.4;
 	EMISSION = flash;
 }

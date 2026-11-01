@@ -71,6 +71,7 @@ func _ready() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.theme = UI.theme()
 	_ui_layer.add_child(root)
+	root.add_child(UI.vignette(0.5))
 	hud = Hud.new()
 	hud.sim = sim
 	hud.names = [fp.name, fe.name]

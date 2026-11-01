@@ -11,7 +11,7 @@ var _water: MeshInstance3D
 
 const THEMES := {
 	"temple": {"sky_top": Color(0.28, 0.45, 0.72), "sky_hor": Color(0.86, 0.78, 0.64), "ground": Color(0.42, 0.37, 0.32), "fog": Color(0.8, 0.74, 0.64), "sun": Color(1.0, 0.9, 0.76), "sun_e": 1.05, "amb": 0.5},
-	"bamboo": {"sky_top": Color(0.42, 0.6, 0.55), "sky_hor": Color(0.8, 0.86, 0.72), "ground": Color(0.38, 0.42, 0.26), "fog": Color(0.7, 0.8, 0.66), "sun": Color(0.95, 1.0, 0.85), "sun_e": 1.1, "amb": 0.6},
+	"bamboo": {"sky_top": Color(0.26, 0.42, 0.4), "sky_hor": Color(0.62, 0.72, 0.58), "ground": Color(0.26, 0.3, 0.17), "fog": Color(0.5, 0.62, 0.48), "sun": Color(0.95, 1.0, 0.85), "sun_e": 1.1, "amb": 0.6},
 	"river": {"sky_top": Color(0.35, 0.45, 0.7), "sky_hor": Color(0.95, 0.72, 0.55), "ground": Color(0.52, 0.42, 0.3), "fog": Color(0.9, 0.72, 0.6), "sun": Color(1.0, 0.8, 0.6), "sun_e": 1.2, "amb": 0.5},
 	"snow": {"sky_top": Color(0.55, 0.62, 0.75), "sky_hor": Color(0.88, 0.9, 0.94), "ground": Color(0.88, 0.9, 0.95), "fog": Color(0.85, 0.88, 0.94), "sun": Color(0.95, 0.97, 1.0), "sun_e": 1.0, "amb": 0.7},
 	"desert": {"sky_top": Color(0.4, 0.55, 0.8), "sky_hor": Color(0.95, 0.82, 0.6), "ground": Color(0.8, 0.65, 0.42), "fog": Color(0.93, 0.8, 0.6), "sun": Color(1.0, 0.9, 0.7), "sun_e": 1.5, "amb": 0.55},
@@ -87,12 +87,15 @@ func _environment(th: Dictionary) -> void:
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = th.amb * 0.8
-	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.tonemap_exposure = 0.85
+	env.ambient_light_energy = th.amb * 0.55
+	env.tonemap_mode = Environment.TONE_MAPPER_ACES
+	env.tonemap_exposure = 0.78
+	env.adjustment_enabled = true
+	env.adjustment_contrast = 1.08
+	env.adjustment_saturation = 1.06
 	env.fog_enabled = true
 	env.fog_light_color = th.fog
-	env.fog_density = 0.0045
+	env.fog_density = 0.0028
 	env.fog_sky_affect = 0.0
 	env.glow_enabled = true
 	env.glow_intensity = 0.5
@@ -103,17 +106,25 @@ func _environment(th: Dictionary) -> void:
 	var sun := DirectionalLight3D.new()
 	sun.light_color = th.sun
 	sun.light_energy = th.sun_e
-	sun.rotation_degrees = Vector3(-50, 35, 0)
+	sun.rotation_degrees = Vector3(-38, 28, 0)
 	sun.shadow_enabled = true
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	sun.directional_shadow_max_distance = 30.0
-	sun.shadow_blur = 1.5
+	sun.shadow_blur = 2.2
+	sun.shadow_bias = 0.03
 	add_child(sun)
 	var fill := DirectionalLight3D.new()
 	fill.light_color = (th.sky_top as Color).lerp(Color.WHITE, 0.5)
 	fill.light_energy = 0.35
 	fill.rotation_degrees = Vector3(-20, -150, 0)
 	add_child(fill)
+	# back rim light: carves the fighters out of the background
+	var rim := DirectionalLight3D.new()
+	rim.light_color = (th.sun as Color).lerp(Color(1.0, 0.85, 0.6), 0.5)
+	rim.light_energy = 0.85 * float(th.sun_e)
+	rim.rotation_degrees = Vector3(-18, 180 - 30, 0)
+	rim.light_specular = 1.5
+	add_child(rim)
 
 func _ground(th: Dictionary) -> void:
 	var g: Color = th.ground
@@ -131,8 +142,8 @@ func _ground(th: Dictionary) -> void:
 	tex.height = 256
 	tex.seamless = true
 	var grad := Gradient.new()
-	grad.set_color(0, g.darkened(0.12))
-	grad.set_color(1, g.lightened(0.1))
+	grad.set_color(0, g.darkened(0.35))
+	grad.set_color(1, g.darkened(0.05))
 	tex.color_ramp = grad
 	gm.albedo_texture = tex
 	gm.albedo_color = Color.WHITE
