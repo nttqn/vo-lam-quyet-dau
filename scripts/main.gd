@@ -15,6 +15,9 @@ func _ready() -> void:
 		if a.begins_with("--delay="): _delay = int(a.substr(8))
 		if a.begins_with("--screen="): screen = a.substr(9)
 	for a in args:
+		if a.begins_with("--facetest"):
+			add_child(load("res://tools/face_test.gd").new())
+			return
 		if a.begins_with("--clipsheet"):
 			add_child(load("res://tools/clip_sheet.gd").new())
 			return
@@ -69,6 +72,11 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 	match screen:
 		"title": Game.goto(TitleScreen.new())
 		"create": Game.goto(CreateScreen.new(0))
+		"create2":
+			var cs := CreateScreen.new(0)
+			Game.goto(cs)
+			cs._pick.call_deferred("nga_mi")
+			cs._to_step2.call_deferred()
 		"hub": Game.goto(HubScreen.new())
 		"map": Game.goto(MapScreen.new())
 		"char": Game.goto(CharacterScreen.new())

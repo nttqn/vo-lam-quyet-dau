@@ -31,6 +31,9 @@ var _snap: Array = []          # [pos, rot] per bone at the moment of a switch
 var _blend_t := 0.0
 var _blend_dur := 0.0
 var overrides := {}            # bone name -> Quaternion applied after the clip
+var _shaders: Array[ShaderMaterial] = []
+var _face_scale := Vector3.ONE
+var _head_bone := -1
 
 func _init(lk: Dictionary = {}) -> void:
 	look = lk
@@ -89,34 +92,55 @@ func _build() -> void:
 	head.skin = hd.skin
 	skel.add_child(head)
 	head.skeleton = NodePath("..")
-	var skin_col: Color = look.get("skin", Color(1, 0.92, 0.85))
-	var hm := (hd.mesh as Mesh).surface_get_material(0).duplicate() as StandardMaterial3D
-	hm.albedo_color = Color(1.0, 0.9, 0.82).lerp(skin_col, 0.3)
-	head.set_surface_override_material(0, hm)
-	_tinted.append(hm)
+	var src_mat := (hd.mesh as Mesh).surface_get_material(0) as StandardMaterial3D
+	var lip_rect := Vector4(0.184, 0.262, 0.036, 0.013) if female else Vector4(0.186, 0.266, 0.033, 0.011)
+	head.set_surface_override_material(0, _skin_mat(src_mat, look.get("lip_amt", 0.0), lip_rect))
 	for part in hd.extras:
+		var nm := String(part.name)
+		if nm == "Eyebrows":
+			continue
 		var e := MeshInstance3D.new()
 		e.mesh = part.mesh
 		e.skin = part.skin
 		skel.add_child(e)
 		e.skeleton = NodePath("..")
-		if String(part.name) == "Eyebrows":
-			_hair_mat(e)
-	# hair
+		if nm == "Eyes":
+			var em := ShaderMaterial.new()
+			em.shader = preload("res://assets/shaders/eye.gdshader")
+			em.set_shader_parameter("tex", ((part.mesh as Mesh).surface_get_material(0) as StandardMaterial3D).albedo_texture)
+			em.set_shader_parameter("iris", look.get("eye", Color(0.12, 0.07, 0.04)))
+			e.set_surface_override_material(0, em)
+			_shaders.append(em)
+	var brow := int(look.get("brow", 1 if female else 0))
+	_attach_hair("Eyebrows_Female" if brow == 1 else "Eyebrows_Regular")
+	# hair: explicit hair_style (player appearance) or derived from the sect look
 	var hs: String = look.get("head_style", "bun")
+	var acc: String = look.get("acc", hs)
+	var style: String = look.get("hair_style", "")
+	if style == "":
+		match hs:
+			"bun", "crown", "hat": style = "bun"
+			"long": style = "long"
+			"headband", "wild": style = "headband"
+			"bald": style = "bald"
+			"hood": style = "bald" if outfit == "Ranger" else "buzz"
+	var hood_on := acc == "hood" and outfit == "Ranger"
 	var hair := ""
-	match hs:
-		"bun", "crown": hair = "Hair_Buns"
+	match style:
+		"bun": hair = "Hair_Buns"
 		"long": hair = "Hair_Long"
-		"headband", "wild": hair = "Hair_SimpleParted"
-		"hat": hair = "Hair_Buns"
-		"bald": hair = ""
-		"hood": hair = "" if outfit == "Ranger" else "Hair_Buzzed"
+		"headband": hair = "Hair_SimpleParted"
+		"buzz": hair = "Hair_BuzzedFemale" if female else "Hair_Buzzed"
+	if hood_on and hair in ["Hair_Buns", "Hair_Long"]:
+		hair = "Hair_BuzzedFemale" if female else "Hair_Buzzed"
 	if hair != "":
 		_attach_hair(hair)
 	if look.get("beard", false):
 		_attach_hair("Hair_Beard")
-	_extras(hs)
+	var hsc: float = look.get("height", 1.0)
+	scale = Vector3(hsc, hsc, hsc)
+	_face_scale = Appearance.FACE_SCALE[clampi(int(look.get("face", 0)), 0, Appearance.FACE_SCALE.size() - 1)]
+	_extras(acc)
 	# weapon + strike markers
 	var w: String = look.get("weapon", "none")
 	var hr := _bone_att("hand_r")
@@ -155,6 +179,9 @@ func _tint(mi: MeshInstance3D, col: Color) -> void:
 			continue
 		var nm := m.duplicate() as StandardMaterial3D
 		var name := m.resource_name
+		if name.contains("Regular") or name.contains("Superhero"):
+			mi.set_surface_override_material(s, _skin_mat(m, 0.0, Vector4(0, 0, 0.001, 0.001)))
+			continue
 		if name.contains("Peasant") or name.contains("Ranger"):
 			var kind := "Peasant" if name.contains("Peasant") else "Ranger"
 			nm.albedo_texture = load(OUTFIT_DIR + "T_%s_Gray.png" % kind)
@@ -241,7 +268,7 @@ func _extras(hs: String) -> void:
 		"crown":
 			Weapons.seg(head, Weapons.box(0.09, 0.06, 0.05), _mat(Color(0.86, 0.66, 0.22), 0.35), Vector3(0, 0.23, -0.04))
 		"headband":
-			Weapons.seg(head, Weapons.cyl(0.115, 0.115, 0.035, 18), _mat(trim), Vector3(0, 0.12, -0.01))
+			Weapons.seg(head, Weapons.cyl(0.112, 0.112, 0.03, 18), _mat(trim), Vector3(0, 0.155, -0.015))
 		"bald":
 			pass
 	if look.get("beads", false):
@@ -351,7 +378,25 @@ func finish(delta: float) -> void:
 			skel.set_bone_pose_rotation(bi, skel.get_bone_pose_rotation(bi) * (overrides[bn] as Quaternion))
 	if _flash > 0.0:
 		_flash = maxf(0.0, _flash - delta * 6.0)
+	if _head_bone < 0:
+		_head_bone = skel.find_bone("Head")
+	if _face_scale != Vector3.ONE and _head_bone >= 0:
+		skel.set_bone_pose_scale(_head_bone, _face_scale)
+	for sm in _shaders:
+		sm.set_shader_parameter("flash", Vector3.ONE * _flash * 0.6)
 	for m in _tinted:
 		m.emission_enabled = _flash > 0.0
 		if _flash > 0.0:
 			m.emission = Color(1, 0.95, 0.85) * (_flash * 0.7)
+
+func _skin_mat(src: StandardMaterial3D, lip_amt: float, lip_rect: Vector4) -> ShaderMaterial:
+	var sm := ShaderMaterial.new()
+	sm.shader = preload("res://assets/shaders/skin.gdshader")
+	sm.set_shader_parameter("tex", src.albedo_texture)
+	sm.set_shader_parameter("nrm", src.normal_texture)
+	sm.set_shader_parameter("skin_tone", look.get("skin_tone", Color(0.93, 0.76, 0.62)))
+	sm.set_shader_parameter("lip_color", look.get("lip", Color(0.72, 0.32, 0.3)))
+	sm.set_shader_parameter("lip_amt", lip_amt)
+	sm.set_shader_parameter("lip_rect", lip_rect)
+	_shaders.append(sm)
+	return sm

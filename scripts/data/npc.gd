@@ -28,5 +28,23 @@ static func side(sect_id: String, level: int, name: String, ai: float, faction :
 		sk.append(null)
 	return {
 		"sect": sect_id, "name": name, "title": title, "level": level, "stats": st,
-		"skills": sk, "look": Looks.npc(sect_id, faction, rng), "ai": ai, "boss": boss,
+		"skills": sk, "look": Appearance.apply(Looks.npc(sect_id, faction, rng), random_look(sect_id, rng, faction)), "ai": ai, "boss": boss,
 	}
+
+static func random_look(sect_id: String, rng: RandomNumberGenerator, faction: String) -> Dictionary:
+	var female := rng.randf() < (0.8 if sect_id == "nga_mi" else 0.18)
+	var a := Appearance.default_for(sect_id, female)
+	a.skin = rng.randi_range(0, 4)
+	a.hair_col = 4 if faction == "elder" else (rng.randi_range(0, 3) if rng.randf() < 0.4 else 0)
+	a.eye = rng.randi_range(0, 3)
+	a.face = rng.randi_range(0, Appearance.FACE_SCALE.size() - 1)
+	a.height = rng.randi_range(0, 2)
+	if sect_id != "thieu_lam" and rng.randf() < 0.5:
+		a.hair = rng.randi_range(0, 3)
+	if not female:
+		a.beard = rng.randf() < (0.7 if faction in ["bandit", "elder"] else 0.3)
+	else:
+		a.lip = rng.randi_range(1, 4)
+	if faction == "demon":
+		a.eye = 5
+	return a

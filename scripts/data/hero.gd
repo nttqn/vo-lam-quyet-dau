@@ -16,6 +16,7 @@ static func create(name: String, sect_id: String) -> Dictionary:
 		"stars": {}, "region": 0,
 		"arena_best": 0, "wins": 0, "losses": 0, "fights": 0,
 		"color": 0, "created": Time.get_unix_time_from_system(),
+		"appearance": Appearance.default_for(sect_id, sect_id == "nga_mi"),
 	}
 	var s := Sects.get_sect(sect_id)
 	h.gear["weapon"] = Items.make("weapon", 1, 0, 0)
@@ -101,7 +102,7 @@ static func look(h: Dictionary) -> Dictionary:
 	var w: Dictionary = h.gear.get("weapon", {})
 	if not w.is_empty() and int(w.get("rar", 0)) >= 3:
 		lk["trim"] = Color(0.9, 0.72, 0.3)
-	return lk
+	return Appearance.apply(lk, h.get("appearance", {}))
 
 static func side(h: Dictionary) -> Dictionary:
 	return {
