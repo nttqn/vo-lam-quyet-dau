@@ -1,16 +1,16 @@
 class_name Showcase
 extends Node3D
-## 3D backdrop for menu screens: an arena with one or two posed bodies.
+## 3D backdrop for menu screens: an arena with one or two skinned fighters.
 
 var arena: Arena
 var cam: Camera3D
-var bodies: Array[Body] = []
+var bodies: Array[Avatar] = []
 var styles: Array[String] = []
 var _t := 0.0
 var spin := false
-var focus_x := 0.0      # where the camera looks (shift to put the hero left/right)
+var focus_x := 0.0
 var _base_yaw: Array[float] = []
-var hold := {}          # body index -> pose dict to hold instead of idling
+var hold := {}          # body index -> {"clip": name, "frac": 0..1 or -1 = loop}
 
 func _init(theme := "temple") -> void:
 	arena = Arena.new(theme, 7)
@@ -37,33 +37,46 @@ func clear() -> void:
 	bodies.clear()
 	styles.clear()
 	_base_yaw.clear()
+	hold.clear()
 
-func add_body(look: Dictionary, style: String, x: float, yaw := -0.5) -> Body:
-	var b := Body.new(look)
+## yaw: radians, 0 = facing the camera. Old callers passed small negative
+## angles meaning "facing right, turned a bit toward the camera".
+func add_body(look: Dictionary, style: String, x: float, yaw := -0.5) -> Avatar:
+	var b := Avatar.new(look)
 	b.position = Vector3(x, 0, 0)
-	b.rotation.y = yaw
+	var y := yaw
+	if absf(yaw) < 1.2:
+		y = PI * 0.5 + yaw * 1.4        # facing right, turned toward camera
+	else:
+		y = -PI * 0.5 + (yaw - PI) * 1.4   # facing left
+	b.rotation.y = y
 	add_child(b)
-	b.apply_pose(Poses.stance(style))
 	bodies.append(b)
 	styles.append(style)
-	_base_yaw.append(yaw)
+	_base_yaw.append(y)
 	return b
 
 func _process(delta: float) -> void:
 	_t += delta
 	for i in bodies.size():
-		var p: Dictionary = hold[i] if hold.has(i) else Poses.idle_breathe(styles[i], _t + i)
-		bodies[i].blend_to(p, minf(1.0, delta * 8.0))
+		var b := bodies[i]
+		if not b.is_inside_tree() or b.ap == null:
+			continue
+		if hold.has(i):
+			var h: Dictionary = hold[i]
+			var fr: float = h.get("frac", -1.0)
+			if fr < 0.0:
+				b.pose(h.clip, _t, 0.2)
+			else:
+				b.pose(h.clip, b.clip_len(h.clip) * fr, 0.2)
+		else:
+			var ic := AnimMap.idle_clip(styles[i])
+			if ic[0] == "a/Punch_Enter":
+				var ph := fposmod(_t * 0.6 + i, 2.0)
+				var fr2: float = ic[1] + (ic[2] - ic[1]) * (ph if ph < 1.0 else 2.0 - ph)
+				b.pose(ic[0], b.clip_len(ic[0]) * fr2, 0.0)
+			else:
+				b.pose(ic[0], _t + i, 0.0)
+		b.finish(delta)
 		if spin:
-			bodies[i].rotation.y = _base_yaw[i] + sin(_t * 0.5) * 0.5
-
-## Strike a pose briefly (e.g. on sect select).
-func flourish(i: int, key: String) -> void:
-	if i >= bodies.size():
-		return
-	var b := bodies[i]
-	var tw := create_tween()
-	var st := styles[i]
-	var p := Poses.victory(st) if key == "victory" else Poses.key(key, st)
-	tw.tween_method(func(k: float): b.blend_to(p, k), 0.0, 1.0, 0.25)
-	tw.tween_interval(0.35)
+			b.rotation.y = _base_yaw[i] + sin(_t * 0.5) * 0.6

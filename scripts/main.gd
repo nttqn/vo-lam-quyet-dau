@@ -15,6 +15,12 @@ func _ready() -> void:
 		if a.begins_with("--delay="): _delay = int(a.substr(8))
 		if a.begins_with("--screen="): screen = a.substr(9)
 	for a in args:
+		if a.begins_with("--clipsheet"):
+			add_child(load("res://tools/clip_sheet.gd").new())
+			return
+		if a.begins_with("--modeltest"):
+			add_child(load("res://tools/model_test.gd").new())
+			return
 		if a.begins_with("--iconshot"):
 			add_child(load("res://tools/icon_shot.gd").new())
 			return

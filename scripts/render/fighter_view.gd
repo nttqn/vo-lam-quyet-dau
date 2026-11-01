@@ -1,23 +1,25 @@
 class_name FighterView
 extends Node3D
-## Visual puppet for a Fighter: positions the Body and picks poses from the
-## logic state each frame, plus shadow blob and weapon trail.
+## Visual puppet for a Fighter: positions the skinned Avatar and drives its
+## clips from the logic state each frame, plus the weapon trail and aura.
 
 var f: Fighter
-var body: Body
+var body: Avatar
 var trail: MeshInstance3D
 var _trail_pts: Array = []
 var _trail_mat: StandardMaterial3D
-var _walk_phase := 0.0
+var _walk_t := 0.0
 var _t := 0.0
 var _aura: OmniLight3D
 var _yaw := 0.0
+var _last_state := -1
+var _last_move: Dictionary = {}
 
-const YAW_TOWARD_CAM := 0.38
+const YAW_TOWARD_CAM := 0.4
 
 func _init(p_f: Fighter, look: Dictionary) -> void:
 	f = p_f
-	body = Body.new(look)
+	body = Avatar.new(look)
 
 func _ready() -> void:
 	add_child(body)
@@ -38,11 +40,16 @@ func _ready() -> void:
 	_aura.omni_range = 3.0
 	_aura.position = Vector3(0, 1.2, 0.6)
 	add_child(_aura)
-	_yaw = -YAW_TOWARD_CAM if f.facing > 0 else PI + YAW_TOWARD_CAM
-	_sync(0.0, true)
+	_yaw = _target_yaw()
+	_sync(0.0)
 
 func _process(delta: float) -> void:
-	_sync(delta, false)
+	_sync(delta)
+
+func _target_yaw() -> float:
+	if f.state in [Fighter.LYING, Fighter.KO, Fighter.AIRHIT]:
+		return PI * 0.5 if f.facing > 0 else -PI * 0.5
+	return PI * 0.5 - YAW_TOWARD_CAM if f.facing > 0 else -PI * 0.5 + YAW_TOWARD_CAM
 
 func tip_node() -> Node3D:
 	var t: String = f.move.get("tip", "weapon") if not f.move.is_empty() else "weapon"
@@ -53,125 +60,131 @@ func tip_node() -> Node3D:
 		"foot_l": return body.foot_l_tip
 	return body.weapon_tip
 
-func _sync(delta: float, snap: bool) -> void:
+func _sync(delta: float) -> void:
 	_t += delta
 	position = Vector3(f.x, f.y, 0)
-	# facing: turn smoothly, slight 3/4 toward the camera
-	var target := -YAW_TOWARD_CAM if f.facing > 0 else PI + YAW_TOWARD_CAM
-	if f.state == Fighter.LYING or f.state == Fighter.KO:
-		target = -0.05 if f.facing > 0 else PI + 0.05
-	_yaw = lerp_angle(_yaw, target, 1.0 if snap else minf(1.0, delta * 14.0))
+	_yaw = lerp_angle(_yaw, _target_yaw(), minf(1.0, delta * 14.0)) if delta > 0 else _target_yaw()
 	body.rotation.y = _yaw
+	body.position = Vector3.ZERO
+	body.overrides.clear()
 	var style := f.style
-	var p: Dictionary
-	var k := minf(1.0, delta * 18.0)
+	var changed := f.state != _last_state or (f.state == Fighter.ATTACK and f.move != _last_move)
+	_last_state = f.state
+	_last_move = f.move
+	var blend := 0.1
 	match f.state:
 		Fighter.IDLE, Fighter.LAND:
 			if f.hold_back:
-				p = Poses.block(style, false)
+				body.pose("b/Sword_Block", body.clip_len("b/Sword_Block") * 0.5, blend)
 			else:
-				p = Poses.idle_breathe(style, _t)
+				var ic := AnimMap.idle_clip(style)
+				var L := body.clip_len(ic[0])
+				var a: float = ic[1]
+				var b: float = ic[2]
+				var ph := fposmod(_t * 0.6, 2.0)
+				var fr := a + (b - a) * (ph if ph < 1.0 else 2.0 - ph)
+				body.pose(ic[0], L * fr, blend)
 		Fighter.WALK:
-			_walk_phase += delta * 9.0 * absf(f.vx) / 2.5
-			p = Poses.walk(style, _walk_phase, signf(f.vx) * f.facing)
-			if f.hold_back:
-				p = Poses.merge(p, _arms(Poses.block(style, false)))
-		Fighter.CROUCH:
-			p = Poses.block(style, true) if f.hold_back else Poses.crouch(style)
-		Fighter.JUMP:
-			p = Poses.jump(style)
-			k = minf(1.0, delta * 12.0)
-		Fighter.ATTACK:
-			p = _attack_pose(style)
-			k = minf(1.0, delta * 30.0)
-		Fighter.BLOCKSTUN:
-			p = Poses.block(style, f.hold_down)
-			k = 1.0
-		Fighter.HITSTUN:
-			p = Poses.hurt_low(style) if f.hit_low else Poses.hurt(style, f.stun > 20)
-			k = minf(1.0, delta * 25.0)
-		Fighter.AIRHIT:
-			p = Poses.airborne_hurt()
-			k = minf(1.0, delta * 10.0)
-		Fighter.LYING, Fighter.KO:
-			p = Poses.lying()
-			k = minf(1.0, delta * 12.0)
-		Fighter.GETUP:
-			p = Poses.getup(style)
-			k = minf(1.0, delta * 10.0)
-		Fighter.DODGE:
-			p = Poses.dodge(style)
-			k = minf(1.0, delta * 20.0)
+			var back := f.hold_back
+			_walk_t += delta * absf(f.vx) / 1.6 * (-1.0 if back else 1.0)
+			if back:
+				body.pose("b/Sword_Block", body.clip_len("b/Sword_Block") * 0.5, blend)
+				body.overrides["thigh_l"] = Quaternion.from_euler(Vector3(deg_to_rad(sin(_t * 9.0) * 18.0), 0, 0))
+				body.overrides["thigh_r"] = Quaternion.from_euler(Vector3(deg_to_rad(-sin(_t * 9.0) * 18.0), 0, 0))
+			else:
+				body.pose("a/Walk", _walk_t, blend)
 		Fighter.DASH:
-			_walk_phase += delta * 16.0
-			p = Poses.add(Poses.walk(style, _walk_phase, 1.0), {"spine": Vector3(0, 0, -14)})
+			_walk_t += delta * 1.4
+			body.pose("a/Jog_Fwd", _walk_t, 0.06)
+		Fighter.CROUCH:
+			if f.hold_back:
+				body.pose("a/Crouch_Idle", 0.3, blend)
+				body.overrides["upperarm_r"] = Quaternion.from_euler(Vector3(0, 0, 0))
+			else:
+				body.pose("a/Crouch_Idle", _t, blend)
+		Fighter.JUMP:
+			if f.sf < 10 and f.vy > 0:
+				body.pose("b/NinjaJump_Start", body.clip_len("b/NinjaJump_Start") * (0.4 + f.sf / 25.0), 0.05)
+			else:
+				body.pose("b/NinjaJump_Idle", _t, 0.12)
+		Fighter.ATTACK:
+			_attack(style)
+		Fighter.BLOCKSTUN:
+			if f.hold_down:
+				body.pose("a/Crouch_Idle", 0.3, 0.05)
+			else:
+				body.pose("b/Sword_Block", body.clip_len("b/Sword_Block") * 0.55, 0.05)
+		Fighter.HITSTUN:
+			var clip := "a/Hit_Head" if (f.stun > 20 and not f.hit_low) else "a/Hit_Chest"
+			var L2 := body.clip_len(clip)
+			body.pose(clip, L2 * clampf(float(f.sf) / maxf(1.0, f.stun), 0.0, 1.0), 0.05)
+		Fighter.AIRHIT:
+			var L3 := body.clip_len("b/Hit_Knockback")
+			body.pose("b/Hit_Knockback", minf(L3 * 0.55, f.sf / 60.0 * 1.4), 0.06)
+		Fighter.LYING, Fighter.KO:
+			var L4 := body.clip_len("b/Hit_Knockback")
+			body.pose("b/Hit_Knockback", minf(L4, L4 * 0.55 + f.sf / 60.0 * 1.6), 0.08)
+		Fighter.GETUP:
+			var L5 := body.clip_len("b/LayToIdle")
+			body.pose("b/LayToIdle", L5 * clampf(f.sf / 18.0, 0.0, 1.0), 0.05)
+		Fighter.DODGE:
+			var L6 := body.clip_len("a/Roll")
+			body.pose("a/Roll", L6 * clampf(1.0 - f.sf / 20.0, 0.0, 1.0) * 0.8, 0.05)
 		Fighter.WIN:
-			p = Poses.victory(style)
-			k = minf(1.0, delta * 5.0)
+			body.pose("b/Idle_FoldArms", _t, 0.25)
 		_:
-			p = Poses.stance(style)
-	if snap:
-		body.apply_pose(p)
-	else:
-		body.blend_to(p, k)
-	# air-hit tumble
-	if f.state == Fighter.AIRHIT:
-		body.rotation.z = lerpf(body.rotation.z, 0.0, 0.2)
-	_update_trail(delta)
-	# ki aura while a skill is active or buffed
+			body.pose(AnimMap.idle_clip(style)[0], _t, blend)
+	body.finish(delta)
+	_update_trail()
 	var aura_on: bool = (f.state == Fighter.ATTACK and f.move.get("skill", false)) or not f.buffs.is_empty()
 	var col: Color = f.sect.get("elem", Color.WHITE)
 	_aura.light_color = col
 	_aura.light_energy = lerpf(_aura.light_energy, 2.2 if aura_on else 0.0, minf(1.0, delta * 8.0))
 
-func _arms(p: Dictionary) -> Dictionary:
-	var o := {}
-	for n in ["sh_l", "el_l", "wr_l", "sh_r", "el_r", "wr_r", "chest"]:
-		if p.has(n):
-			o[n] = p[n]
-	return o
-
-func _named(name: String, style: String) -> Dictionary:
-	match name:
-		"jump": return Poses.jump(style)
-		"block": return Poses.block(style, false)
-		"victory": return Poses.victory(style)
-		"dodge": return Poses.dodge(style)
-		"stance": return Poses.stance(style)
-	return Poses.key(name, style)
-
-func _attack_pose(style: String) -> Dictionary:
+func _attack(style: String) -> void:
 	var m := f.move
-	var w := _named(m.w, style)
-	var s := _named(m.s, style)
-	var sfv := float(f.sf)
-	var stp := float(m.st)
+	var spec := AnimMap.attack(m.get("s", ""), style)
+	var clip: String = spec.clip
+	var L := body.clip_len(clip)
+	var st := float(m.st)
 	var act := float(m.act)
 	var rec := float(m.rec)
-	var hits: int = m.get("hits", 1)
-	if sfv < stp:
-		var t := sfv / maxf(1.0, stp)
-		if t < 0.65:
-			return Body.mix(Poses.stance(style), w, ease(t / 0.65, 0.5))
-		return Body.mix(w, s, ease((t - 0.65) / 0.35, 2.0))
-	if sfv < stp + act:
+	var sfv := float(f.sf)
+	var fr: float
+	var w := 0.0      # override weight
+	if sfv < st:
+		var k := sfv / maxf(1.0, st)
+		fr = lerpf(spec.from, spec.hit, k)
+		w = ease(k, 0.6)
+	elif sfv < st + act:
+		fr = spec.hit
+		var hits: int = m.get("hits", 1)
 		if hits > 1:
-			# alternate between windup and strike for each hit
+			# replay the strike portion for every hit
 			var per := act / hits
-			var ph := fmod(sfv - stp, per) / per
-			return Body.mix(s, w, 0.5 - 0.5 * cos(ph * TAU))
-		return s
-	var r := (sfv - stp - act) / maxf(1.0, rec)
-	return Body.mix(s, Poses.stance(style), ease(r, 0.6))
+			var ph := fmod(sfv - st, per) / per
+			fr = lerpf(spec.from + (spec.hit - spec.from) * 0.4, spec.to, ph)
+		w = 1.0
+	else:
+		var r := (sfv - st - act) / maxf(1.0, rec)
+		fr = lerpf(spec.hit, spec.to, r)
+		w = 1.0 - ease(r, 0.5)
+	body.pose(clip, L * fr, 0.07)
+	if spec.has("ov"):
+		for bn in spec.ov:
+			var e: Vector3 = spec.ov[bn] * (PI / 180.0) * w
+			body.overrides[bn] = Quaternion.from_euler(e)
+	if spec.has("drop"):
+		body.position.y = float(spec.drop) * w
 
-func _update_trail(_delta: float) -> void:
+func _update_trail() -> void:
 	var im := trail.mesh as ImmediateMesh
 	im.clear_surfaces()
-	var active := f.state == Fighter.ATTACK and f.sf >= int(f.move.get("st", 0)) - 2 and f.sf <= int(f.move.get("st", 0)) + int(f.move.get("act", 0)) + 3
+	var active := f.state == Fighter.ATTACK and f.sf >= int(f.move.get("st", 0)) - 3 and f.sf <= int(f.move.get("st", 0)) + int(f.move.get("act", 0)) + 3
 	var tip := tip_node()
-	var base: Node3D = body.j["wr_r"] if f.move.get("tip", "weapon") == "weapon" else (tip.get_parent() as Node3D)
-	if active and tip != null:
-		_trail_pts.push_front([tip.global_position, base.global_position.lerp(tip.global_position, 0.45)])
+	if active and tip != null and tip.is_inside_tree():
+		var base: Vector3 = (tip.get_parent() as Node3D).global_position
+		_trail_pts.push_front([tip.global_position, base.lerp(tip.global_position, 0.5)])
 	elif not _trail_pts.is_empty():
 		_trail_pts.pop_back()
 	while _trail_pts.size() > 9:
@@ -184,8 +197,7 @@ func _update_trail(_delta: float) -> void:
 	im.surface_begin(Mesh.PRIMITIVE_TRIANGLE_STRIP)
 	for i in _trail_pts.size():
 		var a := 1.0 - float(i) / _trail_pts.size()
-		var c := Color(col.r, col.g, col.b, a * 0.75)
-		im.surface_set_color(c)
+		im.surface_set_color(Color(col.r, col.g, col.b, a * 0.75))
 		im.surface_add_vertex(_trail_pts[i][0])
 		im.surface_set_color(Color(col.r, col.g, col.b, 0.0))
 		im.surface_add_vertex(_trail_pts[i][1])

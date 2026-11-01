@@ -165,7 +165,7 @@ static func _build() -> void:
 		"elem": Color(0.55, 1.0, 0.45),
 		"bias": {"luc": 0, "than": 2, "noi": 2, "the": 0},
 		"speed": 1.1,
-		"look": {"robe": Color(0.24, 0.17, 0.3), "trim": Color(0.58, 0.16, 0.22), "pants": Color(0.13, 0.11, 0.16), "head_style": "hood", "weapon": "daggers", "sash": Color(0.58, 0.16, 0.22)},
+		"look": {"robe": Color(0.24, 0.17, 0.3), "trim": Color(0.58, 0.16, 0.22), "pants": Color(0.13, 0.11, 0.16), "head_style": "hood", "outfit": "Ranger", "robe_len": 0.0, "weapon": "daggers", "sash": Color(0.58, 0.16, 0.22)},
 		"moves": {
 			"p1": mv("Chủy Thủ Thích", "jab_w", "cross", 5, 3, 11, 1.0, 1.1, "mid", {"next": "p2", "fx": "slash"}),
 			"p2": mv("Hồi Đao Trảm", "slash_h_w", "slash_h", 7, 3, 13, 1.1, 1.1, "high", {"next": "p3", "fx": "slash"}),

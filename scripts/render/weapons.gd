@@ -1,0 +1,94 @@
+class_name Weapons
+extends RefCounted
+## Builds weapon meshes under a grip node. Convention: the blade/shaft runs
+## along the grip's -Y axis; returns the tip marker node.
+
+static var _mats := {}
+
+static func mat(col: Color, rough := 0.6, metal := 0.0) -> StandardMaterial3D:
+	var key := col.to_html() + str(rough) + str(metal)
+	if _mats.has(key):
+		return _mats[key]
+	var m := StandardMaterial3D.new()
+	m.albedo_color = col
+	m.roughness = rough
+	m.metallic = metal
+	_mats[key] = m
+	return m
+
+static func seg(parent: Node3D, mesh: Mesh, m: Material, pos: Vector3, rot := Vector3.ZERO) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.material_override = m
+	mi.position = pos
+	mi.rotation_degrees = rot
+	parent.add_child(mi)
+	return mi
+
+static func box(x: float, y: float, z: float) -> BoxMesh:
+	var b := BoxMesh.new()
+	b.size = Vector3(x, y, z)
+	return b
+
+static func cyl(t: float, b: float, h: float, seg_n := 10) -> CylinderMesh:
+	var c := CylinderMesh.new()
+	c.top_radius = t
+	c.bottom_radius = b
+	c.height = h
+	c.radial_segments = seg_n
+	c.rings = 1
+	return c
+
+static func sph(r: float) -> SphereMesh:
+	var s := SphereMesh.new()
+	s.radius = r
+	s.height = r * 2.0
+	s.radial_segments = 10
+	s.rings = 5
+	return s
+
+## kind: sword | saber | staff | spear | dual_blade | dagger | fan
+static func build(kind: String, g: Node3D) -> Node3D:
+	var steel := mat(Color(0.85, 0.88, 0.93), 0.22, 0.7)
+	var wood := mat(Color(0.42, 0.26, 0.13), 0.7)
+	var gold := mat(Color(0.86, 0.66, 0.22), 0.35, 0.6)
+	var grip := mat(Color(0.25, 0.07, 0.05), 0.8)
+	var tip := Node3D.new()
+	match kind:
+		"sword":
+			seg(g, cyl(0.016, 0.016, 0.17), grip, Vector3(0, 0.0, 0))
+			seg(g, box(0.05, 0.022, 0.15), gold, Vector3(0, -0.09, 0))
+			seg(g, box(0.042, 0.74, 0.01), steel, Vector3(0, -0.47, 0))
+			seg(g, box(0.03, 0.05, 0.01), steel, Vector3(0, -0.855, 0), Vector3(0, 0, 45))
+			seg(g, box(0.018, 0.14, 0.008), mat(Color(0.8, 0.1, 0.1)), Vector3(0, 0.15, 0))
+			tip.position = Vector3(0, -0.87, 0)
+		"dual_blade":
+			seg(g, cyl(0.014, 0.014, 0.12), grip, Vector3.ZERO)
+			seg(g, box(0.04, 0.02, 0.1), gold, Vector3(0, -0.065, 0))
+			seg(g, box(0.036, 0.5, 0.009), steel, Vector3(0, -0.32, 0))
+			tip.position = Vector3(0, -0.57, 0)
+		"saber":
+			seg(g, cyl(0.018, 0.018, 0.17), grip, Vector3.ZERO)
+			seg(g, cyl(0.05, 0.05, 0.02), gold, Vector3(0, -0.09, 0))
+			seg(g, box(0.08, 0.7, 0.01), steel, Vector3(0.02, -0.44, 0), Vector3(0, 0, -4))
+			tip.position = Vector3(0.04, -0.8, 0)
+		"staff":
+			seg(g, cyl(0.022, 0.022, 1.8), wood, Vector3(0, -0.35, 0))
+			seg(g, cyl(0.028, 0.028, 0.08), gold, Vector3(0, -1.22, 0))
+			seg(g, cyl(0.028, 0.028, 0.08), gold, Vector3(0, 0.52, 0))
+			tip.position = Vector3(0, -1.24, 0)
+		"spear":
+			seg(g, cyl(0.018, 0.018, 1.9), wood, Vector3(0, -0.4, 0))
+			seg(g, cyl(0.0, 0.035, 0.24, 6), steel, Vector3(0, -1.47, 0), Vector3(180, 0, 0))
+			tip.position = Vector3(0, -1.58, 0)
+		"dagger":
+			seg(g, cyl(0.014, 0.014, 0.1), grip, Vector3.ZERO)
+			seg(g, box(0.03, 0.25, 0.008), steel, Vector3(0, -0.18, 0))
+			tip.position = Vector3(0, -0.3, 0)
+		"fan":
+			seg(g, cyl(0.02, 0.22, 0.01, 7), mat(Color(0.95, 0.92, 0.82)), Vector3(0, -0.12, 0), Vector3(90, 0, 0))
+			tip.position = Vector3(0, -0.28, 0)
+		_:
+			tip.position = Vector3.ZERO
+	g.add_child(tip)
+	return tip

@@ -19,3 +19,9 @@ godot --headless --fixed-fps 60 --path . -- --flowtest                     # ch�
 godot --path . -- --screen=hub --shot=hub.png                              # chụp màn hình
 ```
 APK được build bởi GitHub Actions (`.github/workflows/android.yml`).
+
+## Tài nguyên 3D (CC0)
+Nhân vật, trang phục, tóc và animation của **Quaternius** (CC0 1.0): Universal Base Characters,
+Modular Character Outfits – Fantasy, Universal Animation Library 1 & 2. Animation của bộ 1 được
+chuyển sang bộ xương chuẩn bằng `tools/retarget.gd`; texture trang phục xám để tô màu theo phái
+bằng `tools/gray_tex.gd`.

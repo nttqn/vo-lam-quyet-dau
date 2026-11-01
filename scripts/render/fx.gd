@@ -162,12 +162,12 @@ func number(pos: Vector3, amount: float, crit: bool, col := Color(1, 0.95, 0.8))
 	l.modulate = Color(1, 0.85, 0.2) if crit else col
 	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	l.no_depth_test = true
-	l.pixel_size = 0.005
-	l.position = pos + Vector3(randf_range(-0.2, 0.2), 0.4, 0.5)
+	l.pixel_size = 0.0035
+	l.position = pos + Vector3(randf_range(-0.2, 0.2), 0.0, 0.5)
 	add_child(l)
 	var tw := create_tween()
 	tw.set_parallel(true)
-	tw.tween_property(l, "position:y", l.position.y + 0.8, 0.8).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	tw.tween_property(l, "position:y", l.position.y + 0.45, 0.8).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tw.tween_property(l, "modulate:a", 0.0, 0.8).set_delay(0.3)
 	tw.chain().tween_callback(l.queue_free)
 

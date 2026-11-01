@@ -17,9 +17,9 @@ func _ready() -> void:
 	show.set_focus(1.3)
 	var b := show.add_body(Hero.look(h), s.style, 0.0, -0.4)
 	if out.won:
-		show.hold[0] = Poses.victory(s.style)
+		show.hold[0] = {"clip": "b/Idle_FoldArms", "frac": -1.0}
 	else:
-		show.hold[0] = Poses.add(Poses.stance(s.style), {"spine": Vector3(0, 0, -18), "neck": Vector3(0, 0, -20), "root": Vector3(0, -0.06, 0)})
+		show.hold[0] = {"clip": "b/Idle_No", "frac": -1.0}
 	shade(false, 0.6, 0.9)
 	Game.music("menu")
 	var right := UI.vbox(12)
