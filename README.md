@@ -25,3 +25,8 @@ Nhân vật, trang phục, tóc và animation của **Quaternius** (CC0 1.0): Un
 Modular Character Outfits – Fantasy, Universal Animation Library 1 & 2. Animation của bộ 1 được
 chuyển sang bộ xương chuẩn bằng `tools/retarget.gd`; texture trang phục xám để tô màu theo phái
 bằng `tools/gray_tex.gd`.
+
+## Thêm animation Mixamo
+Bỏ file FBX (Mixamo, "Without Skin", 30 fps) vào `assets_src/animation/`, rồi chạy
+`godot --headless --path . --script res://tools/retarget_mixamo.gd` → tạo `assets/models/anims/mixamo.res`,
+clip tên `m/<Tên_file>` (dấu cách → `_`). Gán clip cho đòn trong `scripts/render/anim_map.gd`.

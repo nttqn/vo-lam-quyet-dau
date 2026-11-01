@@ -48,12 +48,9 @@ static func attack(key: String, style: String) -> Dictionary:
 		"fkick":
 			return {"clip": idle_clip(style)[0], "from": 0.9, "hit": 0.9, "to": 0.9,
 				"ov": {"thigh_r": Vector3(-105, 0, 0), "calf_r": Vector3(8, 0, 0), "spine_01": Vector3(-12, 0, 0), "thigh_l": Vector3(-8, 0, 0)}}
-		"skick":
-			return {"clip": idle_clip(style)[0], "from": 0.9, "hit": 0.9, "to": 0.9,
-				"ov": {"pelvis": Vector3(0, -55, 0), "thigh_r": Vector3(-95, 0, 25), "calf_r": Vector3(4, 0, 0), "spine_01": Vector3(-20, 30, 0)}}
-		"round":
-			return {"clip": idle_clip(style)[0], "from": 0.9, "hit": 0.9, "to": 0.9,
-				"ov": {"pelvis": Vector3(0, 60, 0), "thigh_r": Vector3(-85, 0, -35), "calf_r": Vector3(20, 0, 0), "spine_01": Vector3(-15, -20, 0)}}
+		"skick", "round":
+			# Mixamo MMA kick (assets_src/animation): chamber 0.2, full extension ~0.36
+			return {"clip": "m/Mma_Kick", "from": 0.1, "hit": 0.35, "to": 0.72}
 		"sweep":
 			return {"clip": "a/Crouch_Idle", "from": 0.3, "hit": 0.3, "to": 0.3,
 				"ov": {"pelvis": Vector3(0, 70, 0), "thigh_r": Vector3(-75, 0, -30), "calf_r": Vector3(-5, 0, 0), "spine_01": Vector3(25, 0, 0)}, "drop": -0.12}

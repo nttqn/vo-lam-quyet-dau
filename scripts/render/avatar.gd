@@ -13,6 +13,7 @@ const HEAD_BONES := ["Head", "neck_01"]
 static var _head_cache := {}
 static var _lib1: AnimationLibrary
 static var _lib2: AnimationLibrary
+static var _lib3: AnimationLibrary
 
 var look: Dictionary
 var female := false
@@ -51,7 +52,9 @@ static func libs() -> Array:
 				if a.track_get_type(t) == Animation.TYPE_POSITION_3D and String(a.track_get_path(t)).ends_with(":root"):
 					a.remove_track(t)
 		u.free()
-	return [_lib1, _lib2]
+		if ResourceLoader.exists("res://assets/models/anims/mixamo.res"):
+			_lib3 = load("res://assets/models/anims/mixamo.res")
+	return [_lib1, _lib2, _lib3]
 
 func _ready() -> void:
 	_build()
@@ -175,6 +178,8 @@ func _build() -> void:
 	var L := libs()
 	ap.add_animation_library("a", L[0])
 	ap.add_animation_library("b", L[1])
+	if L[2] != null:
+		ap.add_animation_library("m", L[2])
 	ap.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
 	for mi in skel.find_children("*", "MeshInstance3D", true, false):
 		(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON

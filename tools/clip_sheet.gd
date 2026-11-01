@@ -7,6 +7,7 @@ var n := 0
 var avs: Array = []
 var clips: PackedStringArray
 var frac := 0.5
+var fracs: PackedStringArray = []
 
 func _ready() -> void:
 	var sect := "vo_dang"
@@ -16,6 +17,7 @@ func _ready() -> void:
 		if a.begins_with("--shot="): shot = a.substr(7)
 		if a.begins_with("--clips="): clips = a.substr(8).split(",")
 		if a.begins_with("--frac="): frac = float(a.substr(7))
+		if a.begins_with("--fracs="): fracs = a.substr(8).split(",")
 		if a.begins_with("--sect="): sect = a.substr(7)
 		if a.begins_with("--cols="): cols = int(a.substr(7))
 	add_child(Arena.new("temple", 2))
@@ -57,7 +59,8 @@ func _process(d: float) -> void:
 	n += 1
 	for i in avs.size():
 		var av: Avatar = avs[i]
-		av.pose(clips[i], av.clip_len(clips[i]) * frac, 0.0)
+		var fq := float(fracs[i]) if i < fracs.size() else frac
+		av.pose(clips[i], av.clip_len(clips[i]) * fq, 0.0)
 		av.finish(d)
 	if n == 12:
 		get_viewport().get_texture().get_image().save_png(shot)

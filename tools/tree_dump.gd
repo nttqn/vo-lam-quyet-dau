@@ -11,7 +11,7 @@ func _init() -> void:
 				print("  ", a.track_get_type(t), " ", a.track_get_path(t))
 	quit()
 func _dump(n: Node, d: int) -> void:
-	if d > 4: return
+	if d > 6: return
 	var extra := ""
 	if n is MeshInstance3D: extra = " skel=" + str(n.skeleton)
 	print("  ".repeat(d), n.name, " <", n.get_class(), ">", extra)
