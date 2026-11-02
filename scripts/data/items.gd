@@ -101,7 +101,11 @@ static func total(gear: Dictionary) -> Dictionary:
 static func npc_gear(level: int, boss: bool, rng: RandomNumberGenerator) -> Dictionary:
 	var tier := clampi(1 + int((level - 1) / 5.5), 1, 7)
 	var g := {}
-	for slot in SLOTS:
-		var rar := clampi(int(level / 9.0) + (1 if boss else 0) + (1 if rng.randf() < 0.2 else 0) - 1, 0, 4)
-		g[slot] = make(slot, tier, rar, clampi(int(level / 4.0) + (2 if boss else 0), 0, MAX_PLUS))
+	# early foes wear only what a new hero starts with (weapon + armor);
+	# extra slots fill in over the first levels
+	var n_slots := clampi(2 + int((level - 1) / 3), 2, SLOTS.size())
+	for slot in SLOTS.slice(0, n_slots):
+		var lucky := 1 if (level >= 6 and rng.randf() < 0.2) else 0
+		var rar := clampi(int(level / 9.0) + (1 if boss else 0) + lucky - 1, 0, 4)
+		g[slot] = make(slot, tier, rar, clampi(int(level / 4.0) + (2 if boss and level >= 6 else 0), 0, MAX_PLUS))
 	return g

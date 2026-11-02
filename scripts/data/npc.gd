@@ -9,7 +9,7 @@ static func side(sect_id: String, level: int, name: String, ai: float, faction :
 	var pts := Build.auto_points(level, s, rng)
 	var st := Build.stats(level, pts, s, Items.total(Items.npc_gear(level, boss, rng)))
 	if boss:
-		st.hp_max *= 1.25
+		st.hp_max *= 1.25 if level >= 6 else 1.1
 	var sk := []
 	var avail := []
 	for i in s.skills.size():
@@ -17,7 +17,10 @@ static func side(sect_id: String, level: int, name: String, ai: float, faction :
 		if int(m.lvl) <= level and not m.get("ult", false):
 			avail.append(i)
 	avail.shuffle()
-	for i in avail.slice(0, 2 if not boss else 3):
+	# tutorial ramp: lvl 1-2 foes fight with basic moves only, lvl 3 gets one
+	# skill (a new hero owns one), bosses two; full kit from lvl 4
+	var n_sk := (2 if not boss else 3) if level >= 4 else ((1 if level >= 3 else 0) if not boss else 2)
+	for i in avail.slice(0, n_sk):
 		sk.append(Hero.skill_scaled(s.skills[i], clampi(1 + level / 10, 1, Hero.SKILL_MAX)))
 	if (boss or level >= 30) and level >= int(s.skills[5].lvl):
 		if sk.size() >= 3:

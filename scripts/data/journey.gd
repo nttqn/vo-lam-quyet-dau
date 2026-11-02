@@ -7,8 +7,8 @@ const REGIONS := [
 		"intro": "Chân núi Thiếu Thất, sơn tặc hoành hành. Bước chân đầu tiên của kẻ hành hiệp.",
 		"foes": [
 			["Lưu Tam", "Sơn tặc lâu la", "cai_bang"],
-			["Hồ Lão Lục", "Đao phỉ", "duong_mon"],
 			["Mạnh Thiết Ngưu", "Lực sĩ trại Hắc Phong", "thieu_lam"],
+			["Hồ Lão Lục", "Đao phỉ", "duong_mon"],
 			["Tiêu Phi Yến", "Nữ tặc khinh công", "nga_mi"],
 			["Đồ Bách Xuyên", "Quân sư sơn trại", "vo_dang"],
 			["Hắc Phong Trại Chủ", "Lôi Bưu", "cai_bang"],
@@ -79,10 +79,15 @@ static func stage_id(r: int, s: int) -> String:
 	return "%d_%d" % [r, s]
 
 static func stage_level(r: int, s: int) -> int:
+	if r == 0:
+		return 1 + int(s * 0.7)   # 1,1,2,3,3,4: tracks a hero levelling from scratch
 	return int(REGIONS[r].lvl) + int(round(s * 0.85))
 
 ## AI skill 0..1 for a stage
 static func stage_ai(r: int, s: int) -> float:
+	if r == 0:
+		# tutorial region: slow, rarely blocks; ramps to the region-2 level
+		return 0.1 + s * 0.035 + (0.05 if s == 5 else 0.0)
 	return clampf(0.22 + r * 0.11 + s * 0.025 + (0.08 if s == 5 else 0.0), 0.0, 0.98)
 
 static func stage_side(r: int, s: int) -> Dictionary:
