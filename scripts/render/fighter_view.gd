@@ -83,7 +83,10 @@ func _sync(delta: float) -> void:
 				var b: float = ic[2]
 				var ph := fposmod(_t * 0.6, 2.0)
 				var fr := a + (b - a) * (ph if ph < 1.0 else 2.0 - ph)
-				body.pose(ic[0], L * fr, blend)
+				if a == 0.0 and b == 1.0:
+					body.pose(ic[0], _t + f.idx * 1.3, blend)   # full looping stance clip
+				else:
+					body.pose(ic[0], L * fr, blend)
 		Fighter.WALK:
 			var back := f.hold_back
 			_walk_t += delta * absf(f.vx) / 1.6 * (-1.0 if back else 1.0)

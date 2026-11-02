@@ -436,3 +436,12 @@ func _stylise() -> void:
 				sm.rim_tint = 0.35
 			if ow > 0.0 and not nm.begins_with("Hair_B") and mat.next_pass == null:
 				mat.next_pass = _outline
+
+## True if a "lib/clip" name exists in the loaded libraries.
+static func has_clip(name: String) -> bool:
+	var L := libs()
+	var p := name.split("/")
+	if p.size() != 2:
+		return false
+	var lib: AnimationLibrary = L[0] if p[0] == "a" else (L[1] if p[0] == "b" else L[2])
+	return lib != null and lib.has_animation(p[1])

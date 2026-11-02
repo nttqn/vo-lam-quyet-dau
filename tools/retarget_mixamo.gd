@@ -61,6 +61,8 @@ func _bake_all() -> void:
 		var a_src: Animation = sap.get_animation(an)
 		var out := Animation.new()
 		out.length = a_src.length
+		if f.to_lower().contains("idle"):
+			out.loop_mode = Animation.LOOP_LINEAR
 		var tpath := "Armature/Skeleton3D"
 		var rot_tracks := {}
 		for ti in t2s:

@@ -8,8 +8,12 @@ extends RefCounted
 
 const WEAPON_STYLES := ["sword", "staff", "dual", "dagger", "saber", "spear"]
 
+const SECT_IDLE := {"staff": "m/ThieuLam_Idle", "sword": "m/VoDang_Idle", "dual": "m/NgaMi_Idle", "palm": "m/CaiBang_Idle", "dagger": "m/DuongMon_Idle"}
+
 static func idle_clip(style: String) -> Array:
 	# [clip, fraction-from, fraction-to] looped by the view
+	if SECT_IDLE.has(style) and Avatar.has_clip(SECT_IDLE[style]):
+		return [SECT_IDLE[style], 0.0, 1.0]
 	if style in WEAPON_STYLES:
 		return ["a/Sword_Idle", 0.0, 1.0]
 	return ["a/Punch_Enter", 0.82, 1.0]
@@ -48,7 +52,11 @@ static func attack(key: String, style: String) -> Dictionary:
 		"fkick":
 			return {"clip": idle_clip(style)[0], "from": 0.9, "hit": 0.9, "to": 0.9,
 				"ov": {"thigh_r": Vector3(-105, 0, 0), "calf_r": Vector3(8, 0, 0), "spine_01": Vector3(-12, 0, 0), "thigh_l": Vector3(-8, 0, 0)}}
-		"skick", "round":
+		"skick":
+			if Avatar.has_clip("m/Hurricane_Kick"):
+				return {"clip": "m/Hurricane_Kick", "from": 0.12, "hit": 0.4, "to": 0.8}
+			return {"clip": "m/Mma_Kick", "from": 0.1, "hit": 0.35, "to": 0.72}
+		"round":
 			# Mixamo MMA kick (assets_src/animation): chamber 0.2, full extension ~0.36
 			return {"clip": "m/Mma_Kick", "from": 0.1, "hit": 0.35, "to": 0.72}
 		"sweep":
