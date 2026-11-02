@@ -16,6 +16,8 @@ var _last_state := -1
 var _last_move: Dictionary = {}
 
 const YAW_TOWARD_CAM := 0.4
+const BOW_FRAMES := 66
+var intro_frame := -1   # set by the fight scene during the round intro
 
 func _init(p_f: Fighter, look: Dictionary) -> void:
 	f = p_f
@@ -72,10 +74,15 @@ func _sync(delta: float) -> void:
 	_last_state = f.state
 	_last_move = f.move
 	var blend := 0.1
+	body.layer = {}
+	var st_t := f.sf / 60.0   # seconds in the current state
 	match f.state:
 		Fighter.IDLE, Fighter.LAND:
-			if f.hold_back:
-				body.pose("b/Sword_Block", body.clip_len("b/Sword_Block") * 0.5, blend)
+			if intro_frame >= 0 and intro_frame < BOW_FRAMES:
+				# pre-round salute
+				body.pose("m/Bow", body.clip_len("m/Bow") * (0.06 + 0.56 * intro_frame / float(BOW_FRAMES)), 0.2)
+			elif f.hold_back:
+				body.pose("m/Block", body.clip_len("m/Block") * 0.4, blend)
 			else:
 				var ic := AnimMap.idle_clip(style)
 				var L := body.clip_len(ic[0])
@@ -89,52 +96,52 @@ func _sync(delta: float) -> void:
 					body.pose(ic[0], L * fr, blend)
 		Fighter.WALK:
 			var back := f.hold_back
-			_walk_t += delta * absf(f.vx) / 1.6 * (-1.0 if back else 1.0)
-			if back:
-				body.pose("b/Sword_Block", body.clip_len("b/Sword_Block") * 0.5, blend)
-				body.overrides["thigh_l"] = Quaternion.from_euler(Vector3(deg_to_rad(sin(_t * 9.0) * 18.0), 0, 0))
-				body.overrides["thigh_r"] = Quaternion.from_euler(Vector3(deg_to_rad(-sin(_t * 9.0) * 18.0), 0, 0))
-			else:
-				body.pose("a/Walk", _walk_t, blend)
+			_walk_t += delta * absf(f.vx) / 1.6
+			body.pose("m/Walk_Back" if back else "m/Walk_Fwd", _walk_t, blend)
 		Fighter.DASH:
 			_walk_t += delta * 1.4
 			body.pose("a/Jog_Fwd", _walk_t, 0.06)
 		Fighter.CROUCH:
+			body.pose("m/Crouch_Idle", _t, blend)
 			if f.hold_back:
-				body.pose("a/Crouch_Idle", 0.3, blend)
-				body.overrides["upperarm_r"] = Quaternion.from_euler(Vector3(0, 0, 0))
-			else:
-				body.pose("a/Crouch_Idle", _t, blend)
+				_low_guard(0.4)
 		Fighter.JUMP:
-			if f.sf < 10 and f.vy > 0:
-				body.pose("b/NinjaJump_Start", body.clip_len("b/NinjaJump_Start") * (0.4 + f.sf / 25.0), 0.05)
-			else:
-				body.pose("b/NinjaJump_Idle", _t, 0.12)
+			# rising half -> tuck at the apex -> falling half
+			var k := clampf((Fighter.JUMP_V - f.vy) / (2.0 * Fighter.JUMP_V), 0.0, 1.0)
+			body.pose("m/Jump", body.clip_len("m/Jump") * (0.3 + 0.32 * k), 0.08)
 		Fighter.ATTACK:
 			_attack(style)
 		Fighter.BLOCKSTUN:
+			var kb := clampf(float(f.sf) / maxf(1.0, f.stun), 0.0, 1.0)
 			if f.hold_down:
-				body.pose("a/Crouch_Idle", 0.3, 0.05)
+				body.pose("m/Crouch_Idle", 0.3, 0.05)
+				_low_guard(0.42 + 0.1 * sin(kb * PI))
 			else:
-				body.pose("b/Sword_Block", body.clip_len("b/Sword_Block") * 0.55, 0.05)
+				body.pose("m/Block", body.clip_len("m/Block") * (0.4 + 0.12 * sin(kb * PI)), 0.05)
 		Fighter.HITSTUN:
-			var clip := "a/Hit_Head" if (f.stun > 20 and not f.hit_low) else "a/Hit_Chest"
-			var L2 := body.clip_len(clip)
-			body.pose(clip, L2 * clampf(float(f.sf) / maxf(1.0, f.stun), 0.0, 1.0), 0.05)
+			var heavy := f.stun > 20 and not f.hit_low
+			var clip := "m/Hit_Head" if heavy else "m/Hit_Body"
+			var kh := clampf(float(f.sf) / maxf(1.0, f.stun), 0.0, 1.0)
+			body.pose(clip, body.clip_len(clip) * (0.04 + 0.42 * kh), 0.05)
 		Fighter.AIRHIT:
-			var L3 := body.clip_len("b/Hit_Knockback")
-			body.pose("b/Hit_Knockback", minf(L3 * 0.55, f.sf / 60.0 * 1.4), 0.06)
-		Fighter.LYING, Fighter.KO:
-			var L4 := body.clip_len("b/Hit_Knockback")
-			body.pose("b/Hit_Knockback", minf(L4, L4 * 0.55 + f.sf / 60.0 * 1.6), 0.08)
+			# dying fighters use the dramatic KO fall
+			var fall := "m/KO" if f.dead else "m/Knockdown"
+			var a0 := 0.08 if f.dead else 0.14
+			body.pose(fall, body.clip_len(fall) * minf(a0 + 0.26, a0 + st_t * 0.55), 0.06)
+		Fighter.LYING:
+			if f.sf < 18:
+				body.pose("m/Knockdown", body.clip_len("m/Knockdown") * (0.4 + 0.05 * f.sf / 18.0), 0.1)
+			else:
+				# start sitting up so the short GETUP state reads as one motion
+				body.pose("m/Getup", body.clip_len("m/Getup") * (0.36 + 0.14 * (f.sf - 18) / 18.0), 0.2)
 		Fighter.GETUP:
-			var L5 := body.clip_len("b/LayToIdle")
-			body.pose("b/LayToIdle", L5 * clampf(f.sf / 18.0, 0.0, 1.0), 0.05)
+			body.pose("m/Getup", body.clip_len("m/Getup") * (0.5 + 0.22 * clampf(f.sf / 18.0, 0.0, 1.0)), 0.05)
+		Fighter.KO:
+			body.pose("m/KO", body.clip_len("m/KO") * minf(1.0, 0.34 + st_t * 0.35), 0.15)
 		Fighter.DODGE:
-			var L6 := body.clip_len("a/Roll")
-			body.pose("a/Roll", L6 * clampf(1.0 - f.sf / 20.0, 0.0, 1.0) * 0.8, 0.05)
+			body.pose("m/Dodge", body.clip_len("m/Dodge") * (0.1 + 0.5 * clampf(f.sf / 20.0, 0.0, 1.0)), 0.05)
 		Fighter.WIN:
-			body.pose("b/Idle_FoldArms", _t, 0.25)
+			body.pose("m/Victory", minf(st_t, body.clip_len("m/Victory") * 0.5), 0.25)
 		_:
 			body.pose(AnimMap.idle_clip(style)[0], _t, blend)
 	body.finish(delta)
@@ -143,6 +150,10 @@ func _sync(delta: float) -> void:
 	var col: Color = f.sect.get("elem", Color.WHITE)
 	_aura.light_color = col
 	_aura.light_energy = lerpf(_aura.light_energy, 2.2 if aura_on else 0.0, minf(1.0, delta * 8.0))
+
+## Crouching legs with the standing block's arms (Mixamo has no low block).
+func _low_guard(frac: float) -> void:
+	body.layer = {"clip": "m/Block", "t": body.clip_len("m/Block") * frac, "bones": Avatar.ARM_BONES}
 
 func _attack(style: String) -> void:
 	var m := f.move

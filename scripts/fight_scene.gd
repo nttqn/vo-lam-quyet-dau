@@ -314,6 +314,7 @@ func _process(delta: float) -> void:
 			_finish(sim.winner == 0)
 	fx.sync_projs(sim.projs)
 	for v in views:
+		v.intro_frame = sim.pf if sim.phase == FightSim.INTRO else -1
 		var sh: MeshInstance3D = v.get_meta("shadow")
 		sh.position = Vector3(v.f.x, 0.06, 0)
 		var s := clampf(1.0 - v.f.y * 0.25, 0.4, 1.0)

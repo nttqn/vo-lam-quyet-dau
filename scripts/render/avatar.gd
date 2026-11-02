@@ -32,6 +32,10 @@ var _snap: Array = []          # [pos, rot] per bone at the moment of a switch
 var _blend_t := 0.0
 var _blend_dur := 0.0
 var overrides := {}            # bone name -> Quaternion applied after the clip
+## Second clip on a subset of bones: {"clip": "m/Block", "t": 0.5, "bones": [...]}
+## e.g. crouching legs + blocking arms. Cleared by the caller each frame.
+var layer := {}
+const ARM_BONES := ["clavicle_l", "upperarm_l", "lowerarm_l", "hand_l", "clavicle_r", "upperarm_r", "lowerarm_r", "hand_r"]
 var _shaders: Array[ShaderMaterial] = []
 var _face_scale := Vector3.ONE
 var _head_bone := -1
@@ -360,6 +364,20 @@ func pose(clip: String, t: float, blend := 0.12) -> void:
 			t = clampf(t, 0.0, a.length)
 	ap.seek(t, true)
 
+func _apply_layer() -> void:
+	var la := ap.get_animation(layer.clip)
+	if la == null:
+		return
+	var t := clampf(float(layer.t), 0.0, la.length)
+	for bn in layer.bones:
+		var bi := skel.find_bone(bn)
+		if bi < 0:
+			continue
+		for tr in la.get_track_count():
+			if la.track_get_type(tr) == Animation.TYPE_ROTATION_3D and String(la.track_get_path(tr)).ends_with(":" + bn):
+				skel.set_bone_pose_rotation(bi, la.rotation_track_interpolate(tr, t))
+				break
+
 func clip_len(clip: String) -> float:
 	var a := ap.get_animation(clip)
 	return a.length if a else 1.0
@@ -379,6 +397,8 @@ func finish(delta: float) -> void:
 			var s: Array = _snap[i]
 			skel.set_bone_pose_position(i, (s[0] as Vector3).lerp(skel.get_bone_pose_position(i), k))
 			skel.set_bone_pose_rotation(i, (s[1] as Quaternion).slerp(skel.get_bone_pose_rotation(i), k))
+	if not layer.is_empty():
+		_apply_layer()
 	for bn in overrides:
 		var bi := skel.find_bone(bn)
 		if bi >= 0:

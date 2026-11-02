@@ -61,7 +61,8 @@ func _bake_all() -> void:
 		var a_src: Animation = sap.get_animation(an)
 		var out := Animation.new()
 		out.length = a_src.length
-		if f.to_lower().contains("idle"):
+		var fl := f.to_lower()
+		if fl.contains("idle") or fl.contains("walk") or fl.contains("crouch"):
 			out.loop_mode = Animation.LOOP_LINEAR
 		var tpath := "Armature/Skeleton3D"
 		var rot_tracks := {}
@@ -96,7 +97,10 @@ func _bake_all() -> void:
 			var sh := S.get_bone_global_pose(s_hip).origin - S.get_bone_global_rest(s_hip).origin
 			if fi == 0:
 				hip0 = sh
-			sh = Vector3(0, sh.y, 0)
+			if fi == frames:
+				print("  hip drift ", sh - hip0)
+			# jumps: the sim lifts the fighter, keep only the crouch dip
+			sh = Vector3(0, minf(sh.y, 0.0) if fl.contains("jump") else sh.y, 0)
 			var parent_t := T.get_bone_parent(t_hip)
 			var pgb: Basis = Basis.IDENTITY if parent_t < 0 else (tg[parent_t] as Transform3D).basis.orthonormalized()
 			out.position_track_insert_key(pos_tr, t, T.get_bone_rest(t_hip).origin + pgb.inverse() * (sh * ratio))
