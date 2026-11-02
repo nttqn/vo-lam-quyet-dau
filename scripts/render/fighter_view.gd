@@ -144,6 +144,12 @@ func _sync(delta: float) -> void:
 			body.pose("m/Victory", minf(st_t, body.clip_len("m/Victory") * 0.5), 0.25)
 		_:
 			body.pose(AnimMap.idle_clip(style)[0], _t, blend)
+	match f.state:
+		Fighter.HITSTUN, Fighter.AIRHIT, Fighter.LYING, Fighter.THROWN: body.expr = "hurt"
+		Fighter.KO: body.expr = "ko"
+		Fighter.ATTACK, Fighter.BLOCKSTUN: body.expr = "attack"
+		Fighter.WIN: body.expr = "win"
+		_: body.expr = ""
 	body.finish(delta)
 	_update_trail()
 	var aura_on: bool = (f.state == Fighter.ATTACK and f.move.get("skill", false)) or not f.buffs.is_empty()
