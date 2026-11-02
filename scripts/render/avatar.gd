@@ -61,7 +61,126 @@ static func libs() -> Array:
 	return [_lib1, _lib2, _lib3]
 
 func _ready() -> void:
-	_build()
+	var model: String = look.get("model", "")
+	if model != "" and ResourceLoader.exists(VRM_DIR + model + ".glb"):
+		_build_vrm(model)
+	else:
+		_build()
+
+# ------------------------------------------------------------- VRM models
+## A VRoid/VRM character (assets/models/vrm/<name>.glb, exported as VRM 1.0
+## and renamed). The Quaternius rig still runs every clip invisibly; each
+## frame its pose is copied onto the VRM skeleton (global rest-delta), so all
+## clips, overrides, layers and the fight timing work unchanged.
+const VRM_DIR := "res://assets/models/vrm/"
+const VRM_MAP := {
+	"pelvis": "J_Bip_C_Hips", "spine_01": "J_Bip_C_Spine", "spine_02": "J_Bip_C_Chest", "spine_03": "J_Bip_C_UpperChest",
+	"neck_01": "J_Bip_C_Neck", "Head": "J_Bip_C_Head",
+	"clavicle_l": "J_Bip_L_Shoulder", "upperarm_l": "J_Bip_L_UpperArm", "lowerarm_l": "J_Bip_L_LowerArm", "hand_l": "J_Bip_L_Hand",
+	"clavicle_r": "J_Bip_R_Shoulder", "upperarm_r": "J_Bip_R_UpperArm", "lowerarm_r": "J_Bip_R_LowerArm", "hand_r": "J_Bip_R_Hand",
+	"thigh_l": "J_Bip_L_UpperLeg", "calf_l": "J_Bip_L_LowerLeg", "foot_l": "J_Bip_L_Foot", "ball_l": "J_Bip_L_ToeBase",
+	"thigh_r": "J_Bip_R_UpperLeg", "calf_r": "J_Bip_R_LowerLeg", "foot_r": "J_Bip_R_Foot", "ball_r": "J_Bip_R_ToeBase",
+}
+## Facial expressions -> VRoid blend shapes
+const EXPR := {
+	"hurt": {"Fcl_BRW_Sorrow": 0.8, "Fcl_EYE_Close": 0.65, "Fcl_MTH_Large": 0.35},
+	"ko": {"Fcl_EYE_Close": 1.0, "Fcl_MTH_Small": 0.5},
+	"attack": {"Fcl_BRW_Angry": 0.9, "Fcl_EYE_Angry": 0.5, "Fcl_MTH_Angry": 0.4},
+	"win": {"Fcl_ALL_Joy": 0.85},
+}
+const VRM_LIT := 0.45
+var vskel: Skeleton3D            # the visible skeleton (== skel for Quaternius models)
+var _rt: Array = []              # [ue bone, vrm bone, ue rest^-1, vrm rest] parents first
+var _hip_ue := -1
+var _hip_v := -1
+var _hip_ratio := 1.0
+var _face: MeshInstance3D
+var expr := ""                   # set each frame by the view
+var _expr_w := {}                # blend shape index -> current weight
+var _blink_t := 0.0
+
+func _build_vrm(model: String) -> void:
+	# invisible animation driver
+	root = load(OUTFIT_DIR + "Female_Peasant.gltf").instantiate()
+	add_child(root)
+	skel = root.get_node("Armature/Skeleton3D")
+	for m in skel.get_children():
+		if m is MeshInstance3D:
+			skel.remove_child(m)
+			m.free()
+	var v: Node3D = load(VRM_DIR + model + ".glb").instantiate()
+	add_child(v)
+	vskel = v.find_children("*", "Skeleton3D", true, false)[0]
+	var order := []
+	for ub in VRM_MAP:
+		var ui := skel.find_bone(ub)
+		var vi := vskel.find_bone(VRM_MAP[ub])
+		if ui < 0 or vi < 0:
+			continue
+		var depth := 0
+		var p := vi
+		while p >= 0:
+			p = vskel.get_bone_parent(p)
+			depth += 1
+		order.append([depth, ui, vi, skel.get_bone_global_rest(ui).basis.orthonormalized().inverse(), vskel.get_bone_global_rest(vi).basis.orthonormalized()])
+	order.sort_custom(func(a, b): return a[0] < b[0])
+	for o in order:
+		_rt.append(o.slice(1))
+	_hip_ue = skel.find_bone("pelvis")
+	_hip_v = vskel.find_bone("J_Bip_C_Hips")
+	_hip_ratio = vskel.get_bone_global_rest(_hip_v).origin.y / maxf(0.01, skel.get_bone_global_rest(_hip_ue).origin.y)
+	# toon-lit materials (VRM MToon imports as unshaded) so arena lights read
+	for m in vskel.find_children("*", "MeshInstance3D", true, false):
+		var mi := m as MeshInstance3D
+		if String(mi.name) == "Face":
+			_face = mi
+		for s in mi.mesh.get_surface_count():
+			var src := mi.mesh.surface_get_material(s) as StandardMaterial3D
+			if src == null:
+				continue
+			var nm := src.duplicate() as StandardMaterial3D
+			nm.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+			nm.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
+			nm.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+			nm.roughness = 1.0
+			# MToon textures are authored for unlit display; under the arena
+			# sun + ambient the pale skin clips to white without this
+			nm.albedo_color = src.albedo_color * Color(VRM_LIT, VRM_LIT, VRM_LIT)
+			mi.set_surface_override_material(s, nm)
+			_tinted.append(nm)
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	var hsc: float = look.get("height", 1.0)
+	scale = Vector3(hsc, hsc, hsc)
+	_stylise(vskel)
+	_weapons_and_anim()
+
+func _retarget() -> void:
+	for e in _rt:
+		var gt: Basis = skel.get_bone_global_pose(e[0]).basis.orthonormalized() * e[2] * e[3]
+		var pi := vskel.get_bone_parent(e[1])
+		var pg := vskel.get_bone_global_pose(pi).basis.orthonormalized() if pi >= 0 else Basis.IDENTITY
+		vskel.set_bone_pose_rotation(e[1], (pg.inverse() * gt).get_rotation_quaternion())
+	var d := skel.get_bone_global_pose(_hip_ue).origin - skel.get_bone_global_rest(_hip_ue).origin
+	var hp := vskel.get_bone_parent(_hip_v)
+	var pgb := vskel.get_bone_global_pose(hp).basis.orthonormalized() if hp >= 0 else Basis.IDENTITY
+	vskel.set_bone_pose_position(_hip_v, vskel.get_bone_rest(_hip_v).origin + pgb.inverse() * (d * _hip_ratio))
+
+func _update_face(delta: float) -> void:
+	var want := {}
+	for k in EXPR.get(expr, {}):
+		want[k] = EXPR[expr][k]
+	# idle blinking
+	_blink_t += delta
+	if expr == "" and fmod(_blink_t, 3.7) < 0.12:
+		want["Fcl_EYE_Close"] = 1.0
+	for k in want:
+		var i := _face.find_blend_shape_by_name(k)
+		if i >= 0 and not _expr_w.has(i):
+			_expr_w[i] = 0.0
+	for i in _expr_w.keys():
+		var target: float = want.get(String(_face.mesh.get_blend_shape_name(i)), 0.0)
+		_expr_w[i] = move_toward(_expr_w[i], target, delta * 9.0)
+		_face.set_blend_shape_value(i, _expr_w[i])
 
 # ------------------------------------------------------------- building
 func _build() -> void:
@@ -148,7 +267,13 @@ func _build() -> void:
 	scale = Vector3(hsc, hsc, hsc)
 	_face_scale = Appearance.FACE_SCALE[clampi(int(look.get("face", 0)), 0, Appearance.FACE_SCALE.size() - 1)]
 	# code-drawn extras (sash, headband, hats, beads, robe skirt) removed: real models only
-	_stylise()
+	_stylise(skel)
+	vskel = skel
+	_weapons_and_anim()
+	for mi in skel.find_children("*", "MeshInstance3D", true, false):
+		(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+
+func _weapons_and_anim() -> void:
 	# weapon + strike markers
 	var w: String = look.get("weapon", "none")
 	var hr := _bone_att("hand_r")
@@ -179,8 +304,6 @@ func _build() -> void:
 	if L[2] != null:
 		ap.add_animation_library("m", L[2])
 	ap.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
-	for mi in skel.find_children("*", "MeshInstance3D", true, false):
-		(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 
 func _tint(mi: MeshInstance3D, col: Color) -> void:
 	for s in mi.mesh.get_surface_count():
@@ -220,11 +343,22 @@ func _attach_hair(name: String) -> void:
 		_hair_mat(mi)
 	h.free()
 
-func _bone_att(bone: String) -> BoneAttachment3D:
+## Node following a (Quaternius-named) bone on the visible skeleton. On VRM
+## models it carries the Quaternius bone's rest frame, so grips and markers
+## made for that rig line up unchanged.
+func _bone_att(bone: String) -> Node3D:
 	var b := BoneAttachment3D.new()
-	b.bone_name = bone
-	skel.add_child(b)
-	return b
+	if vskel == skel:
+		b.bone_name = bone
+		skel.add_child(b)
+		return b
+	var vb: String = VRM_MAP.get(bone, "J_Bip_C_Hips")
+	b.bone_name = vb
+	vskel.add_child(b)
+	var fr := Node3D.new()
+	fr.basis = vskel.get_bone_global_rest(vskel.find_bone(vb)).basis.orthonormalized().inverse() * skel.get_bone_global_rest(skel.find_bone(bone)).basis.orthonormalized()
+	b.add_child(fr)
+	return fr
 
 func _grip(att: Node3D) -> Node3D:
 	# hand bone: +Y runs along the fingers; the fist's thumb side is +Z.
@@ -409,6 +543,10 @@ func finish(delta: float) -> void:
 		_head_bone = skel.find_bone("Head")
 	if _face_scale != Vector3.ONE and _head_bone >= 0:
 		skel.set_bone_pose_scale(_head_bone, _face_scale)
+	if vskel != skel and vskel != null:
+		_retarget()
+		if _face:
+			_update_face(delta)
 	for sm in _shaders:
 		sm.set_shader_parameter("flash", Vector3.ONE * _flash * 0.6)
 	for m in _tinted:
@@ -431,12 +569,12 @@ func _skin_mat(src: StandardMaterial3D, lip_amt: float, lip_rect: Vector4) -> Sh
 static var _outline: ShaderMaterial
 
 ## Ink outline + rim light on every character surface (not eyes/brows).
-func _stylise() -> void:
+func _stylise(sk: Skeleton3D) -> void:
 	if _outline == null:
 		_outline = ShaderMaterial.new()
 		_outline.shader = preload("res://assets/shaders/outline.gdshader")
 	var ow: float = look.get("outline", 0.007)
-	for mi in skel.find_children("*", "MeshInstance3D", true, false):
+	for mi in sk.find_children("*", "MeshInstance3D", true, false):
 		var m3 := mi as MeshInstance3D
 		var nm := String(m3.name)
 		if nm.begins_with("Eye") or not m3.visible:

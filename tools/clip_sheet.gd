@@ -54,6 +54,11 @@ func _ready() -> void:
 	cam.position = Vector3(0, 1.8 + rows * 0.6, 5.5 + rows * 1.6)
 	add_child(cam)
 	cam.look_at(Vector3(0, 0.9, -(rows - 1) * 1.3))
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--cam="):
+			var c := a.substr(6).split(",")
+			cam.position = Vector3(float(c[0]), float(c[1]), float(c[2]))
+			cam.look_at(Vector3(0, float(c[3]), 0))
 
 func _process(d: float) -> void:
 	n += 1

@@ -113,7 +113,7 @@ static func _build() -> void:
 		"elem": Color(1.0, 0.6, 0.8),
 		"bias": {"luc": -1, "than": 3, "noi": 2, "the": -1},
 		"speed": 1.12,
-		"look": {"robe": Color(0.96, 0.94, 0.96), "trim": Color(0.88, 0.42, 0.58), "pants": Color(0.86, 0.76, 0.84), "head_style": "long", "weapon": "dual", "female": true, "bulk": 0.86, "height": 0.95, "sash": Color(0.88, 0.38, 0.55), "robe_len": 0.58},
+		"look": {"model": "NgaMi", "robe": Color(0.96, 0.94, 0.96), "trim": Color(0.88, 0.42, 0.58), "pants": Color(0.86, 0.76, 0.84), "head_style": "long", "weapon": "dual", "female": true, "bulk": 0.86, "height": 0.95, "sash": Color(0.88, 0.38, 0.55), "robe_len": 0.58},
 		"moves": {
 			"p1": mv("Phất Vân Thủ", "jab_w", "jab", 5, 3, 10, 0.9, 1.1, "mid", {"next": "p2", "tip": "hand_l", "fx": "slash"}),
 			"p2": mv("Song Yến Phi", "cross_w", "cross", 6, 3, 11, 1.0, 1.1, "high", {"next": "p3", "fx": "slash"}),
