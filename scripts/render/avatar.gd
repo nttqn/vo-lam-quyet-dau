@@ -143,14 +143,8 @@ func _build() -> void:
 	var hsc: float = look.get("height", 1.0)
 	scale = Vector3(hsc, hsc, hsc)
 	_face_scale = Appearance.FACE_SCALE[clampi(int(look.get("face", 0)), 0, Appearance.FACE_SCALE.size() - 1)]
-	_extras(acc)
+	# code-drawn extras (sash, headband, hats, beads, robe skirt) removed: real models only
 	_stylise()
-	var rl: float = look.get("robe_len", 0.5)
-	if rl > 0.0:
-		var robe_node := Robe.new()
-		rl = maxf(rl, 0.62)
-		robe_node.setup(skel, rl, look.get("robe", Color(0.4, 0.5, 0.7)), look.get("trim", Color(0.9, 0.85, 0.7)))
-		add_child(robe_node)
 	# weapon + strike markers
 	var w: String = look.get("weapon", "none")
 	var hr := _bone_att("hand_r")
