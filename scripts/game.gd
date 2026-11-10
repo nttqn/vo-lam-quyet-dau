@@ -20,6 +20,12 @@ func _ready() -> void:
 	get_tree().set_quit_on_go_back(false)
 	_load_settings()
 	_load_audio()
+	if Diag.on("memlog"):
+		var t := Timer.new()
+		t.wait_time = 5.0
+		t.autostart = true
+		t.timeout.connect(func(): print("MEM godot_static=%.1fMB objs=%d tex=%.1fMB fps=%d" % [OS.get_static_memory_usage() / 1048576.0, Performance.get_monitor(Performance.OBJECT_COUNT), Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1048576.0, Engine.get_frames_per_second()]))
+		add_child(t)
 
 # ------------------------------------------------------------- navigation
 func goto(node: Node) -> void:

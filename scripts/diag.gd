@@ -4,7 +4,7 @@ extends RefCounted
 ## debuggable build), used to bisect device-only problems without rebuilding:
 ##   adb shell run-as <pkg> sh -c 'echo {\"no_glow\":true} > files/diag.json'
 ## Keys: no_model (Quaternius instead of sect models), hide_bodies, freeze_bodies,
-## no_retarget, no_outline, no_glow, no_fog, no_shadow, no_sky.
+## no_retarget, no_outline, no_glow, no_fog, no_shadow, no_sky, no_ui, no_arena, empty.
 
 static var _d = null
 

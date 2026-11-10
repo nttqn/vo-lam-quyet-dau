@@ -17,6 +17,8 @@ func _init_ui(theme_3d := "") -> void:
 	ui.theme = UI.theme()
 	ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(ui)
+	if Diag.on("no_ui"):
+		layer.visible = false
 	if show:
 		ui.add_child(UI.vignette(0.45))
 

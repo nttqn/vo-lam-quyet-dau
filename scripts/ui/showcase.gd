@@ -16,7 +16,8 @@ func _init(theme := "temple") -> void:
 	arena = Arena.new(theme, 7)
 
 func _ready() -> void:
-	add_child(arena)
+	if not Diag.on("no_arena"):
+		add_child(arena)
 	cam = Camera3D.new()
 	cam.fov = 38
 	add_child(cam)

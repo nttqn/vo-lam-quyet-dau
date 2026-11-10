@@ -70,8 +70,9 @@ jobs:
             echo "EXPORT_MODE=release" >> "$GITHUB_ENV"
           else
             echo "::warning::KEYSTORE_BASE64 secret not set - building a debug-signed APK"
-            keytool -genkeypair -v -keystore "$RUNNER_TEMP/debug.keystore" -storepass android -alias androiddebugkey \
-              -keypass android -keyalg RSA -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+            # fixed debug key (ci/debug.p12) so every debug APK installs over the previous one
+            keytool -importkeystore -noprompt -srckeystore ci/debug.p12 -srcstoretype PKCS12 -srcstorepass android \
+              -destkeystore "$RUNNER_TEMP/debug.keystore" -deststoretype JKS -deststorepass android -destkeypass android -alias androiddebugkey
             echo "GODOT_ANDROID_KEYSTORE_DEBUG_PATH=$RUNNER_TEMP/debug.keystore" >> "$GITHUB_ENV"
             echo "GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey" >> "$GITHUB_ENV"
             echo "GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android" >> "$GITHUB_ENV"

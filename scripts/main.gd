@@ -8,6 +8,8 @@ var _delay := 30
 var _n := 0
 
 func _ready() -> void:
+	if Diag.on("empty"):
+		return   # blank scene: is the leak in the engine itself?
 	var args := OS.get_cmdline_user_args()
 	var screen := ""
 	for a in args:
