@@ -107,14 +107,17 @@ func _environment(th: Dictionary) -> void:
 	env.ambient_light_energy = th.amb * 0.55
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_exposure = 0.78
-	env.adjustment_enabled = true
+	# Glow / adjustment add a post-process pass that leaks ~11 MB/s of driver
+	# memory on Mali (GL Compatibility) and crashed phones after ~5 min: desktop only.
+	var post := not OS.has_feature("mobile")
+	env.adjustment_enabled = post
 	env.adjustment_contrast = 1.08
 	env.adjustment_saturation = 1.06
 	env.fog_enabled = not Diag.on("no_fog")
 	env.fog_light_color = th.fog
 	env.fog_density = 0.0028
 	env.fog_sky_affect = 0.0
-	env.glow_enabled = not Diag.on("no_glow")
+	env.glow_enabled = post and not Diag.on("no_glow")
 	env.glow_intensity = 0.5
 	env.glow_bloom = 0.05
 	var we := WorldEnvironment.new()
