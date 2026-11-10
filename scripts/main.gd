@@ -76,7 +76,6 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			var cs := CreateScreen.new(0)
 			Game.goto(cs)
 			cs._pick.call_deferred("nga_mi")
-			cs._to_step2.call_deferred()
 		"hub": Game.goto(HubScreen.new())
 		"map": Game.goto(MapScreen.new())
 		"char": Game.goto(CharacterScreen.new())
