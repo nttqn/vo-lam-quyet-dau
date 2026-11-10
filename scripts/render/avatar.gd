@@ -592,10 +592,13 @@ func finish(delta: float) -> void:
 			_update_face(delta)
 	for sm in _shaders:
 		sm.set_shader_parameter("flash", Vector3.ONE * _flash * 0.6)
+	# keep emission always on and only change its colour: toggling emission_enabled
+	# swaps the material's shader, so every hit recompiled shaders (Mali phones
+	# ran out of memory mid-fight)
 	for m in _tinted:
-		m.emission_enabled = _flash > 0.0
-		if _flash > 0.0:
-			m.emission = Color(1, 0.95, 0.85) * (_flash * 0.7)
+		if not m.emission_enabled:
+			m.emission_enabled = true
+		m.emission = Color(1, 0.95, 0.85) * (_flash * 0.7)
 
 func _skin_mat(src: StandardMaterial3D, lip_amt: float, lip_rect: Vector4) -> ShaderMaterial:
 	var sm := ShaderMaterial.new()

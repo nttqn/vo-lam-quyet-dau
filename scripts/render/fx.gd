@@ -8,6 +8,18 @@ var _num_font: Font
 func _ready() -> void:
 	_num_font = load("res://assets/fonts/BeVietnamPro-Bold.ttf")
 
+# Godot frees a material shader as soon as no material uses that feature set;
+# the next spark then recompiles it (a hitch, and on Mali phones each compile
+# grows driver memory until the game crashes). Keep one copy of every
+# feature combination alive for the whole session.
+static var _pins := {}
+
+static func _pin(m: StandardMaterial3D) -> StandardMaterial3D:
+	var k := "%d/%d/%d/%d/%d/%s/%s" % [m.shading_mode, m.transparency, m.blend_mode, m.cull_mode, m.billboard_mode, m.emission_enabled, m.metallic > 0.0]
+	if not _pins.has(k):
+		_pins[k] = m.duplicate()
+	return m
+
 func _unshaded(col: Color, add := true) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -16,7 +28,7 @@ func _unshaded(col: Color, add := true) -> StandardMaterial3D:
 	if add:
 		m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	m.cull_mode = BaseMaterial3D.CULL_DISABLED
-	return m
+	return _pin(m)
 
 func spark(pos: Vector3, col: Color, heavy: bool, fx: String) -> void:
 	var p := CPUParticles3D.new()
@@ -36,6 +48,7 @@ func spark(pos: Vector3, col: Color, heavy: bool, fx: String) -> void:
 	q.size = Vector2(0.06, 0.06)
 	var mm := _unshaded(col)
 	mm.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	_pin(mm)
 	q.material = mm
 	p.mesh = q
 	var curve := Curve.new()
@@ -147,7 +160,7 @@ func dust(x: float) -> void:
 	m.albedo_color = Color(0.8, 0.75, 0.65, 0.5)
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	q.material = m
+	q.material = _pin(m)
 	p.mesh = q
 	var sc := Curve.new()
 	sc.add_point(Vector2(0, 1))
@@ -211,7 +224,7 @@ func add_proj(p: Dictionary, col: Color) -> void:
 			m.roughness = 0.2
 			m.emission_enabled = vis == "needle"
 			m.emission = Color(0.3, 1.0, 0.2)
-			mi.material_override = m
+			mi.material_override = _pin(m)
 			n.add_child(mi)
 		"crescent", "sword":
 			var mi := MeshInstance3D.new()
@@ -274,7 +287,7 @@ func add_proj(p: Dictionary, col: Color) -> void:
 			mi.mesh = sm
 			var m := StandardMaterial3D.new()
 			m.albedo_color = Color(0.1, 0.1, 0.1)
-			mi.material_override = m
+			mi.material_override = _pin(m)
 			n.add_child(mi)
 			var fuse := OmniLight3D.new()
 			fuse.light_color = Color(1, 0.6, 0.2)
