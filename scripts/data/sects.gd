@@ -87,7 +87,7 @@ static func _build() -> void:
 		"elem": Color(0.45, 0.75, 1.0),
 		"bias": {"luc": 0, "than": 1, "noi": 2, "the": 0},
 		"speed": 1.0,
-		"look": {"robe": Color(0.38, 0.5, 0.66), "trim": Color(0.93, 0.93, 0.96), "pants": Color(0.2, 0.22, 0.3), "head_style": "bun", "weapon": "sword", "sash": Color(0.15, 0.15, 0.22)},
+		"look": {"model": "VoDang", "robe": Color(0.38, 0.5, 0.66), "trim": Color(0.93, 0.93, 0.96), "pants": Color(0.2, 0.22, 0.3), "head_style": "bun", "weapon": "sword", "sash": Color(0.15, 0.15, 0.22)},
 		"moves": {
 			"p1": mv("Thanh Phong Phất Liễu", "slash_h_w", "slash_h", 7, 3, 12, 1.0, 1.15, "mid", {"next": "p2", "fx": "slash"}),
 			"p2": mv("Bạch Hạc Lượng Sí", "slash_hi_w", "slash_hi", 8, 3, 14, 1.1, 1.15, "high", {"next": "p3", "fx": "slash"}),
@@ -139,7 +139,7 @@ static func _build() -> void:
 		"elem": Color(1.0, 0.85, 0.3),
 		"bias": {"luc": 2, "than": 0, "noi": 1, "the": 1},
 		"speed": 1.05,
-		"look": {"robe": Color(0.46, 0.4, 0.26), "trim": Color(0.32, 0.46, 0.26), "pants": Color(0.36, 0.3, 0.22), "head_style": "headband", "weapon": "none", "bulk": 1.15, "sash": Color(0.56, 0.36, 0.16), "bracers": true, "beard": true},
+		"look": {"model": "CaiBang", "robe": Color(0.46, 0.4, 0.26), "trim": Color(0.32, 0.46, 0.26), "pants": Color(0.36, 0.3, 0.22), "head_style": "headband", "weapon": "none", "bulk": 1.15, "sash": Color(0.56, 0.36, 0.16), "bracers": true, "beard": true},
 		"moves": {
 			"p1": mv("Khai Môn Quyền", "jab_w", "jab", 6, 3, 11, 1.05, 1.05, "mid", {"next": "p2", "tip": "hand_l", "fx": "punch"}),
 			"p2": mv("Băng Quyền", "cross_w", "cross", 7, 3, 13, 1.3, 1.05, "high", {"next": "p3", "tip": "hand_r", "fx": "punch"}),
@@ -165,7 +165,7 @@ static func _build() -> void:
 		"elem": Color(0.55, 1.0, 0.45),
 		"bias": {"luc": 0, "than": 2, "noi": 2, "the": 0},
 		"speed": 1.1,
-		"look": {"robe": Color(0.24, 0.17, 0.3), "trim": Color(0.58, 0.16, 0.22), "pants": Color(0.13, 0.11, 0.16), "head_style": "hood", "outfit": "Ranger", "robe_len": 0.0, "weapon": "daggers", "sash": Color(0.58, 0.16, 0.22)},
+		"look": {"model": "DuongMon", "robe": Color(0.24, 0.17, 0.3), "trim": Color(0.58, 0.16, 0.22), "pants": Color(0.13, 0.11, 0.16), "head_style": "hood", "outfit": "Ranger", "robe_len": 0.0, "weapon": "daggers", "sash": Color(0.58, 0.16, 0.22)},
 		"moves": {
 			"p1": mv("Chủy Thủ Thích", "jab_w", "cross", 5, 3, 11, 1.0, 1.1, "mid", {"next": "p2", "fx": "slash"}),
 			"p2": mv("Hồi Đao Trảm", "slash_h_w", "slash_h", 7, 3, 13, 1.1, 1.1, "high", {"next": "p3", "fx": "slash"}),

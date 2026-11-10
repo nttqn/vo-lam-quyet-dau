@@ -10,3 +10,6 @@ android/
 
 # Meshy/Mixamo FBX sources: the game copy lives in assets/models/chars (identical file)
 assets_src/characters/*.fbx
+assets_src/characters/*.png
+assets_src/characters/*.import
+*.gd.uid.tmp
