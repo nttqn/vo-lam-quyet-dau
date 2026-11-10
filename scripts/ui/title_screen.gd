@@ -3,6 +3,7 @@ extends Screen
 ## Title + save slot selection.
 
 var _slots_box: Control
+var _cloud_lbl: Label
 
 func _ready() -> void:
 	Game.hero = {}
@@ -59,6 +60,21 @@ func _ready() -> void:
 	ui.add_child(bottom)
 	bottom.add_child(UI.button("Cài đặt", func(): ui.add_child(SettingsPanel.new()), 22, 180))
 	bottom.add_child(UI.button("Hướng dẫn", func(): ui.add_child(HelpPanel.new()), 22, 180))
+	if Cloud.enabled():
+		bottom.offset_left = -420
+		bottom.offset_right = 420
+		bottom.add_child(UI.button("Tài khoản", _account, 22, 180))
+		_cloud_lbl = UI.label("", 18, Color(0.85, 0.82, 0.75))
+		_cloud_lbl.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+		_cloud_lbl.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		_cloud_lbl.clip_text = true
+		_cloud_lbl.offset_left = -640
+		_cloud_lbl.offset_right = -16
+		_cloud_lbl.offset_top = 8
+		_cloud_lbl.offset_bottom = 34
+		_cloud_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		ui.add_child(_cloud_lbl)
+		_sync()
 
 func _build_slots() -> void:
 	for c in _slots_box.get_children():
@@ -83,12 +99,17 @@ func _build_slots() -> void:
 			v.add_child(UI.label("%s  ·  Cấp %d" % [s.name, int(info.get("level", 1))], 22))
 			var prog: int = (info.get("stars", {}) as Dictionary).size()
 			v.add_child(UI.label("Giang hồ: %d/42 trận" % prog, 18, Color(0.8, 0.78, 0.72)))
+			if Cloud.conflicts.has(i):
+				v.add_child(UI.label("Bản trên mây khác bản trong máy", 17, Color(1, 0.7, 0.45)))
+				v.add_child(UI.gold_button("Chọn bản lưu", func(): _resolve(i), 22))
+				_slots_box.add_child(p)
+				continue
 			var h := UI.hbox(8)
 			v.add_child(h)
 			var play := UI.gold_button("Vào game", func(): _play(i), 22)
 			play.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			h.add_child(play)
-			h.add_child(UI.button("Xóa", func(): confirm("Xóa nhân vật %s? Không thể hoàn tác." % info.get("name", ""), func():
+			h.add_child(UI.button("Xóa", func(): confirm("Xóa nhân vật %s? Bản lưu trên mây cũng bị xóa." % info.get("name", ""), func():
 				Game.delete_slot(i)
 				_build_slots(), "Xóa"), 20))
 		_slots_box.add_child(p)
@@ -102,3 +123,70 @@ func _play(i: int) -> void:
 
 func back() -> void:
 	get_tree().quit()
+
+# ------------------------------------------------------------- cloud
+func _status_text() -> String:
+	return "☁ " + (Cloud.email if Cloud.email != "" else "Khách (chưa liên kết email)")
+
+func _sync() -> void:
+	_cloud_lbl.text = _status_text() + "  ·  Đang đồng bộ…"
+	var msg: String = await Cloud.sync_all()
+	if not is_inside_tree():
+		return
+	_cloud_lbl.text = _status_text() + "  ·  " + msg
+	_build_slots()
+
+func _account() -> void:
+	var p := AccountPanel.new()
+	ui.add_child(p)
+	p.tree_exited.connect(func():
+		if is_inside_tree():
+			_sync())
+
+func _when(t: float) -> String:
+	if t <= 0:
+		return "?"
+	var d := Time.get_datetime_dict_from_unix_time(int(t + Time.get_time_zone_from_system().bias * 60))
+	return "%02d:%02d %02d/%02d" % [d.hour, d.minute, d.day, d.month]
+
+func _resolve(i: int) -> void:
+	var c: Dictionary = Cloud.conflicts.get(i, {})
+	var l := Game.slot_info(i)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.65)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ui.add_child(dim)
+	var cc := CenterContainer.new()
+	cc.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.add_child(cc)
+	var p := UI.panel()
+	cc.add_child(p)
+	var v := UI.vbox(14)
+	v.custom_minimum_size.x = 640
+	p.add_child(v)
+	v.add_child(UI.heading("Ô lưu %d: chọn bản giữ lại" % (i + 1), 34))
+	var t := UI.label("Bản không chọn sẽ bị thay thế (bản trong máy vẫn được cất dự phòng).", 18, Color(0.85, 0.82, 0.75))
+	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(t)
+	var h := UI.hbox(14)
+	v.add_child(h)
+	for side in ["local", "cloud"]:
+		var info: Dictionary = l if side == "local" else c
+		var box := UI.panel(Color(0.08, 0.05, 0.05, 0.9))
+		box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		h.add_child(box)
+		var bv := UI.vbox(6)
+		box.add_child(bv)
+		bv.add_child(UI.label("Trong máy này" if side == "local" else "Trên mây", 20, UI.GOLD, UI.bold))
+		bv.add_child(UI.label(str(info.get("name", "?")), 24, UI.PAPER, UI.title))
+		bv.add_child(UI.label("%s  ·  Cấp %d" % [Sects.get_sect(str(info.get("sect", "vo_dang"))).name, int(info.get("level", 1))], 19))
+		bv.add_child(UI.label("Lưu lúc " + _when(float(info.get("saved_at", 0))), 17, Color(0.8, 0.78, 0.72)))
+		bv.add_child(UI.gold_button("Giữ bản này", func():
+			dim.queue_free()
+			if side == "local":
+				await Cloud.resolve_keep_local(i)
+			else:
+				Cloud.resolve_take_cloud(i)
+			if is_inside_tree():
+				_build_slots(), 20))
+	v.add_child(UI.button("Để sau", dim.queue_free, 20))

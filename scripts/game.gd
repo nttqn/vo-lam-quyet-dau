@@ -109,11 +109,25 @@ func save() -> void:
 		return
 	hero["saved_at"] = Time.get_unix_time_from_system()
 	_write_json(SAVE_PATH % slot, hero)
+	Cloud.queue_upload(slot)
 
 func delete_slot(i: int) -> void:
-	var p := ProjectSettings.globalize_path(SAVE_PATH % i)
-	if FileAccess.file_exists(SAVE_PATH % i):
-		DirAccess.remove_absolute(p)
+	park_slot(i)
+	Cloud.delete_slot(i)
+
+## Cloud pull: replace a slot's file with data from the server.
+func write_slot(i: int, data: Dictionary) -> void:
+	_write_json(SAVE_PATH % i, data)
+
+## Keep the previous copy of a slot as save_N.bak.json before it is replaced or
+## deleted, so a bad sync or a mistaken delete can be recovered by hand.
+func park_slot(i: int) -> void:
+	var p := SAVE_PATH % i
+	if FileAccess.file_exists(p):
+		var bak := p.replace(".json", ".bak.json")
+		if FileAccess.file_exists(bak):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(bak))
+		DirAccess.rename_absolute(ProjectSettings.globalize_path(p), ProjectSettings.globalize_path(bak))
 
 func _read_json(path: String):
 	if not FileAccess.file_exists(path):

@@ -12,6 +12,7 @@ config/version="1.0.0"
 [autoload]
 
 Game="*res://scripts/game.gd"
+Cloud="*res://scripts/cloud.gd"
 
 [display]
 

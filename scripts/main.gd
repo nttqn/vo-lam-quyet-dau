@@ -27,6 +27,9 @@ func _ready() -> void:
 		if a.begins_with("--iconshot"):
 			add_child(load("res://tools/icon_shot.gd").new())
 			return
+		if a == "--cloudtest" and screen == "":
+			add_child(load("res://tools/cloud_test.gd").new())
+			return
 		if a.begins_with("--posetest"):
 			add_child(load("res://tools/pose_test.gd").new())
 			return
@@ -71,6 +74,10 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 	Game.hero.bag.append(Items.make("jade", 2, 1, 3))
 	match screen:
 		"title": Game.goto(TitleScreen.new())
+		"account":
+			var ts := TitleScreen.new()
+			Game.goto(ts)
+			(func(): ts.ui.add_child(AccountPanel.new())).call_deferred()
 		"create": Game.goto(CreateScreen.new(0))
 		"create2":
 			var cs := CreateScreen.new(0)
