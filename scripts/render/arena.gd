@@ -63,6 +63,8 @@ func _ready() -> void:
 	var th: Dictionary = THEMES.get(theme, THEMES["temple"])
 	_environment(th)
 	_ground(th)
+	if Diag.on("no_props"):
+		return
 	match theme:
 		"temple": _temple()
 		"bamboo": _bamboo()
@@ -86,7 +88,8 @@ func _environment(th: Dictionary) -> void:
 	sky.sky_material = sm
 	env.background_mode = Environment.BG_COLOR if Diag.on("no_sky") else Environment.BG_SKY
 	env.sky = sky
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR if Diag.on("no_ambient_sky") else Environment.AMBIENT_SOURCE_SKY
+	env.ambient_light_color = th.sky_top
 	env.ambient_light_energy = th.amb * 0.55
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_exposure = 0.78
@@ -145,12 +148,13 @@ func _ground(th: Dictionary) -> void:
 	grad.set_color(0, g.darkened(0.35))
 	grad.set_color(1, g.darkened(0.05))
 	tex.color_ramp = grad
-	gm.albedo_texture = tex
+	if not Diag.on("no_noise"):
+		gm.albedo_texture = tex
 	gm.albedo_color = Color.WHITE
 	gm.uv1_scale = Vector3(8, 6, 1)
 	_mesh(pm, gm, Vector3(0, 0, -10), Vector3.ZERO, Vector3.ONE, false)
 	# fighting floor: stone slabs / platform for most themes
-	if theme in ["temple", "peak", "demon", "night"]:
+	if theme in ["temple", "peak", "demon", "night"] and not Diag.on("no_floor"):
 		var slab := m(g.darkened(0.02) if theme != "demon" else Color(0.3, 0.22, 0.2), 0.8)
 		var slab2 := m(g.darkened(0.1) if theme != "demon" else Color(0.24, 0.18, 0.17), 0.8)
 		for ix in range(-9, 10):
@@ -220,7 +224,7 @@ func lantern(pos: Vector3, col := Color(0.95, 0.3, 0.15), light := false) -> voi
 	lm.emission = col
 	lm.emission_energy_multiplier = 1.6
 	_mesh(SphereMesh.new(), lm, pos + Vector3(0, 2.5, 0), Vector3.ZERO, Vector3(0.36, 0.48, 0.36), false)
-	if light:
+	if light and not Diag.on("no_lights"):
 		var l := OmniLight3D.new()
 		l.light_color = col
 		l.light_energy = 1.5
