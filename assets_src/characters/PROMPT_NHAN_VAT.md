@@ -50,4 +50,31 @@ Shaolin warrior monk, young man, bald with incense burn dots on the forehead. Sa
 ```
 Same character, same face, same hairstyle and body. New premium outfit: <mô tả bộ đồ>. Keep all the outfit rules above.
 ```
-Ví dụ Thiếu Lâm "Kim Cang": `golden tunic with red trim, embroidered golden dragon on the back, red sash with gold tassels kept short, golden arm bands.`
+Mỗi phái một bộ riêng (thay `<mô tả bộ đồ>`):
+
+**Thiếu Lâm — Kim Cang**
+```
+golden yellow tunic with deep red trim, embroidered golden dragon on the back, red sash with short gold tassels, golden arm bands on the forearms, dark red trousers with gold-edged leg wraps, large golden prayer beads worn tight around the neck.
+```
+
+**Võ Đang — Thái Cực**
+```
+white silk tunic with deep navy blue trim, silver cloud pattern embroidered along the hem and cuffs, large silver yin-yang emblem on the back, navy sash with a small jade pendant tied tight, silver hair crown on the topknot, white trousers with navy leg wraps.
+```
+
+**Nga Mi — Phượng Hoàng**
+```
+white and crimson silk tunic, golden phoenix embroidered across the back and shoulder, crimson trim with gold edging, short pink silk sash, small golden phoenix hairpin in the ponytail, pale pink trousers with crimson leg wraps.
+```
+
+**Cái Bang — Long Bang**
+```
+dark olive green tunic with neat patches stitched in gold thread, worn brown leather belt with a polished bronze wine gourd tied tight, brown leather bracers, red cloth headband, dark brown rolled trousers with leg wraps, sturdy straw sandals.
+```
+
+**Đường Môn — Ám Ảnh**
+```
+black and deep purple fitted tunic with silver trim, slim leather chest harness with small flat throwing knives in sheaths, steel forearm bracers, black mask with a silver pattern covering the lower face, black trousers with purple leg wraps, black boots.
+```
+
+Lưu tên: `<Phai>_<TenBo>.fbx`, ví dụ `ThieuLam_KimCang.fbx`, `VoDang_ThaiCuc.fbx`.
