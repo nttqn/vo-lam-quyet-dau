@@ -40,6 +40,7 @@ func _run() -> void:
 	var guest := Cloud.uid
 	var mail := "cloudtest%d@example.com" % (Time.get_ticks_usec() % 100000000)
 	_ok(await Cloud.link_email(mail, "test-pass-123"), "link guest to " + mail)
+	print("  raw: ", Cloud.last_raw)
 	_ok(Cloud.uid == guest, "link keeps uid")
 	Cloud.sign_out()
 	_ok(not await Cloud.sign_in_email(mail, "wrong-pass"), "wrong password rejected (" + Cloud.last_error + ")")

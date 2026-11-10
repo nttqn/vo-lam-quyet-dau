@@ -22,6 +22,7 @@ var uid := ""
 var email := ""            # "" = anonymous (guest)
 var busy := false
 var last_error := ""
+var last_raw := ""         # raw server error text (debug)
 var conflicts := {}        # slot -> cloud doc summary (see _doc_summary)
 
 var _refresh := ""
@@ -118,7 +119,9 @@ func delete_slot(slot: int) -> void:
 func link_email(p_email: String, password: String) -> bool:
 	if not await _ensure_token():
 		return false
-	var r := await _req(HTTPClient.METHOD_POST, _auth_url("accounts:update"),
+	# linking = signUp with the guest idToken (what the SDK's linkWithCredential does);
+	# accounts:update is refused while email enumeration protection is on
+	var r := await _req(HTTPClient.METHOD_POST, _auth_url("accounts:signUp"),
 		JSON.stringify({"idToken": _id_token, "email": p_email, "password": password, "returnSecureToken": true}))
 	if r.code != 200:
 		last_error = _auth_error(r.body)
@@ -366,7 +369,10 @@ func _req(method: int, url: String, body := "", auth := false, form := false) ->
 	var res: Array = await h.request_completed
 	h.queue_free()
 	var code: int = res[1] if res[0] == HTTPRequest.RESULT_SUCCESS else 0
-	var parsed = JSON.parse_string((res[3] as PackedByteArray).get_string_from_utf8())
+	var txt := (res[3] as PackedByteArray).get_string_from_utf8()
+	if code >= 400:
+		last_raw = txt.substr(0, 400)
+	var parsed = JSON.parse_string(txt)
 	return {"code": code, "body": parsed if parsed is Dictionary else {}}
 
 # ------------------------------------------------------------- state file
