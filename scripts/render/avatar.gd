@@ -61,18 +61,47 @@ static func libs() -> Array:
 	return [_lib1, _lib2, _lib3]
 
 func _ready() -> void:
-	var model: String = look.get("model", "")
-	if model != "" and ResourceLoader.exists(VRM_DIR + model + ".glb"):
-		_build_vrm(model)
+	var path := model_path(look.get("model", ""))
+	if path != "":
+		_build_vrm(path)
 	else:
 		_build()
 
-# ------------------------------------------------------------- VRM models
-## A VRoid/VRM character (assets/models/vrm/<name>.glb, exported as VRM 1.0
-## and renamed). The Quaternius rig still runs every clip invisibly; each
-## frame its pose is copied onto the VRM skeleton (global rest-delta), so all
-## clips, overrides, layers and the fight timing work unchanged.
+# ------------------------------------------------------------- external models
+## A complete rigged character: VRoid/VRM (assets/models/vrm/<name>.glb,
+## exported as VRM 1.0 and renamed) or a Mixamo-rigged model, e.g. from Meshy
+## (assets/models/chars/<name>.fbx). The Quaternius rig still runs every clip
+## invisibly; each frame its pose is copied onto the model's skeleton (global
+## rest-delta), so all clips, overrides, layers and fight timing are unchanged.
 const VRM_DIR := "res://assets/models/vrm/"
+const CHAR_DIR := "res://assets/models/chars/"
+const MIXAMO_MAP := {
+	"pelvis": "Hips", "spine_01": "Spine", "spine_02": "Spine1", "spine_03": "Spine2",
+	"neck_01": "Neck", "Head": "Head",
+	"clavicle_l": "LeftShoulder", "upperarm_l": "LeftArm", "lowerarm_l": "LeftForeArm", "hand_l": "LeftHand",
+	"clavicle_r": "RightShoulder", "upperarm_r": "RightArm", "lowerarm_r": "RightForeArm", "hand_r": "RightHand",
+	"thigh_l": "LeftUpLeg", "calf_l": "LeftLeg", "foot_l": "LeftFoot", "ball_l": "LeftToeBase",
+	"thigh_r": "RightUpLeg", "calf_r": "RightLeg", "foot_r": "RightFoot", "ball_r": "RightToeBase",
+}
+var _vmap := {}                  # Quaternius bone -> bone name on the visible skeleton
+
+static func model_path(model: String) -> String:
+	if model == "":
+		return ""
+	for p in [CHAR_DIR + model + ".fbx", CHAR_DIR + model + ".glb", VRM_DIR + model + ".glb"]:
+		if ResourceLoader.exists(p):
+			return p
+	return ""
+
+func _find_vbone(ub: String) -> String:
+	var cands := [VRM_MAP.get(ub, "")]
+	if MIXAMO_MAP.has(ub):
+		for pre in ["mixamorig_", "mixamorig:", "mixamorig1_", "mixamorig1:", ""]:
+			cands.append(pre + MIXAMO_MAP[ub])
+	for c in cands:
+		if c != "" and vskel.find_bone(c) >= 0:
+			return c
+	return ""
 const VRM_MAP := {
 	"pelvis": "J_Bip_C_Hips", "spine_01": "J_Bip_C_Spine", "spine_02": "J_Bip_C_Chest", "spine_03": "J_Bip_C_UpperChest",
 	"neck_01": "J_Bip_C_Neck", "Head": "J_Bip_C_Head",
@@ -89,6 +118,7 @@ const EXPR := {
 	"win": {"Fcl_ALL_Joy": 0.85},
 }
 const VRM_LIT := 0.45
+const BAKED_LIT := 0.6
 var vskel: Skeleton3D            # the visible skeleton (== skel for Quaternius models)
 var _rt: Array = []              # [ue bone, vrm bone, ue rest^-1, vrm rest] parents first
 var _hip_ue := -1
@@ -99,7 +129,7 @@ var expr := ""                   # set each frame by the view
 var _expr_w := {}                # blend shape index -> current weight
 var _blink_t := 0.0
 
-func _build_vrm(model: String) -> void:
+func _build_vrm(path: String) -> void:
 	# invisible animation driver
 	root = load(OUTFIT_DIR + "Female_Peasant.gltf").instantiate()
 	add_child(root)
@@ -108,14 +138,21 @@ func _build_vrm(model: String) -> void:
 		if m is MeshInstance3D:
 			skel.remove_child(m)
 			m.free()
-	var v: Node3D = load(VRM_DIR + model + ".glb").instantiate()
+	var v: Node3D = load(path).instantiate()
+	for a in v.find_children("*", "AnimationPlayer", true, false):
+		a.get_parent().remove_child(a)
+		a.free()
 	add_child(v)
 	vskel = v.find_children("*", "Skeleton3D", true, false)[0]
 	var order := []
 	for ub in VRM_MAP:
+		var vb := _find_vbone(ub)
+		if vb == "":
+			continue
+		_vmap[ub] = vb
 		var ui := skel.find_bone(ub)
-		var vi := vskel.find_bone(VRM_MAP[ub])
-		if ui < 0 or vi < 0:
+		var vi := vskel.find_bone(vb)
+		if ui < 0:
 			continue
 		var depth := 0
 		var p := vi
@@ -127,9 +164,8 @@ func _build_vrm(model: String) -> void:
 	for o in order:
 		_rt.append(o.slice(1))
 	_hip_ue = skel.find_bone("pelvis")
-	_hip_v = vskel.find_bone("J_Bip_C_Hips")
+	_hip_v = vskel.find_bone(_vmap.get("pelvis", ""))
 	_hip_ratio = vskel.get_bone_global_rest(_hip_v).origin.y / maxf(0.01, skel.get_bone_global_rest(_hip_ue).origin.y)
-	# toon-lit materials (VRM MToon imports as unshaded) so arena lights read
 	for m in vskel.find_children("*", "MeshInstance3D", true, false):
 		var mi := m as MeshInstance3D
 		if String(mi.name) == "Face":
@@ -139,13 +175,20 @@ func _build_vrm(model: String) -> void:
 			if src == null:
 				continue
 			var nm := src.duplicate() as StandardMaterial3D
-			nm.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
-			nm.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
-			nm.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
-			nm.roughness = 1.0
-			# MToon textures are authored for unlit display; under the arena
-			# sun + ambient the pale skin clips to white without this
-			nm.albedo_color = src.albedo_color * Color(VRM_LIT, VRM_LIT, VRM_LIT)
+			if src.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED:
+				# VRM MToon imports unshaded: re-light as toon so arena lights
+				# read; the pale skin clips to white without the albedo scale
+				nm.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+				nm.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
+				nm.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+				nm.roughness = 1.0
+				nm.albedo_color = src.albedo_color * Color(VRM_LIT, VRM_LIT, VRM_LIT)
+			else:
+				# baked-texture models (Meshy): matte, keep their painted light
+				nm.roughness = 0.9
+				nm.albedo_color = src.albedo_color * Color(BAKED_LIT, BAKED_LIT, BAKED_LIT)
+				nm.metallic = 0.0
+				nm.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 			mi.set_surface_override_material(s, nm)
 			_tinted.append(nm)
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
@@ -352,7 +395,7 @@ func _bone_att(bone: String) -> Node3D:
 		b.bone_name = bone
 		skel.add_child(b)
 		return b
-	var vb: String = VRM_MAP.get(bone, "J_Bip_C_Hips")
+	var vb: String = _vmap.get(bone, _vmap.get("pelvis", ""))
 	b.bone_name = vb
 	vskel.add_child(b)
 	var fr := Node3D.new()

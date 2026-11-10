@@ -10,7 +10,7 @@ func _init() -> void:
 		for s in n.find_children("*", "Skeleton3D", true, false):
 			var sk := s as Skeleton3D
 			print("skeleton ", n.get_path_to(sk), " bones ", sk.get_bone_count())
-			for b in ["root", "pelvis", "hand_l", "hand_r", "Head", "Root", "J_Bip_C_Hips", "J_Bip_L_Hand", "J_Bip_C_Head", "J_Bip_R_Hand", "J_Bip_R_UpperArm", "J_Bip_L_Foot"]:
+			for b in ["root", "pelvis", "hand_l", "hand_r", "Head", "Root", "J_Bip_C_Hips", "J_Bip_L_Hand", "J_Bip_C_Head", "J_Bip_R_Hand", "J_Bip_R_UpperArm", "J_Bip_L_Foot", "mixamorig:Hips", "mixamorig:Head", "mixamorig:RightHand", "mixamorig:LeftFoot", "Hips", "Head"]:
 				var i := sk.find_bone(b)
 				if i >= 0:
 					print("  ", b, " parent ", sk.get_bone_parent(i), " rest ", sk.get_bone_rest(i), " grest ", sk.get_bone_global_rest(i).origin)

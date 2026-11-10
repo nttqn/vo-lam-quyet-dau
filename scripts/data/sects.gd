@@ -61,7 +61,7 @@ static func _build() -> void:
 		"elem": Color(1.0, 0.75, 0.25),
 		"bias": {"luc": 1, "than": -1, "noi": 1, "the": 2},
 		"speed": 0.9,
-		"look": {"robe": Color(0.92, 0.55, 0.12), "trim": Color(0.62, 0.14, 0.1), "pants": Color(0.82, 0.5, 0.14), "head_style": "bald", "weapon": "staff", "beads": true, "sash": Color(0.62, 0.14, 0.1), "bulk": 1.08},
+		"look": {"model": "ThieuLam", "robe": Color(0.92, 0.55, 0.12), "trim": Color(0.62, 0.14, 0.1), "pants": Color(0.82, 0.5, 0.14), "head_style": "bald", "weapon": "staff", "beads": true, "sash": Color(0.62, 0.14, 0.1), "bulk": 1.08},
 		"moves": {
 			"p1": mv("Côn Điểm", "staff_poke_w", "staff_poke", 9, 3, 13, 1.0, 1.1, "mid", {"next": "p2", "fx": "blunt"}),
 			"p2": mv("Hoành Tảo Côn", "slash_h_w", "slash_h", 10, 4, 15, 1.2, 1.15, "high", {"next": "p3", "fx": "blunt"}),
