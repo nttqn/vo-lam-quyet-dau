@@ -17,3 +17,7 @@ static func on(key: String) -> bool:
 				_d = p
 				print("DIAG ", _d)
 	return bool(_d.get(key, false))
+
+static func value(key: String, default = null):
+	on(key)   # make sure the file is loaded
+	return _d.get(key, default)

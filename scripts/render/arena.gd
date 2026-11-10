@@ -63,18 +63,32 @@ func _ready() -> void:
 	var th: Dictionary = THEMES.get(theme, THEMES["temple"])
 	_environment(th)
 	_ground(th)
-	if Diag.on("no_props"):
-		return
-	match theme:
-		"temple": _temple()
-		"bamboo": _bamboo()
-		"river": _river()
-		"snow": _snow()
-		"desert": _desert()
-		"demon": _demon()
-		"peak": _peak()
-		"night": _night()
-	_mountains(th)
+	if not Diag.on("no_props"):
+		match theme:
+			"temple": _temple()
+			"bamboo": _bamboo()
+			"river": _river()
+			"snow": _snow()
+			"desert": _desert()
+			"demon": _demon()
+			"peak": _peak()
+			"night": _night()
+		_mountains(th)
+	# diag: {"arena_remove": ["DirectionalLight3D", ...], "env_set": {"tonemap_mode": 0},
+	#        "light_set": {"light_bake_mode": 0}}
+	var rm: Array = Diag.value("arena_remove", [])
+	var ls: Dictionary = Diag.value("light_set", {})
+	for c in get_children():
+		for cls in rm:
+			if c.is_class(cls):
+				c.queue_free()
+		if c is Light3D:
+			for k in ls:
+				c.set(k, ls[k])
+		if c is WorldEnvironment:
+			var es: Dictionary = Diag.value("env_set", {})
+			for k in es:
+				c.environment.set(k, es[k])
 
 func _environment(th: Dictionary) -> void:
 	var env := Environment.new()
