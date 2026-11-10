@@ -84,7 +84,7 @@ func _environment(th: Dictionary) -> void:
 	sm.ground_bottom_color = (th.ground as Color).darkened(0.3)
 	sm.sun_angle_max = 20.0
 	sky.sky_material = sm
-	env.background_mode = Environment.BG_SKY
+	env.background_mode = Environment.BG_COLOR if Diag.on("no_sky") else Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 	env.ambient_light_energy = th.amb * 0.55
@@ -93,11 +93,11 @@ func _environment(th: Dictionary) -> void:
 	env.adjustment_enabled = true
 	env.adjustment_contrast = 1.08
 	env.adjustment_saturation = 1.06
-	env.fog_enabled = true
+	env.fog_enabled = not Diag.on("no_fog")
 	env.fog_light_color = th.fog
 	env.fog_density = 0.0028
 	env.fog_sky_affect = 0.0
-	env.glow_enabled = true
+	env.glow_enabled = not Diag.on("no_glow")
 	env.glow_intensity = 0.5
 	env.glow_bloom = 0.05
 	var we := WorldEnvironment.new()
@@ -107,7 +107,7 @@ func _environment(th: Dictionary) -> void:
 	sun.light_color = th.sun
 	sun.light_energy = th.sun_e
 	sun.rotation_degrees = Vector3(-38, 28, 0)
-	sun.shadow_enabled = true
+	sun.shadow_enabled = not Diag.on("no_shadow")
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	sun.directional_shadow_max_distance = 30.0
 	sun.shadow_blur = 2.2

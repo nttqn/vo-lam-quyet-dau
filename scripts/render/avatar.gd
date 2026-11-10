@@ -61,7 +61,9 @@ static func libs() -> Array:
 	return [_lib1, _lib2, _lib3]
 
 func _ready() -> void:
-	var path := model_path(look.get("model", ""))
+	var path := "" if Diag.on("no_model") else model_path(look.get("model", ""))
+	if Diag.on("hide_bodies"):
+		visible = false
 	if path != "":
 		_build_vrm(path)
 	else:
@@ -566,6 +568,8 @@ func _snapshot() -> void:
 
 ## Called after pose(): applies the cross-fade and procedural overrides.
 func finish(delta: float) -> void:
+	if Diag.on("freeze_bodies"):
+		return
 	if _blend_dur > 0.0 and _blend_t < _blend_dur and not _snap.is_empty():
 		_blend_t += delta
 		var k := clampf(_blend_t / _blend_dur, 0.0, 1.0)
@@ -586,7 +590,7 @@ func finish(delta: float) -> void:
 		_head_bone = skel.find_bone("Head")
 	if _face_scale != Vector3.ONE and _head_bone >= 0:
 		skel.set_bone_pose_scale(_head_bone, _face_scale)
-	if vskel != skel and vskel != null:
+	if vskel != skel and vskel != null and not Diag.on("no_retarget"):
 		_retarget()
 		if _face:
 			_update_face(delta)
@@ -638,7 +642,7 @@ func _stylise(sk: Skeleton3D) -> void:
 				sm.rim_enabled = true
 				sm.rim = 0.3
 				sm.rim_tint = 0.35
-			if ow > 0.0 and not nm.begins_with("Hair_B") and mat.next_pass == null:
+			if ow > 0.0 and not nm.begins_with("Hair_B") and mat.next_pass == null and not Diag.on("no_outline"):
 				mat.next_pass = _outline
 
 ## True if a "lib/clip" name exists in the loaded libraries.
