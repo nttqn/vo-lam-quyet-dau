@@ -50,6 +50,9 @@ static func attack(key: String, style: String) -> Dictionary:
 		"block":
 			return {"clip": "b/Sword_Block", "from": 0.2, "hit": 0.5, "to": 0.6}
 		"fkick":
+			if Avatar.has_clip("m/Front_Kick"):
+				# Capoeira Bencao: right foot chambers 0.2, full push 0.40-0.48
+				return {"clip": "m/Front_Kick", "from": 0.12, "hit": 0.42, "to": 0.78}
 			return {"clip": idle_clip(style)[0], "from": 0.9, "hit": 0.9, "to": 0.9,
 				"ov": {"thigh_r": Vector3(-105, 0, 0), "calf_r": Vector3(8, 0, 0), "spine_01": Vector3(-12, 0, 0), "thigh_l": Vector3(-8, 0, 0)}}
 		"skick":
@@ -60,12 +63,18 @@ static func attack(key: String, style: String) -> Dictionary:
 			# Mixamo MMA kick (assets_src/animation): chamber 0.2, full extension ~0.36
 			return {"clip": "m/Mma_Kick", "from": 0.1, "hit": 0.35, "to": 0.72}
 		"sweep":
+			if Avatar.has_clip("m/Leg_Sweep"):
+				# wide low stance with the leg sweeping out 0.30-0.37; later the clip spins away and rises into a high hook
+				return {"clip": "m/Leg_Sweep", "from": 0.18, "hit": 0.31, "hit_to": 0.36, "to": 0.37}
 			return {"clip": "a/Crouch_Idle", "from": 0.3, "hit": 0.3, "to": 0.3,
 				"ov": {"pelvis": Vector3(0, 70, 0), "thigh_r": Vector3(-75, 0, -30), "calf_r": Vector3(-5, 0, 0), "spine_01": Vector3(25, 0, 0)}, "drop": -0.12}
 		"lowpunch":
 			return {"clip": "a/Punch_Jab", "from": 0.05, "hit": 0.38, "to": 0.95,
 				"ov": {"thigh_l": Vector3(-80, 0, 0), "calf_l": Vector3(110, 0, 0), "thigh_r": Vector3(-20, 0, 0), "calf_r": Vector3(100, 0, 0), "spine_01": Vector3(20, 0, 0)}, "drop": -0.38}
 		"jkick":
+			if Avatar.has_clip("m/Flying_Kick"):
+				# left foot peaks 0.22-0.32 (bake drops the clip's own hop; the sim does the jump)
+				return {"clip": "m/Flying_Kick", "from": 0.1, "hit": 0.26, "to": 0.42}
 			return {"clip": "b/NinjaJump_Idle", "from": 0.2, "hit": 0.3, "to": 0.4,
 				"ov": {"thigh_r": Vector3(-100, 0, 0), "calf_r": Vector3(5, 0, 0), "spine_01": Vector3(-15, 0, 0)}}
 		"jpunch":

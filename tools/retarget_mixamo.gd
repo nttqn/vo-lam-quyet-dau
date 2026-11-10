@@ -99,8 +99,8 @@ func _bake_all() -> void:
 				hip0 = sh
 			if fi == frames:
 				print("  hip drift ", sh - hip0)
-			# jumps: the sim lifts the fighter, keep only the crouch dip
-			sh = Vector3(0, minf(sh.y, 0.0) if fl.contains("jump") else sh.y, 0)
+			# jumps / flying kicks: the sim lifts the fighter, keep only the crouch dip
+			sh = Vector3(0, minf(sh.y, 0.0) if (fl.contains("jump") or fl.contains("flying")) else sh.y, 0)
 			var parent_t := T.get_bone_parent(t_hip)
 			var pgb: Basis = Basis.IDENTITY if parent_t < 0 else (tg[parent_t] as Transform3D).basis.orthonormalized()
 			out.position_track_insert_key(pos_tr, t, T.get_bone_rest(t_hip).origin + pgb.inverse() * (sh * ratio))

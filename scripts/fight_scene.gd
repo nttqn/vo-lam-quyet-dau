@@ -26,6 +26,7 @@ var _pause_layer: CanvasLayer
 var _frames := 0
 var _shot := ""
 var _shot_frames: Array = []
+var _script := {}             # --inputs=frame:keys;... scripted player input (tests), enemy idles
 var _quit_after_shot := false
 var _ui_layer: CanvasLayer
 
@@ -98,6 +99,15 @@ func _ready() -> void:
 		if a.begins_with("--shotat="):
 			for s in a.substr(9).split(","): _shot_frames.append(int(s))
 			_quit_after_shot = true
+		if a.begins_with("--inputs="):
+			for e in a.substr(9).split(";"):
+				var p := e.split(":")
+				var d := {}
+				for k in p[1].split("+"):
+					if k in ["up", "down"]: d[k] = true
+					elif k == "fwd": d["mx"] = 1
+					else: d["btn"] = k
+				_script[int(p[0])] = d
 	Game.music("fight")
 
 func _shadow(v: FighterView) -> void:
@@ -187,6 +197,9 @@ func _physics_process(_delta: float) -> void:
 	if ai_p:
 		inp = ai_p.decide(sim)
 	var ein := ai.decide(sim)
+	if not _script.is_empty():
+		inp = _script.get(_frames, {})
+		ein = {}
 	sim.tick(inp, ein)
 	if cfg.get("training", false):
 		sim.timer = FightSim.ROUND_FRAMES
@@ -198,7 +211,7 @@ func _physics_process(_delta: float) -> void:
 	if _shot != "" and _shot_frames.has(_frames):
 		var img := get_viewport().get_texture().get_image()
 		img.save_png(_shot.replace(".png", "_%d.png" % _frames))
-		print("shot ", _shot)
+		print("shot ", _frames, " p state=", sim.f[0].state, " sf=", sim.f[0].sf, " move=", sim.f[0].move_key)
 		if _quit_after_shot and _frames == _shot_frames.max():
 			get_tree().quit()
 	_events()

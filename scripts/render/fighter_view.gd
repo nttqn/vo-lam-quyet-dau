@@ -177,7 +177,8 @@ func _attack(style: String) -> void:
 		fr = lerpf(spec.from, spec.hit, k)
 		w = ease(k, 0.6)
 	elif sfv < st + act:
-		fr = spec.hit
+		# optional "hit_to": keep the strike moving through the active frames (sweeps)
+		fr = lerpf(spec.hit, spec.get("hit_to", spec.hit), (sfv - st) / maxf(1.0, act))
 		var hits: int = m.get("hits", 1)
 		if hits > 1:
 			# replay the strike portion for every hit
@@ -187,7 +188,7 @@ func _attack(style: String) -> void:
 		w = 1.0
 	else:
 		var r := (sfv - st - act) / maxf(1.0, rec)
-		fr = lerpf(spec.hit, spec.to, r)
+		fr = lerpf(spec.get("hit_to", spec.hit), spec.to, r)
 		w = 1.0 - ease(r, 0.5)
 	body.pose(clip, L * fr, 0.07)
 	if spec.has("ov"):
