@@ -36,6 +36,21 @@ func _run() -> void:
 	await Cloud.delete_slot(2)
 	var r: Dictionary = await Cloud._req(HTTPClient.METHOD_GET, Cloud._doc_url(2), "", true)
 	_ok(r.code == 404, "delete removed the document (HTTP %d)" % r.code)
+	# email link -> sign out -> sign in again keeps the same uid
+	var guest := Cloud.uid
+	var mail := "cloudtest%d@example.com" % (Time.get_ticks_usec() % 100000000)
+	_ok(await Cloud.link_email(mail, "test-pass-123"), "link guest to " + mail)
+	_ok(Cloud.uid == guest, "link keeps uid")
+	Cloud.sign_out()
+	_ok(not await Cloud.sign_in_email(mail, "wrong-pass"), "wrong password rejected (" + Cloud.last_error + ")")
+	_ok(await Cloud.sign_in_email(mail, "test-pass-123"), "sign in with email")
+	_ok(Cloud.uid == guest, "sign in returns the same uid")
+	# clean up: remove every test document and the test account
+	for i in Game.SLOTS:
+		await Cloud._req(HTTPClient.METHOD_DELETE, Cloud._doc_url(i), "", true)
+	await Cloud._ensure_token()
+	var d: Dictionary = await Cloud._req(HTTPClient.METHOD_POST, Cloud._auth_url("accounts:delete"), JSON.stringify({"idToken": Cloud._id_token}))
+	_ok(d.code == 200, "test account deleted")
 	# restore the dev slot
 	if keep.is_empty():
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(Game.SAVE_PATH % 2))

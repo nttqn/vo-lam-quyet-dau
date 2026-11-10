@@ -338,7 +338,7 @@ static func _auth_error(body) -> String:
 		"TOO_MANY_ATTEMPTS_TRY_LATER": return "Thử quá nhiều lần, hãy đợi một lát"
 		"USER_DISABLED": return "Tài khoản đã bị khóa"
 		"CREDENTIAL_TOO_OLD_LOGIN_AGAIN", "TOKEN_EXPIRED": return "Phiên đăng nhập đã cũ, hãy thử lại"
-		"OPERATION_NOT_ALLOWED", "ADMIN_ONLY_OPERATION": return "Máy chủ chưa bật kiểu đăng nhập này"
+		"OPERATION_NOT_ALLOWED", "ADMIN_ONLY_OPERATION", "CONFIGURATION_NOT_FOUND": return "Máy chủ chưa bật kiểu đăng nhập này"
 	return "Lỗi máy chủ" + (" (" + m + ")" if m != "" else "")
 
 # ------------------------------------------------------------- http
