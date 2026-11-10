@@ -3,25 +3,27 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bh4jml620wmuu"
-path="res://.godot/imported/T_Regular_Male_Normal.png-757d9741be48647917b00a300f4709a6.ctex"
+path.s3tc="res://.godot/imported/T_Regular_Male_Normal.png-757d9741be48647917b00a300f4709a6.s3tc.ctex"
+path.etc2="res://.godot/imported/T_Regular_Male_Normal.png-757d9741be48647917b00a300f4709a6.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/models/outfits/T_Regular_Male_Normal.png"
-dest_files=["res://.godot/imported/T_Regular_Male_Normal.png-757d9741be48647917b00a300f4709a6.ctex"]
+dest_files=["res://.godot/imported/T_Regular_Male_Normal.png-757d9741be48647917b00a300f4709a6.s3tc.ctex", "res://.godot/imported/T_Regular_Male_Normal.png-757d9741be48647917b00a300f4709a6.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=false
 mipmaps/limit=-1

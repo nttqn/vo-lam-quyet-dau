@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d05hfmgonfyvm"
-path="res://.godot/imported/NgaMi_3.png-de4424af42ae7307a7a4c9d9b12edead.ctex"
+path.s3tc="res://.godot/imported/NgaMi_3.png-de4424af42ae7307a7a4c9d9b12edead.s3tc.ctex"
+path.etc2="res://.godot/imported/NgaMi_3.png-de4424af42ae7307a7a4c9d9b12edead.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "137ab28df07e3ac9c22bbe3464e4931a"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/chars/NgaMi_3.png"
-dest_files=["res://.godot/imported/NgaMi_3.png-de4424af42ae7307a7a4c9d9b12edead.ctex"]
+dest_files=["res://.godot/imported/NgaMi_3.png-de4424af42ae7307a7a4c9d9b12edead.s3tc.ctex", "res://.godot/imported/NgaMi_3.png-de4424af42ae7307a7a4c9d9b12edead.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

@@ -128,7 +128,12 @@ func _draw() -> void:
 		var a3 := clampf(_banner_t * 3.0, 0.0, 1.0)
 		var H := size.y
 		draw_rect(Rect2(0, H * 0.36, W, H * 0.2), Color(0, 0, 0, 0.35 * a3))
+		# zoom-in by transform, NOT by font size: every distinct font size builds
+		# its own glyph cache that is never freed (~500 MB after a few fights)
 		var sc := 1.0 + maxf(0.0, (_banner_t - 1.2)) * 0.8
-		_text(Vector2(W * 0.5, H * 0.48), _banner, int(86 * sc), Color(_banner_col.r, _banner_col.g, _banner_col.b, a3), UI.title, 1, 12)
+		var c := Vector2(W * 0.5, H * 0.48)
+		draw_set_transform(c * (1.0 - sc), 0.0, Vector2(sc, sc))
+		_text(c, _banner, 86, Color(_banner_col.r, _banner_col.g, _banner_col.b, a3), UI.title, 1, 12)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 		if _banner_sub != "":
 			_text(Vector2(W * 0.5, H * 0.54), _banner_sub, 26, Color(1, 1, 1, a3), null, 1)

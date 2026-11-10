@@ -27,6 +27,12 @@ func _ready() -> void:
 		if a.begins_with("--iconshot"):
 			add_child(load("res://tools/icon_shot.gd").new())
 			return
+		if a == "--memmodels":
+			add_child(load("res://tools/mem_models.gd").new())
+			return
+		if a == "--soak":
+			add_child(load("res://tools/soak.gd").new())
+			return
 		if a == "--cloudtest" and screen == "":
 			add_child(load("res://tools/cloud_test.gd").new())
 			return

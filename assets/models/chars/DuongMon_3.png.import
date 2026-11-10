@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bcfkf54bapk7h"
-path="res://.godot/imported/DuongMon_3.png-99d8a2164b907e8d72c5e29e27942b4b.ctex"
+path.s3tc="res://.godot/imported/DuongMon_3.png-99d8a2164b907e8d72c5e29e27942b4b.s3tc.ctex"
+path.etc2="res://.godot/imported/DuongMon_3.png-99d8a2164b907e8d72c5e29e27942b4b.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "5f7d00692f61607c62c41f9f15477803"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/chars/DuongMon_3.png"
-dest_files=["res://.godot/imported/DuongMon_3.png-99d8a2164b907e8d72c5e29e27942b4b.ctex"]
+dest_files=["res://.godot/imported/DuongMon_3.png-99d8a2164b907e8d72c5e29e27942b4b.s3tc.ctex", "res://.godot/imported/DuongMon_3.png-99d8a2164b907e8d72c5e29e27942b4b.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

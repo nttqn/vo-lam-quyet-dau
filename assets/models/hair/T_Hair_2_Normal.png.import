@@ -3,25 +3,27 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://clq5ds16itoo7"
-path="res://.godot/imported/T_Hair_2_Normal.png-69dfaec4ce817cba06aaafe57e2b11b4.ctex"
+path.s3tc="res://.godot/imported/T_Hair_2_Normal.png-69dfaec4ce817cba06aaafe57e2b11b4.s3tc.ctex"
+path.etc2="res://.godot/imported/T_Hair_2_Normal.png-69dfaec4ce817cba06aaafe57e2b11b4.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 
 [deps]
 
 source_file="res://assets/models/hair/T_Hair_2_Normal.png"
-dest_files=["res://.godot/imported/T_Hair_2_Normal.png-69dfaec4ce817cba06aaafe57e2b11b4.ctex"]
+dest_files=["res://.godot/imported/T_Hair_2_Normal.png-69dfaec4ce817cba06aaafe57e2b11b4.s3tc.ctex", "res://.godot/imported/T_Hair_2_Normal.png-69dfaec4ce817cba06aaafe57e2b11b4.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=false
 mipmaps/limit=-1

@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bvn5v7y2503nc"
-path="res://.godot/imported/ThieuLam_2.png-b20cecf518690e7cfd3652f74a4f8317.ctex"
+path.s3tc="res://.godot/imported/ThieuLam_2.png-b20cecf518690e7cfd3652f74a4f8317.s3tc.ctex"
+path.etc2="res://.godot/imported/ThieuLam_2.png-b20cecf518690e7cfd3652f74a4f8317.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "9e45169c71f1285a249808411b455ab4"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/chars/ThieuLam_2.png"
-dest_files=["res://.godot/imported/ThieuLam_2.png-b20cecf518690e7cfd3652f74a4f8317.ctex"]
+dest_files=["res://.godot/imported/ThieuLam_2.png-b20cecf518690e7cfd3652f74a4f8317.s3tc.ctex", "res://.godot/imported/ThieuLam_2.png-b20cecf518690e7cfd3652f74a4f8317.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

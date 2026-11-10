@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://d0x5ea1nopo3c"
-path="res://.godot/imported/CaiBang_2.png-3d90f2ca6bd1ecf6dfd8eac0933077ae.ctex"
+path.s3tc="res://.godot/imported/CaiBang_2.png-3d90f2ca6bd1ecf6dfd8eac0933077ae.s3tc.ctex"
+path.etc2="res://.godot/imported/CaiBang_2.png-3d90f2ca6bd1ecf6dfd8eac0933077ae.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "7dc00f732c6cd26a4d01dad4e5abdd35"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/chars/CaiBang_2.png"
-dest_files=["res://.godot/imported/CaiBang_2.png-3d90f2ca6bd1ecf6dfd8eac0933077ae.ctex"]
+dest_files=["res://.godot/imported/CaiBang_2.png-3d90f2ca6bd1ecf6dfd8eac0933077ae.s3tc.ctex", "res://.godot/imported/CaiBang_2.png-3d90f2ca6bd1ecf6dfd8eac0933077ae.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

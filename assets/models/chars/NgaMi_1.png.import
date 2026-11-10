@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bq85ds1p76vbo"
-path="res://.godot/imported/NgaMi_1.png-30aaaf0ad5cb65b62f3ea278eb2ddf25.ctex"
+path.s3tc="res://.godot/imported/NgaMi_1.png-30aaaf0ad5cb65b62f3ea278eb2ddf25.s3tc.ctex"
+path.etc2="res://.godot/imported/NgaMi_1.png-30aaaf0ad5cb65b62f3ea278eb2ddf25.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "0d596cee00dc6e63c51597c5c589ee84"
@@ -14,17 +16,17 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/models/chars/NgaMi_1.png"
-dest_files=["res://.godot/imported/NgaMi_1.png-30aaaf0ad5cb65b62f3ea278eb2ddf25.ctex"]
+dest_files=["res://.godot/imported/NgaMi_1.png-30aaaf0ad5cb65b62f3ea278eb2ddf25.s3tc.ctex", "res://.godot/imported/NgaMi_1.png-30aaaf0ad5cb65b62f3ea278eb2ddf25.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
 compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
-compress/normal_map=0
+compress/normal_map=1
 compress/channel_pack=0
 mipmaps/generate=true
 mipmaps/limit=-1
