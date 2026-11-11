@@ -10,8 +10,17 @@ static func _launch(cfg: Dictionary, on_done: Callable) -> void:
 # ------------------------------------------------------------- story
 static func start_stage(r: int, s: int) -> void:
 	var h := Game.hero
+	var foe := Journey.stage_side(r, s)
+	# story first: the region's intro on its first duel, the boss's words before the boss
+	if not Game.autoplay:
+		if s == 0 and Story.has(r, "intro") and not Story.seen(h, r, "intro"):
+			Game.goto(DialogScreen.new(r, "intro", {}, func(): start_stage(r, s)))
+			return
+		if s == 5 and Story.has(r, "boss") and not Story.seen(h, r, "boss"):
+			Game.goto(DialogScreen.new(r, "boss", foe, func(): start_stage(r, s)))
+			return
 	var cfg := {
-		"p": Hero.side(h), "e": Journey.stage_side(r, s),
+		"p": Hero.side(h), "e": foe,
 		"theme": Journey.REGIONS[r].theme, "rounds": 2, "seed": randi(),
 	}
 	_launch(cfg, func(res: Dictionary): _stage_done(r, s, res))
@@ -56,6 +65,9 @@ static func _stage_done(r: int, s: int, res: Dictionary) -> void:
 		out.rewards = rw2
 		out.levels = _grant(rw2)
 	Game.save()
+	if res.won and s == 5 and not Game.autoplay and Story.has(r, "after") and not Story.seen(h, r, "after"):
+		Game.goto(DialogScreen.new(r, "after", Journey.stage_side(r, s), func(): Game.goto(ResultScreen.new(out))))
+		return
 	Game.goto(ResultScreen.new(out))
 
 static func _grant(rw: Dictionary) -> int:
