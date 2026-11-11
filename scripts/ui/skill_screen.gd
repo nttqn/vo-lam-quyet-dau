@@ -48,16 +48,41 @@ static func pic(sect_id: String, i: int) -> Texture2D:
 	var p := PIC % [sect_id, i]
 	return load(p) if ResourceLoader.exists(p) else null
 
-## Image filling its box (cropped, never stretched).
-static func _image(tex: Texture2D, size: Vector2) -> TextureRect:
-	var r := TextureRect.new()
-	r.texture = tex
-	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	r.custom_minimum_size = size
-	r.clip_contents = true
-	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return r
+## Round skill icon (painted, from assets/ui/skills); until a sect's icons
+## exist, a disc in the sect colour with the skill's initials.
+static func icon(sect: Dictionary, i: int, side: float, dim := false) -> Control:
+	var tex := pic(sect.id, i)
+	var box := CenterContainer.new()
+	box.custom_minimum_size = Vector2(side, side)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if tex:
+		var r := TextureRect.new()
+		r.texture = tex
+		r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		r.custom_minimum_size = Vector2(side, side)
+		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if dim:
+			r.self_modulate = Color(0.35, 0.35, 0.38)
+		box.add_child(r)
+		return box
+	var col: Color = sect.elem
+	var disc := Panel.new()
+	disc.custom_minimum_size = Vector2(side, side)
+	disc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var bg := col.darkened(0.55) if not dim else Color(0.18, 0.17, 0.17)
+	disc.add_theme_stylebox_override("panel", UI.box(bg, col if not dim else Color(0.35, 0.33, 0.3), maxi(2, int(side / 30)), int(side / 2), 0))
+	box.add_child(disc)
+	var words: PackedStringArray = String(sect.skills[i].name).split(" ")
+	var ini := ""
+	for wd in words.slice(0, 2):
+		ini += wd.substr(0, 1)
+	var l := UI.label(ini, int(side * 0.36), col.lightened(0.3) if not dim else Color(0.55, 0.53, 0.5), UI.title)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	disc.add_child(l)
+	return box
 
 static func describe(m: Dictionary) -> String:
 	var kind: String = m.get("kind", "strike")
@@ -117,7 +142,7 @@ func _build() -> void:
 		slot.add_child(sh)
 		sh.add_child(UI.label(str(k + 1), 24, UI.GOLD, UI.title))
 		if i >= 0:
-			sh.add_child(_image(pic(s.id, i), Vector2(56, 42)))
+			sh.add_child(icon(s, i, 44))
 		sh.add_child(UI.label(s.skills[i].name if i >= 0 else "(trống)", 18, UI.PAPER if i >= 0 else Color(0.6, 0.58, 0.55)))
 		_slots.add_child(slot)
 	var sp := Control.new()
@@ -153,9 +178,12 @@ func _card(s: Dictionary, i: int) -> Control:
 	v.offset_bottom = -6
 	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	b.add_child(v)
-	var img := _image(pic(s.id, i), Vector2(212, 150))
-	if lv == 0:
-		img.self_modulate = Color(0.35, 0.35, 0.38)
+	var img := Control.new()   # icon + badge/lock overlay
+	img.custom_minimum_size = Vector2(212, 150)
+	img.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var ic := icon(s, i, 140, lv == 0)
+	ic.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	img.add_child(ic)
 	v.add_child(img)
 	var eq: int = h.equip.find(i)
 	if eq >= 0:
@@ -176,10 +204,13 @@ func _card(s: Dictionary, i: int) -> Control:
 		lock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		img.add_child(lock)
 	var nm := UI.label(m.name, 17, UI.GOLD if lv > 0 else Color(0.62, 0.6, 0.56), UI.bold)
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	nm.clip_text = true
 	v.add_child(nm)
-	v.add_child(_pips(lv, 12))
+	var pp := _pips(lv, 12)
+	pp.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_child(pp)
 	return b
 
 func _pips(lv: int, sz: int) -> Control:
@@ -200,13 +231,18 @@ func _build_detail(s: Dictionary) -> void:
 	var i := _sel
 	var m: Dictionary = s.skills[i]
 	var lv := int(h.skill_lv[i])
-	var img := _image(pic(s.id, i), Vector2(0, 220))
-	img.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_detail.add_child(img)
+	var head := UI.hbox(16)
+	_detail.add_child(head)
+	head.add_child(icon(s, i, 150, lv == 0))
+	var hv := UI.vbox(6)
+	hv.alignment = BoxContainer.ALIGNMENT_CENTER
+	hv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	head.add_child(hv)
 	var t := UI.heading(m.name, 34)
-	_detail.add_child(t)
+	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hv.add_child(t)
 	var row := UI.hbox(10)
-	_detail.add_child(row)
+	hv.add_child(row)
 	if m.get("ult", false):
 		row.add_child(UI.label("Tuyệt kỹ", 18, Color(1, 0.6, 0.3), UI.bold))
 	if lv > 0:

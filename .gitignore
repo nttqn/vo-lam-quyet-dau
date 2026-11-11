@@ -13,3 +13,5 @@ assets_src/characters/*.fbx
 assets_src/characters/*.png
 assets_src/characters/*.import
 *.gd.uid.tmp
+assets_src/skills/*.png
+assets_src/skills/*.import
