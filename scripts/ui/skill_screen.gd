@@ -250,7 +250,7 @@ func _build_detail(s: Dictionary) -> void:
 		row.add_child(_pips(lv, 10))
 	else:
 		row.add_child(UI.label("Mở khi đạt cấp %d" % int(m.lvl), 18, Color(1, 0.7, 0.5), UI.bold))
-	var d := UI.label(describe(Hero.skill_scaled(m, maxi(1, lv))), 18, Color(0.9, 0.87, 0.8))
+	var d := UI.label(describe(Hero.skill_scaled(m, maxi(1, lv), Books.mod_of(h, i))), 18, Color(0.9, 0.87, 0.8))
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	d.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_detail.add_child(d)
@@ -276,6 +276,71 @@ func _build_detail(s: Dictionary) -> void:
 		ub = UI.button("Đã đạt tầng tối đa", func(): pass, 18)
 		ub.disabled = true
 	_detail.add_child(ub)
+	# bí kíp bound to this skill
+	var bk := Books.mod_of(h, i)
+	var br := UI.hbox(8)
+	_detail.add_child(br)
+	var bl := UI.label((Books.name_of(bk) + ": " + Books.KINDS[bk][1]) if bk != "" else "Chưa gắn bí kíp", 17, Books.COLOR.get(bk, Color(0.7, 0.68, 0.62)), UI.bold)
+	bl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	br.add_child(bl)
+	br.add_child(UI.button("Bí kíp", func(): _books(i), 18, 110))
+
+func _books(i: int) -> void:
+	var h := Game.hero
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.65)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ui.add_child(dim)
+	var cc := CenterContainer.new()
+	cc.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.add_child(cc)
+	var p := UI.panel()
+	cc.add_child(p)
+	var v := UI.vbox(8)
+	v.custom_minimum_size.x = 620
+	p.add_child(v)
+	v.add_child(UI.heading("Tàng Kinh Các", 36))
+	var note := UI.label("Gắn một bí kíp vào %s. Bí kíp đang gắn (nếu có) sẽ mất." % Hero.sect(h).skills[i].name, 17, Color(0.85, 0.82, 0.75))
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(note)
+	for k in Books.KINDS:
+		var row := UI.hbox(10)
+		v.add_child(row)
+		var l := UI.label("%s  ·  %s" % [Books.KINDS[k][0], Books.KINDS[k][1]], 18, Books.COLOR[k], UI.bold)
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(l)
+		row.add_child(UI.label("có %d" % Books.count(h, k), 17, UI.PAPER))
+		var kk: String = k
+		var b := UI.gold_button("Gắn", func():
+			if Books.bind(h, i, kk):
+				Game.sfx("skill")
+				Game.save()
+				dim.queue_free()
+				_build(), 18, 90)
+		b.disabled = Books.count(h, k) <= 0
+		row.add_child(b)
+	var hb := UI.hbox(10)
+	v.add_child(hb)
+	var buy := UI.gold_button("Mua bí kíp ngẫu nhiên (%d Ngọc)" % Books.PRICE, func():
+		if int(h.jade) < Books.PRICE:
+			return
+		h.jade = int(h.jade) - Books.PRICE
+		var rng := RandomNumberGenerator.new()
+		rng.randomize()
+		var got := Books.random_kind(rng)
+		Books.give(h, got)
+		Game.sfx("coin")
+		Game.save()
+		refresh_wallet()
+		dim.queue_free()
+		toast("Nhận " + Books.name_of(got), Books.COLOR[got])
+		_books(i), 18)
+	buy.disabled = int(h.jade) < Books.PRICE
+	buy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hb.add_child(buy)
+	hb.add_child(UI.button("Đóng", dim.queue_free, 18, 110))
+
 func _equip(i: int, k: int) -> void:
 	var h := Game.hero
 	var cur: int = h.equip.find(i)

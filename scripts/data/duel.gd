@@ -75,7 +75,7 @@ static func snapshot(h: Dictionary) -> Dictionary:
 	for k in 3:
 		var i := int(h.equip[k])
 		if i >= 0 and int(h.skill_lv[i]) > 0:
-			sk.append([i, int(h.skill_lv[i])])
+			sk.append([i, int(h.skill_lv[i]), Books.mod_of(h, i)])
 	var w: Dictionary = h.gear.get("weapon", {})
 	return {"sect": h.sect, "name": h.name, "level": int(h.level), "stats": Hero.stats(h), "skills": sk,
 		"color": int(h.get("color", 0)), "wrar": int(w.get("rar", 0))}
@@ -95,7 +95,7 @@ static func side(doc: Dictionary) -> Dictionary:
 	for p in snap.get("skills", []):
 		var i := int(p[0])
 		if i >= 0 and i < s.skills.size():
-			sk.append(Hero.skill_scaled(s.skills[i], int(p[1])))
+			sk.append(Hero.skill_scaled(s.skills[i], int(p[1]), str(p[2]) if p.size() > 2 else ""))
 	while sk.size() < 3:
 		sk.append(null)
 	var lk: Dictionary = s.look.duplicate()

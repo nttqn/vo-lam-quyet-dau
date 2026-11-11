@@ -63,6 +63,7 @@ func _ready() -> void:
 		Game.autoplay = true
 		Game.slot = 2
 		Game.hero = Hero.create("Kiểm Thử", "nga_mi")
+		Game.hero.skill_mod = ["doc", "", "", "", "", ""]
 		var tw := -1
 		for a in args:
 			if a.begins_with("--tower="): tw = int(a.substr(8))

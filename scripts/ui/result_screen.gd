@@ -67,6 +67,8 @@ func _ready() -> void:
 		var it: Dictionary = out.drop
 		var l := UI.label("Chiến lợi phẩm: %s (%s)" % [Items.item_name(it, s.style), Items.RARITY[int(it.rar)]], 22, Items.RARITY_COL[int(it.rar)], UI.bold)
 		rv.add_child(l)
+	if out.has("book"):
+		rv.add_child(UI.label("%s: %s" % [Books.name_of(out.book), Books.KINDS[out.book][1]], 21, Books.COLOR[out.book], UI.bold))
 	right.add_child(rp)
 	# rewarded ad: double the experience and gold of a won fight
 	if out.won and (int(rw.get("exp", 0)) > 0 or int(rw.get("gold", 0)) > 0):

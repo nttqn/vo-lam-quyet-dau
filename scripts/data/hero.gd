@@ -72,13 +72,13 @@ static func _unlock_skills(h: Dictionary) -> void:
 static func stats(h: Dictionary) -> Dictionary:
 	return Build.stats(int(h.level), h.pts, sect(h), Items.total(h.gear))
 
-static func skill_scaled(m: Dictionary, lv: int) -> Dictionary:
+static func skill_scaled(m: Dictionary, lv: int, book := "") -> Dictionary:
 	var c := m.duplicate(true)
 	c.dmg = float(m.dmg) * (1.0 + 0.12 * (lv - 1))
 	if c.has("heal"):
 		c.heal = float(m.heal) * (1.0 + 0.08 * (lv - 1))
 	c["lv"] = lv
-	return c
+	return Books.apply(c, book)
 
 static func equipped_skills(h: Dictionary) -> Array:
 	var s := sect(h)
@@ -86,7 +86,7 @@ static func equipped_skills(h: Dictionary) -> Array:
 	for k in 3:
 		var i: int = int(h.equip[k])
 		if i >= 0 and int(h.skill_lv[i]) > 0:
-			out.append(skill_scaled(s.skills[i], int(h.skill_lv[i])))
+			out.append(skill_scaled(s.skills[i], int(h.skill_lv[i]), Books.mod_of(h, i)))
 		else:
 			out.append(null)
 	return out

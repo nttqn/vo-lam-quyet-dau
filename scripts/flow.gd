@@ -42,6 +42,11 @@ static func _stage_done(r: int, s: int, res: Dictionary) -> void:
 			var it := Journey.boss_drop(r, rng)
 			h.bag.append(it)
 			out.drop = it
+		if first and s == 5:
+			var brng := RandomNumberGenerator.new()
+			brng.randomize()
+			out.book = Books.random_kind(brng)
+			Books.give(h, out.book)
 		if first and s == 5 and r + 1 < Journey.REGIONS.size():
 			out.unlock = Journey.REGIONS[r + 1].name
 	else:
@@ -126,6 +131,11 @@ static func _tower_done(f: int, res: Dictionary) -> void:
 		var rw := Tower.reward(f) if first else {"gold": 0, "exp": int(Tower.reward(f).exp * 0.2), "jade": 0, "item": -1}
 		if first:
 			h.tower = {"best": f}
+			if f % 5 == 0:
+				var brng := RandomNumberGenerator.new()
+				brng.randomize()
+				out.book = Books.random_kind(brng)
+				Books.give(h, out.book)
 		out.rewards = rw
 		out.levels = _grant(rw)
 		if int(rw.get("item", -1)) >= 0:
