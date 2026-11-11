@@ -623,7 +623,8 @@ func _stylise(sk: Skeleton3D) -> void:
 	if _outline == null:
 		_outline = ShaderMaterial.new()
 		_outline.shader = preload("res://assets/shaders/outline.gdshader")
-	var ow: float = look.get("outline", 0.007)
+	# sect models (Meshy) have painted shading: an ink outline makes them look like stickers
+	var ow: float = look.get("outline", 0.0 if vskel != skel else 0.007)
 	for mi in sk.find_children("*", "MeshInstance3D", true, false):
 		var m3 := mi as MeshInstance3D
 		var nm := String(m3.name)

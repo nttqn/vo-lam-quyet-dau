@@ -29,6 +29,9 @@ func _ready() -> void:
 		if a.begins_with("--iconshot"):
 			add_child(load("res://tools/icon_shot.gd").new())
 			return
+		if a == "--skillshots":
+			add_child(load("res://tools/skill_shots.gd").new())
+			return
 		if a == "--memmodels":
 			add_child(load("res://tools/mem_models.gd").new())
 			return

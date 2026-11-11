@@ -8,7 +8,7 @@ var _cloud_lbl: Label
 func _ready() -> void:
 	Game.hero = {}
 	Game.slot = -1
-	_init_ui("night")
+	_init_ui("peak")
 	show.set_focus(0.0)
 	show.add_body(Sects.get_sect("vo_dang").look, "sword", -1.0, -0.4)
 	show.add_body(Sects.get_sect("nga_mi").look, "dual", 1.0, PI + 0.4)
@@ -17,7 +17,7 @@ func _ready() -> void:
 	Game.music("menu")
 	var g := Gradient.new()
 	g.set_color(0, Color(0, 0, 0, 0.0))
-	g.set_color(1, Color(0, 0, 0, 0.75))
+	g.set_color(1, Color(0, 0, 0, 0.5))
 	var gt := GradientTexture2D.new()
 	gt.gradient = g
 	gt.fill_from = Vector2(0.5, 0.3)
