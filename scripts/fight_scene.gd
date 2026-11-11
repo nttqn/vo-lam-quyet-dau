@@ -24,6 +24,8 @@ var _done := false
 var _end_t := 0.0
 var _pause_layer: CanvasLayer
 var _frames := 0
+var _skills_used := 0     # player skills / ultimates this fight (daily missions)
+var _ults_used := 0
 var _shot := ""
 var _shot_frames: Array = []
 var _script := {}             # --inputs=frame:keys;... scripted player input (tests), enemy idles
@@ -250,6 +252,10 @@ func _events() -> void:
 				Game.sfx("counter")
 			"skill":
 				hud.skill(e.i, e.name)
+				if e.i == 0:
+					_skills_used += 1
+					if e.get("ult", false):
+						_ults_used += 1
 				var f: Fighter = sim.f[e.i]
 				fx.ground_ring(f.x, f.sect.elem)
 				Game.sfx("skill")
@@ -312,7 +318,7 @@ func _finish(won: bool, forfeit := false) -> void:
 	var res := {
 		"won": won, "forfeit": forfeit, "rounds_won": sim.wins[0], "rounds_lost": sim.wins[1],
 		"hp_left": fp.hp / fp.st.hp_max, "max_combo": fp.max_combo, "seconds": sim.frame / 60.0,
-		"perfect": won and sim.wins[1] == 0,
+		"perfect": won and sim.wins[1] == 0, "skills": _skills_used, "ults": _ults_used,
 	}
 	Engine.time_scale = 1.0
 	finished.emit(res)

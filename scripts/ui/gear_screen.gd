@@ -182,6 +182,7 @@ func _upgrade(slot: String) -> void:
 		return
 	h.gold = int(h.gold) - cost
 	it.plus = int(it.get("plus", 0)) + 1
+	Daily.track(h, "upgrade")
 	Game.sfx("levelup")
 	Game.save()
 	_build()

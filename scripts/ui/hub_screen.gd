@@ -70,11 +70,13 @@ func _ready() -> void:
 	right.add_child(grid)
 	var pts := int(h.free_pts)
 	var spts := int(h.skill_pts)
+	var dq := Daily.pending(h)
 	var items := [
 		["Nhân Vật" + (" (%d)" % pts if pts > 0 else ""), func(): Game.goto(CharacterScreen.new())],
 		["Võ Công" + (" (%d)" % spts if spts > 0 else ""), func(): Game.goto(SkillScreen.new())],
 		["Trang Bị", func(): Game.goto(GearScreen.new(false))],
 		["Tiệm Binh Khí", func(): Game.goto(GearScreen.new(true))],
+		["Nhiệm Vụ" + (" (%d)" % dq if dq > 0 else ""), func(): Game.goto(DailyScreen.new())],
 		["Cài Đặt", func(): ui.add_child(SettingsPanel.new())],
 		["Rời Đi", back],
 	]

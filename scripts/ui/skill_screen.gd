@@ -297,6 +297,7 @@ func _up(i: int) -> void:
 	h.skill_pts = int(h.skill_pts) - 1
 	h.gold = int(h.gold) - cost
 	h.skill_lv[i] = lv + 1
+	Daily.track(h, "upgrade")
 	Game.sfx("levelup")
 	Game.save()
 	refresh_wallet()

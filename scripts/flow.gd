@@ -20,6 +20,7 @@ static func _stage_done(r: int, s: int, res: Dictionary) -> void:
 	var h := Game.hero
 	h.fights = int(h.fights) + 1
 	var out := {"mode": "stage", "r": r, "s": s, "won": res.won, "res": res}
+	Daily.on_fight(h, "stage", res)
 	if res.won:
 		h.wins = int(h.wins) + 1
 		var stars := 1
@@ -71,6 +72,7 @@ static func start_arena(n: int, revived := false) -> void:
 static func _arena_done(n: int, res: Dictionary, revived := false) -> void:
 	var h := Game.hero
 	var out := {"mode": "arena", "n": n, "won": res.won, "res": res, "revived": revived}
+	Daily.on_fight(h, "arena", res)
 	var lvl := int(h.level) - 3 + n
 	if res.won:
 		var streak := n + 1
@@ -94,4 +96,8 @@ static func start_training() -> void:
 	var e := Npc.side(sects[0], int(h.level), "Mộc Nhân Luyện Công", 0.0, "", false, 77, "Luyện tập")
 	e.stats.hp_max *= 3.0
 	var cfg := {"p": Hero.side(h), "e": e, "theme": "temple", "rounds": 99, "training": true, "seed": randi()}
-	_launch(cfg, func(_res: Dictionary): Game.goto(HubScreen.new()))
+	_launch(cfg, func(_res: Dictionary):
+		Daily.track(Game.hero, "train")
+		Daily.on_fight(Game.hero, "train", _res)
+		Game.save()
+		Game.goto(HubScreen.new()))

@@ -98,6 +98,9 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 		"map": Game.goto(MapScreen.new())
 		"char": Game.goto(CharacterScreen.new())
 		"skill": Game.goto(SkillScreen.new())
+		"daily":
+			Daily.track(Game.hero, "fight", 3)
+			Game.goto(DailyScreen.new())
 		"gear": Game.goto(GearScreen.new(false))
 		"shop": Game.goto(GearScreen.new(true))
 		"help":
