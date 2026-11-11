@@ -78,6 +78,7 @@ func _ready() -> void:
 		["Võ Công" + (" (%d)" % spts if spts > 0 else ""), func(): Game.goto(SkillScreen.new())],
 		["Trang Bị", func(): Game.goto(GearScreen.new(false))],
 		["Tiệm Binh Khí", func(): Game.goto(GearScreen.new(true))],
+		["Y Phục", func(): Game.goto(WardrobeScreen.new())],
 		["Nhiệm Vụ" + (" (%d)" % dq if dq > 0 else ""), func(): Game.goto(DailyScreen.new())],
 		["Cài Đặt", func(): ui.add_child(SettingsPanel.new())],
 		["Rời Đi", back],

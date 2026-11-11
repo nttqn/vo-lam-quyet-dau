@@ -108,6 +108,7 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 		"char": Game.goto(CharacterScreen.new())
 		"skill": Game.goto(SkillScreen.new())
 		"tower": Game.goto(TowerScreen.new())
+		"wardrobe": Game.goto(WardrobeScreen.new())
 		"dialog": Game.goto(DialogScreen.new(5, "boss", Journey.stage_side(5, 5), func(): pass))
 		"duel": Game.goto(DuelScreen.new())
 		"daily":
