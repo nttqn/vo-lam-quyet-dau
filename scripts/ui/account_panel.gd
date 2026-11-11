@@ -38,6 +38,7 @@ func _build() -> void:
 		_v.add_child(_msg)
 		var h := UI.hbox(10)
 		_v.add_child(h)
+		h.add_child(_delete_button())
 		h.add_child(UI.button("Đăng xuất", func():
 			Cloud.sign_out()
 			_build(), 20))
@@ -64,6 +65,7 @@ func _build() -> void:
 	var h2 := UI.hbox(10)
 	_v.add_child(h2)
 	h2.add_child(UI.button("Quên mật khẩu", _reset, 18))
+	h2.add_child(_delete_button())
 	var close := UI.button("Đóng", queue_free, 20)
 	close.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	h2.add_child(close)
@@ -120,3 +122,21 @@ func _reset() -> void:
 		_say("Đã gửi thư đặt lại mật khẩu, hãy kiểm tra hộp thư.", Color(0.6, 1, 0.6))
 	else:
 		_say(Cloud.last_error)
+
+## Two taps: the first arms it, the second deletes for good.
+func _delete_button() -> Button:
+	var b := UI.button("Xóa tài khoản", func(): pass, 16)
+	b.add_theme_color_override("font_color", Color(1, 0.6, 0.55))
+	b.pressed.connect(func():
+		if not b.has_meta("armed"):
+			b.set_meta("armed", true)
+			b.text = "Bấm lần nữa để xóa vĩnh viễn"
+			_say("Sẽ xóa tài khoản, mọi bản lưu trên mây và bóng Tỉ Võ. Nhân vật trong máy vẫn còn.")
+			return
+		_say("Đang xóa…", UI.PAPER)
+		if await Cloud.delete_account():
+			_build()
+			_say("Đã xóa tài khoản và dữ liệu trên mây.", Color(0.6, 1, 0.6))
+		else:
+			_say(Cloud.last_error))
+	return b

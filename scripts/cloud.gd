@@ -153,6 +153,23 @@ func reset_password(p_email: String) -> bool:
 		return false
 	return true
 
+## Deletes everything this account has on the server (cloud saves, this
+## season's Tỉ Võ shadow) and the account itself. Local saves stay on the phone.
+## Play policy: account deletion must be available in the app.
+func delete_account() -> bool:
+	if not await _ensure_token():
+		return false
+	for i in Game.SLOTS:
+		await _req(HTTPClient.METHOD_DELETE, _doc_url(i), "", true)
+	await _req(HTTPClient.METHOD_DELETE, _base_url() + "%s/%s" % [Duel.collection(), uid], "", true)
+	var r := await _req(HTTPClient.METHOD_POST, _auth_url("accounts:delete"), JSON.stringify({"idToken": _id_token}))
+	if r.code != 200:
+		last_error = _auth_error(r.body)
+		return false
+	_dirty = {}
+	sign_out()
+	return true
+
 ## Forget this account on this device. Local saves stay; the next sync signs in
 ## as a new guest and uploads them there.
 func sign_out() -> void:
