@@ -26,3 +26,21 @@ Ví dụ kiếm dáng 3: `<mô tả vũ khí>` = `a heavenly Chinese jian sword 
 5. Đặt tên đúng bảng trên, thả vào `assets_src/weapons/`.
 
 Trong Meshy, nếu vũ khí bị nằm ngang hay chúc ngược, xoay lại cho **đứng thẳng, chuôi ở dưới** trước khi tải (nút xoay trong khung xem). Game tự chỉnh kích thước và tự đặt vào tay.
+
+## Mô tả từng model (thay vào `<mô tả vũ khí>`)
+Làm dáng 2 và 3 thì đính kèm ảnh dáng 1 và thêm `Same weapon design as the attached image, upgraded:` trước mô tả, để 3 dáng cùng phong cách.
+
+| File | Mô tả |
+|---|---|
+| `staff_1.glb` | `a plain long wooden Shaolin fighting staff, smooth light brown wood, simple dark iron caps on both ends, a little cloth grip wrap near the bottom third` |
+| `staff_2.glb` | `a long Shaolin fighting staff of dark polished hardwood with engraved silver bands, iron end caps carved with lotus patterns, red cloth grip wrap near the bottom third` |
+| `staff_3.glb` | `a heavenly long Shaolin staff of black jade and gold, golden end caps shaped like lotus buds, carved Buddhist sutra patterns along the shaft, a short string of golden prayer beads tied near the top, faint golden glow` |
+| `sword_1.glb` | `a plain straight double-edged Chinese jian sword, simple iron blade, bronze cross guard, dark wooden grip wrapped in cord, short red tassel on the pommel` |
+| `sword_2.glb` | `a refined Chinese jian sword with a tempered steel blade showing a faint blue sheen, engraved cloud patterns near the base, silver cross guard with a small taiji emblem, black grip, blue silk tassel` |
+| `sword_3.glb` | `a heavenly Chinese jian sword in gold and white jade, white jade blade with cloud engravings and a soft blue glow, golden guard shaped like clouds with a taiji emblem, long white and blue silk tassel` |
+| `dual_blade_1.glb` | `one short slender straight sword, plain steel blade, small round bronze guard, wooden grip wrapped in pink cord` |
+| `dual_blade_2.glb` | `one short slender straight sword with a polished silver blade engraved with lotus flowers, silver guard shaped like a lotus, white grip, short pink silk ribbon on the pommel` |
+| `dual_blade_3.glb` | `one short slender heavenly sword with a pale pink jade blade glowing softly, golden lotus-shaped guard, white jade grip, long pink and gold silk ribbon on the pommel` |
+| `dagger_1.glb` | `one short curved dagger, plain dark iron blade, simple wooden handle wrapped in black cloth` |
+| `dagger_2.glb` | `one short curved dagger with a black steel blade etched with thin green poison runes, dark leather-wrapped handle, small silver pommel` |
+| `dagger_3.glb` | `one short curved dagger with a black jade blade glowing with green venom runes, dark purple handle with silver snake-scale pattern, faint green mist around the blade` |
