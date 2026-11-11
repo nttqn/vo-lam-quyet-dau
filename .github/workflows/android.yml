@@ -48,10 +48,21 @@ jobs:
           done
           cat "$HOME/.config/godot/editor_settings-4.7.tres"
 
+      - name: AdMob Android library (Poing Studios plugin)
+        run: |
+          set -e
+          wget -q https://github.com/poingstudios/godot-admob-plugin/releases/download/v5.1.0/android-template-v${GODOT_VERSION}.zip -O admob-android.zip
+          mkdir -p addons/admob/android/bin
+          unzip -q -o admob-android.zip "ads/*" -d addons/admob/android/bin
+          ls -R addons/admob/android/bin | head
+
       - name: Import project
         run: |
           ./godot --headless --path . --import || true
           ./godot --headless --path . --import || true
+
+      - name: Android build template (gradle)
+        run: ./godot --headless --path . --install-android-build-template && ls android/build | head
 
       - name: Balance smoke test (AI vs AI)
         run: ./godot --headless --path . --script res://tools/sim.gd -- --n=1 --lvl=12
@@ -83,9 +94,17 @@ jobs:
         run: |
           mkdir -p build
           ./godot --headless --path . --export-$EXPORT_MODE "Android" build/vo-lam-quyet-dau.apk
+          # Play Store bundle from the same preset
+          sed -i 's|^gradle_build/export_format=0|gradle_build/export_format=1|' export_presets.cfg
+          ./godot --headless --path . --export-$EXPORT_MODE "Android" build/vo-lam-quyet-dau.aab
           ls -la build
 
       - uses: actions/upload-artifact@v4
         with:
           name: vo-lam-quyet-dau-apk
           path: build/*.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vo-lam-quyet-dau-aab
+          path: build/*.aab

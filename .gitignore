@@ -5,7 +5,7 @@ build/
 *.keystore
 keystore-base64.txt
 export_credentials.cfg
-android/
+/android/
 *.tmp
 
 # Meshy/Mixamo FBX sources: the game copy lives in assets/models/chars (identical file)

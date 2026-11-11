@@ -62,6 +62,15 @@ func _ready() -> void:
 		var l := UI.label("Chiến lợi phẩm: %s (%s)" % [Items.item_name(it, s.style), Items.RARITY[int(it.rar)]], 22, Items.RARITY_COL[int(it.rar)], UI.bold)
 		rv.add_child(l)
 	right.add_child(rp)
+	# rewarded ad: double the experience and gold of a won fight
+	if out.won and (int(rw.get("exp", 0)) > 0 or int(rw.get("gold", 0)) > 0):
+		var dbl := UI.gold_button("▶ Xem quảng cáo: nhân đôi kinh nghiệm và vàng", func(): pass, 19)
+		dbl.disabled = not Ads.is_ready()
+		dbl.pressed.connect(_double.bind(dbl, rw))
+		Ads.ready_changed.connect(func():
+			if is_instance_valid(dbl) and dbl.text.begins_with("▶"):
+				dbl.disabled = not Ads.is_ready())
+		rp.get_child(0).add_child(dbl)
 	if int(out.get("levels", 0)) > 0:
 		var lv := UI.label("Thăng cấp! Đạt cấp %d  (+%d điểm tiềm năng, +%d điểm võ công)" % [int(h.level), int(out.levels) * Build.POINTS_PER_LEVEL, int(out.levels)], 22, Color(0.6, 1.0, 0.6), UI.bold)
 		lv.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -86,7 +95,13 @@ func _ready() -> void:
 		row.add_child(UI.button("Bản đồ", func(): Game.goto(MapScreen.new()), 24, 150))
 	else:
 		if out.won:
-			row.add_child(UI.gold_button("Đấu tiếp", func(): Flow.start_arena(int(out.n) + 1), 24, 190))
+			row.add_child(UI.gold_button("Đấu tiếp", func(): Flow.start_arena(int(out.n) + 1, out.get("revived", false)), 24, 190))
+		elif not out.get("revived", false) and int(out.n) >= 3:
+			# once per run: watch an ad to retry this fight and keep the streak
+			var rv_b := UI.gold_button("▶ Hồi sinh (quảng cáo)", func(): pass, 22, 230)
+			rv_b.disabled = not Ads.is_ready()
+			rv_b.pressed.connect(_revive)
+			row.add_child(rv_b)
 		row.add_child(UI.button("Về sảnh", func(): Game.goto(HubScreen.new()), 24, 170))
 	if out.won:
 		Game.sfx("coin")
@@ -96,3 +111,24 @@ func _ready() -> void:
 
 func back() -> void:
 	Game.goto(HubScreen.new())
+
+func _double(dbl: Button, rw: Dictionary) -> void:
+	dbl.disabled = true
+	var ok := Ads.show_rewarded(func(): _doubled(dbl, rw))
+	if not ok:
+		dbl.disabled = false
+		toast("Chưa có quảng cáo, thử lại sau", Color(1, 0.7, 0.5))
+
+func _doubled(dbl: Button, rw: Dictionary) -> void:
+	var extra := {"exp": int(rw.get("exp", 0)), "gold": int(rw.get("gold", 0))}
+	var lv_up := Flow._grant(extra)
+	Game.save()
+	refresh_wallet()
+	if is_instance_valid(dbl):
+		dbl.text = "Đã nhân đôi: +%d kinh nghiệm, +%d vàng" % [extra.exp, extra.gold]
+	if lv_up > 0:
+		toast("Thăng cấp! Đạt cấp %d" % int(Game.hero.level), Color(0.6, 1.0, 0.6))
+
+func _revive() -> void:
+	if not Ads.show_rewarded(func(): Flow.start_arena(int(out.n), true)):
+		toast("Chưa có quảng cáo, thử lại sau", Color(1, 0.7, 0.5))

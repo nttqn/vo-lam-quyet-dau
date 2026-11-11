@@ -75,6 +75,10 @@ func music(name: String) -> void:
 	if float(settings.music) > 0.0:
 		_music_player.play()
 
+## Rewarded ads take over the screen: stop the music meanwhile.
+func music_pause(on: bool) -> void:
+	_music_player.stream_paused = on
+
 func apply_volume() -> void:
 	_music_player.volume_db = linear_to_db(maxf(0.0001, float(settings.music)))
 	if float(settings.music) <= 0.0:

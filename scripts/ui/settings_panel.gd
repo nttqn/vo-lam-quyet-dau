@@ -30,6 +30,8 @@ func _ready() -> void:
 	v.add_child(vib)
 	var cr := UI.label("Võ Lâm Quyết Đấu  ·  phiên bản %s\nĐồ họa, âm thanh và nhạc được tạo bằng mã nguồn.\nPhông chữ: Be Vietnam Pro, Playfair Display (SIL OFL)." % ProjectSettings.get_setting("application/config/version", "1.0.0"), 16, Color(0.75, 0.72, 0.66))
 	v.add_child(cr)
+	if Ads.privacy_options_required():
+		v.add_child(UI.button("Quyền riêng tư quảng cáo", Ads.show_privacy_options, 20))
 	v.add_child(UI.gold_button("Đóng", queue_free, 24))
 
 func _slider(label: String, key: String) -> Control:

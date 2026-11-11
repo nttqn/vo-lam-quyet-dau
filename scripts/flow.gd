@@ -59,18 +59,18 @@ static func _grant(rw: Dictionary) -> int:
 	return Hero.add_exp(h, int(rw.get("exp", 0)))
 
 # ------------------------------------------------------------- arena
-static func start_arena(n: int) -> void:
+static func start_arena(n: int, revived := false) -> void:
 	var h := Game.hero
 	var themes := ["night", "temple", "bamboo", "river", "snow", "desert", "demon", "peak"]
 	var cfg := {
 		"p": Hero.side(h), "e": Journey.arena_side(int(h.level), n),
 		"theme": themes[n % themes.size()], "rounds": 1, "seed": randi(), "arena_n": n,
 	}
-	_launch(cfg, func(res: Dictionary): _arena_done(n, res))
+	_launch(cfg, func(res: Dictionary): _arena_done(n, res, revived))
 
-static func _arena_done(n: int, res: Dictionary) -> void:
+static func _arena_done(n: int, res: Dictionary, revived := false) -> void:
 	var h := Game.hero
-	var out := {"mode": "arena", "n": n, "won": res.won, "res": res}
+	var out := {"mode": "arena", "n": n, "won": res.won, "res": res, "revived": revived}
 	var lvl := int(h.level) - 3 + n
 	if res.won:
 		var streak := n + 1
