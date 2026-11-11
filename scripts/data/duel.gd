@@ -78,7 +78,7 @@ static func snapshot(h: Dictionary) -> Dictionary:
 			sk.append([i, int(h.skill_lv[i]), Books.mod_of(h, i)])
 	var w: Dictionary = h.gear.get("weapon", {})
 	return {"sect": h.sect, "name": h.name, "level": int(h.level), "stats": Hero.stats(h), "skills": sk,
-		"color": int(h.get("color", 0)), "wrar": int(w.get("rar", 0)), "outfit": str(h.get("outfit", ""))}
+		"color": int(h.get("color", 0)), "wrar": int(w.get("rar", 0)), "wtier": int(w.get("tier", 1)), "outfit": str(h.get("outfit", ""))}
 
 static func fields(h: Dictionary) -> Dictionary:
 	var d := ensure(h)
@@ -106,6 +106,7 @@ static func side(doc: Dictionary) -> Dictionary:
 			lk[k] = alt[k]
 	if str(snap.get("outfit", "")) != "" and lk.has("model"):
 		lk["model"] = Outfits.model_for(str(snap.sect), str(snap.outfit))
+	lk["wtier"] = int(snap.get("wtier", 1))
 	if int(snap.get("wrar", 0)) >= 3:
 		lk["trim"] = Color(0.9, 0.72, 0.3)
 	var st: Dictionary = snap.stats

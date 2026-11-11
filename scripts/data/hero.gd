@@ -100,6 +100,8 @@ static func look(h: Dictionary) -> Dictionary:
 			lk[k] = alt[k]
 	# better weapons get a gilded trim
 	var w: Dictionary = h.gear.get("weapon", {})
+	if not w.is_empty():
+		lk["wtier"] = int(w.get("tier", 1))
 	if not w.is_empty() and int(w.get("rar", 0)) >= 3:
 		lk["trim"] = Color(0.9, 0.72, 0.3)
 	var wear := str(h.get("outfit", ""))

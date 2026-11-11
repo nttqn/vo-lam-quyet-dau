@@ -29,9 +29,11 @@ static func side(sect_id: String, level: int, name: String, ai: float, faction :
 			sk.append(Hero.skill_scaled(s.skills[5], 1))
 	while sk.size() < 3:
 		sk.append(null)
+	var nlook := Appearance.apply(Looks.npc(sect_id, faction, rng), random_look(sect_id, rng, faction))
+	nlook["wtier"] = clampi(1 + int((level - 1) / 5.5), 1, 7)
 	return {
 		"sect": sect_id, "name": name, "title": title, "level": level, "stats": st,
-		"skills": sk, "look": Appearance.apply(Looks.npc(sect_id, faction, rng), random_look(sect_id, rng, faction)), "ai": ai, "boss": boss,
+		"skills": sk, "look": nlook, "ai": ai, "boss": boss,
 	}
 
 static func random_look(sect_id: String, rng: RandomNumberGenerator, faction: String) -> Dictionary:

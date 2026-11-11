@@ -17,3 +17,6 @@ assets_src/skills/*.png
 assets_src/skills/*.import
 assets_src/items/*.png
 assets_src/items/*.import
+assets_src/weapons/*.glb
+assets_src/weapons/*.png
+assets_src/weapons/*.import

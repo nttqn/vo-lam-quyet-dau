@@ -47,8 +47,77 @@ static func sph(r: float) -> SphereMesh:
 	s.rings = 5
 	return s
 
+# ------------------------------------------------------------- model files
+## Meshy weapon models: assets/models/weapons/<kind>_<stage>.glb (stage 1 = tiers
+## 1-2, 2 = tiers 3-5, 3 = tiers 6-7), or <kind>.glb for every tier. Modelled
+## standing straight up with the handle at the bottom; scaled to the length
+## below and gripped at the given fraction of it, measured from the bottom.
+const MODEL_DIR := "res://assets/models/weapons/"
+const SPEC := {"sword": [1.0, 0.09], "dual_blade": [0.64, 0.12], "staff": [1.8, 0.29], "dagger": [0.36, 0.18], "saber": [0.95, 0.1], "spear": [2.0, 0.3]}
+const BAKED_LIT := 0.6
+
+static func stage(tier: int) -> int:
+	return 1 if tier <= 2 else (2 if tier <= 5 else 3)
+
+static func model_file(kind: String, tier: int) -> String:
+	for p in ["%s%s_%d" % [MODEL_DIR, kind, stage(tier)], MODEL_DIR + kind]:
+		for ext in [".glb", ".fbx"]:
+			if ResourceLoader.exists(p + ext):
+				return p + ext
+	return ""
+
+static func _model(kind: String, tier: int, g: Node3D) -> Node3D:
+	var path := model_file(kind, tier)
+	if path == "" or not SPEC.has(kind):
+		return null
+	var inst: Node3D = load(path).instantiate()
+	for ap in inst.find_children("*", "AnimationPlayer", true, false):
+		ap.queue_free()
+	# bounds in the model root space
+	var box := AABB()
+	var first := true
+	for mi in inst.find_children("*", "MeshInstance3D", true, false):
+		var xf := Transform3D.IDENTITY
+		var n: Node = mi
+		while n != inst and n is Node3D:
+			xf = (n as Node3D).transform * xf
+			n = n.get_parent()
+		var bb: AABB = xf * (mi as MeshInstance3D).get_aabb()
+		box = bb if first else box.merge(bb)
+		first = false
+		# baked lighting in the texture: dim it like the sect models
+		var m3 := mi as MeshInstance3D
+		for s in m3.mesh.get_surface_count():
+			var src = m3.get_active_material(s)
+			if src is StandardMaterial3D:
+				var nm := (src as StandardMaterial3D).duplicate() as StandardMaterial3D
+				nm.albedo_color = nm.albedo_color * Color(BAKED_LIT, BAKED_LIT, BAKED_LIT)
+				nm.roughness = 0.75
+				m3.set_surface_override_material(s, nm)
+	if first or box.size.y <= 0.0001:
+		inst.free()
+		return null
+	var len_m: float = SPEC[kind][0]
+	var frac: float = SPEC[kind][1]
+	var k := len_m / box.size.y
+	var grip_y := box.position.y + box.size.y * frac
+	var holder := Node3D.new()
+	holder.rotation_degrees = Vector3(180, 0, 0)   # model up -> blade along -Y
+	g.add_child(holder)
+	inst.scale = Vector3.ONE * k
+	var c := box.get_center()
+	inst.position = -Vector3(c.x, grip_y, c.z) * k
+	holder.add_child(inst)
+	var tip := Node3D.new()
+	tip.position = Vector3(0, -(box.end.y - grip_y) * k, 0)
+	g.add_child(tip)
+	return tip
+
 ## kind: sword | saber | staff | spear | dual_blade | dagger | fan
-static func build(kind: String, g: Node3D) -> Node3D:
+static func build(kind: String, g: Node3D, tier := 1) -> Node3D:
+	var from_file := _model(kind, tier, g)
+	if from_file:
+		return from_file
 	var steel := mat(Color(0.85, 0.88, 0.93), 0.22, 0.7)
 	var wood := mat(Color(0.42, 0.26, 0.13), 0.7)
 	var gold := mat(Color(0.86, 0.66, 0.22), 0.35, 0.6)

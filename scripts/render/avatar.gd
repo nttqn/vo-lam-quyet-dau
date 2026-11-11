@@ -327,15 +327,15 @@ func _weapons_and_anim() -> void:
 	var grip_l := _grip(hl)
 	match w:
 		"dual":
-			weapon_tip = Weapons.build("dual_blade", grip_r)
-			Weapons.build("dual_blade", grip_l)
+			weapon_tip = Weapons.build("dual_blade", grip_r, int(look.get("wtier", 1)))
+			Weapons.build("dual_blade", grip_l, int(look.get("wtier", 1)))
 		"daggers":
-			weapon_tip = Weapons.build("dagger", grip_r)
+			weapon_tip = Weapons.build("dagger", grip_r, int(look.get("wtier", 1)))
 		"none":
 			weapon_tip = Node3D.new()
 			hr.add_child(weapon_tip)
 		_:
-			weapon_tip = Weapons.build(w, grip_r)
+			weapon_tip = Weapons.build(w, grip_r, int(look.get("wtier", 1)))
 	hand_r_tip = _marker(hr, Vector3(0, 0.08, 0))
 	hand_l_tip = _marker(hl, Vector3(0, 0.08, 0))
 	foot_r_tip = _marker(_bone_att("ball_r"), Vector3.ZERO)
