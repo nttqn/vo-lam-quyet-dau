@@ -43,6 +43,10 @@ func _ready() -> void:
 			var st := UI.label("★".repeat(stars) + "☆".repeat(3 - stars), 54, UI.GOLD)
 			right.add_child(st)
 			right.add_child(UI.label("★ thắng  ★★ còn ≥50% sinh lực  ★★★ thắng tuyệt đối", 16, Color(0.75, 0.72, 0.66)))
+	elif out.mode == "duel":
+		var dl := int(out.delta)
+		right.add_child(UI.label("Tỉ Võ với %s" % out.foe, 24))
+		right.add_child(UI.label("Điểm tỉ võ %s%d  →  %d (%s)" % ["+" if dl >= 0 else "", dl, int(h.duel.score), Duel.tier(int(h.duel.score))[0]], 26, Color(0.6, 1, 0.6) if dl >= 0 else Color(1, 0.6, 0.5), UI.bold))
 	elif out.mode == "tower":
 		right.add_child(UI.label("Tháp Thí Luyện — Tầng %d" % int(out.f) + (" · vượt tầng mới!" if out.won and int(out.f) == Tower.best(h) else ""), 26, UI.GOLD, UI.bold))
 	elif out.mode == "arena":
@@ -95,6 +99,9 @@ func _ready() -> void:
 		if next_ok:
 			row.add_child(UI.gold_button("Trận kế", func(): Flow.start_stage(out.r, out.s + 1), 24, 170))
 		row.add_child(UI.button("Bản đồ", func(): Game.goto(MapScreen.new()), 24, 150))
+	elif out.mode == "duel":
+		row.add_child(UI.gold_button("Tỉ võ tiếp", func(): Game.goto(DuelScreen.new()), 24, 190))
+		row.add_child(UI.button("Về sảnh", func(): Game.goto(HubScreen.new()), 24, 170))
 	elif out.mode == "tower":
 		if out.won:
 			row.add_child(UI.gold_button("Tầng kế", func(): Flow.start_tower(int(out.f) + 1), 24, 170))

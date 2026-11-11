@@ -66,7 +66,9 @@ func _ready() -> void:
 		var tw := -1
 		for a in args:
 			if a.begins_with("--tower="): tw = int(a.substr(8))
-		if tw > 0:
+		if "--duel" in args:
+			Flow.start_duel(Duel.bots(Game.hero, 1)[0])
+		elif tw > 0:
 			Flow.start_tower(tw)
 		else:
 			Flow.start_stage(0, 0)
@@ -105,6 +107,7 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 		"char": Game.goto(CharacterScreen.new())
 		"skill": Game.goto(SkillScreen.new())
 		"tower": Game.goto(TowerScreen.new())
+		"duel": Game.goto(DuelScreen.new())
 		"daily":
 			Daily.track(Game.hero, "fight", 3)
 			Game.goto(DailyScreen.new())

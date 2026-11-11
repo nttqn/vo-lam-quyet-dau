@@ -344,6 +344,70 @@ static func _auth_error(body) -> String:
 		"OPERATION_NOT_ALLOWED", "ADMIN_ONLY_OPERATION", "CONFIGURATION_NOT_FOUND": return "Máy chủ chưa bật kiểu đăng nhập này"
 	return "Lỗi máy chủ" + (" (" + m + ")" if m != "" else "")
 
+# ------------------------------------------------------------- shared docs (Tỉ Võ)
+## Writes collection/{uid} with plain fields (String/int/float values).
+func put_my_doc(collection: String, fields: Dictionary) -> bool:
+	if not await _ensure_token():
+		return false
+	var f := {}
+	for k in fields:
+		f[k] = _fs_value(fields[k])
+	var r := await _req(HTTPClient.METHOD_PATCH, _base_url() + "%s/%s" % [collection, uid], JSON.stringify({"fields": f}), true)
+	if r.code != 200:
+		last_error = "HTTP %d" % r.code
+	return r.code == 200
+
+## Documents of a collection ordered by `order_field` (descending), optionally
+## with order_field between lo and hi. Returns plain dicts with "_id" = doc id.
+func query(collection: String, order_field: String, limit: int, lo = null, hi = null) -> Array:
+	if not await _ensure_token():
+		return []
+	var sq := {
+		"from": [{"collectionId": collection}],
+		"orderBy": [{"field": {"fieldPath": order_field}, "direction": "DESCENDING"}],
+		"limit": limit,
+	}
+	var filters := []
+	if lo != null:
+		filters.append({"fieldFilter": {"field": {"fieldPath": order_field}, "op": "GREATER_THAN_OR_EQUAL", "value": _fs_value(lo)}})
+	if hi != null:
+		filters.append({"fieldFilter": {"field": {"fieldPath": order_field}, "op": "LESS_THAN_OR_EQUAL", "value": _fs_value(hi)}})
+	if filters.size() == 1:
+		sq["where"] = filters[0]
+	elif filters.size() > 1:
+		sq["where"] = {"compositeFilter": {"op": "AND", "filters": filters}}
+	var url := "https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents:runQuery" % project_id
+	var r := await _req(HTTPClient.METHOD_POST, url, JSON.stringify({"structuredQuery": sq}), true)
+	var out := []
+	if r.code != 200:
+		last_error = "HTTP %d" % r.code
+		return out
+	# runQuery answers with a JSON array; _req only keeps dictionaries
+	for row in r.get("list", []):
+		var d = (row as Dictionary).get("document")
+		if d is Dictionary:
+			var plain := {}
+			var fl: Dictionary = d.get("fields", {})
+			for k in fl:
+				plain[k] = _fs_plain(fl[k])
+			var nm := str(d.get("name", ""))
+			plain["_id"] = nm.get_slice("/", nm.get_slice_count("/") - 1)
+			out.append(plain)
+	return out
+
+static func _fs_value(v) -> Dictionary:
+	match typeof(v):
+		TYPE_INT: return {"integerValue": str(v)}
+		TYPE_FLOAT: return {"doubleValue": v}
+		TYPE_BOOL: return {"booleanValue": v}
+		_: return {"stringValue": str(v)}
+
+static func _fs_plain(v: Dictionary):
+	if v.has("integerValue"): return int(v.integerValue)
+	if v.has("doubleValue"): return float(v.doubleValue)
+	if v.has("booleanValue"): return bool(v.booleanValue)
+	return str(v.get("stringValue", ""))
+
 # ------------------------------------------------------------- http
 func _auth_url(method: String) -> String:
 	return "https://identitytoolkit.googleapis.com/v1/%s?key=%s" % [method, api_key]
@@ -373,7 +437,7 @@ func _req(method: int, url: String, body := "", auth := false, form := false) ->
 	if code >= 400:
 		last_raw = txt.substr(0, 400)
 	var parsed = JSON.parse_string(txt)
-	return {"code": code, "body": parsed if parsed is Dictionary else {}}
+	return {"code": code, "body": parsed if parsed is Dictionary else {}, "list": parsed if parsed is Array else []}
 
 # ------------------------------------------------------------- state file
 func _save_state() -> void:

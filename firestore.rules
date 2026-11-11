@@ -1,13 +1,26 @@
 rules_version = '2';
-// Võ Lâm Quyết Đấu cloud saves: each player reads/writes only their own slots.
+// Võ Lâm Quyết Đấu
 service cloud.firestore {
   match /databases/{database}/documents {
+    // cloud saves: each player reads/writes only their own slots
     match /players/{uid}/slots/{slot} {
       allow read, delete: if request.auth != null && request.auth.uid == uid;
       allow create, update: if request.auth != null && request.auth.uid == uid
         && slot in ['0', '1', '2']
         && request.resource.data.data is string
         && request.resource.data.data.size() < 400000;
+    }
+    // Tỉ Võ seasons (duel_2026w46 ...): everyone signed in can read the
+    // shadows, each player writes only their own
+    match /{coll}/{uid} {
+      allow read: if request.auth != null && coll.matches('duel_[0-9]{4}w[0-9]{2}');
+      allow write: if request.auth != null && request.auth.uid == uid
+        && coll.matches('duel_[0-9]{4}w[0-9]{2}')
+        && request.resource.data.data is string
+        && request.resource.data.data.size() < 20000
+        && request.resource.data.score is int
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 24;
     }
   }
 }

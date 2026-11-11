@@ -49,21 +49,19 @@ func _ready() -> void:
 	var b1 := UI.gold_button("Hành Tẩu Giang Hồ", func(): Game.goto(MapScreen.new()), 32)
 	b1.custom_minimum_size.y = 86
 	right.add_child(b1)
-	var row := UI.hbox(12)
-	right.add_child(row)
-	var b2 := UI.button("Lôi Đài", func(): Flow.start_arena(0), 26)
-	b2.custom_minimum_size.y = 72
-	b2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(b2)
-	var bt := UI.button("Tháp", func(): Game.goto(TowerScreen.new()), 26)
-	bt.custom_minimum_size.y = 72
-	bt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(bt)
-	var b3 := UI.button("Luyện Công", func(): Flow.start_training(), 26)
-	b3.custom_minimum_size.y = 72
-	b3.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(b3)
-	right.add_child(UI.label("Lôi đài kỷ lục: %d trận  ·  Tháp: tầng %d" % [int(h.arena_best), Tower.best(h)], 18, Color(0.85, 0.82, 0.75)))
+	var modes := GridContainer.new()
+	modes.columns = 2
+	modes.add_theme_constant_override("h_separation", 12)
+	modes.add_theme_constant_override("v_separation", 10)
+	right.add_child(modes)
+	var dl := Duel.ensure(h)
+	for it in [["Tỉ Võ", func(): Game.goto(DuelScreen.new())], ["Tháp Thí Luyện", func(): Game.goto(TowerScreen.new())],
+			["Lôi Đài", func(): Flow.start_arena(0)], ["Luyện Công", func(): Flow.start_training()]]:
+		var b := UI.button(it[0], it[1], 24)
+		b.custom_minimum_size.y = 60
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		modes.add_child(b)
+	right.add_child(UI.label("Tỉ võ %d điểm  ·  Tháp tầng %d  ·  Lôi đài %d trận" % [int(dl.score), Tower.best(h), int(h.arena_best)], 17, Color(0.85, 0.82, 0.75)))
 	var sp := Control.new()
 	sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right.add_child(sp)

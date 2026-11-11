@@ -141,3 +141,35 @@ static func _tower_done(f: int, res: Dictionary) -> void:
 		out.levels = 0
 	Game.save()
 	Game.goto(ResultScreen.new(out))
+
+# ------------------------------------------------------------- duel (Tỉ Võ)
+static func start_duel(doc: Dictionary) -> void:
+	var h := Game.hero
+	var d := Duel.ensure(h)
+	if int(d.tickets) <= 0:
+		return
+	d.tickets = int(d.tickets) - 1
+	Game.save()
+	var themes := ["temple", "peak", "river", "night", "bamboo"]
+	var cfg := {"p": Hero.side(h), "e": Duel.side(doc), "theme": themes[randi() % themes.size()], "rounds": 2, "seed": randi()}
+	_launch(cfg, func(res: Dictionary): _duel_done(doc, res))
+
+static func _duel_done(doc: Dictionary, res: Dictionary) -> void:
+	var h := Game.hero
+	h.fights = int(h.fights) + 1
+	Daily.on_fight(h, "duel", res)
+	var delta := Duel.apply(h, int(doc.get("score", Duel.START)), res.won)
+	var out := {"mode": "duel", "won": res.won, "res": res, "delta": delta, "foe": str(doc.get("name", "?"))}
+	var lvl := int(h.level)
+	if res.won:
+		h.wins = int(h.wins) + 1
+		out.rewards = {"exp": 15 + 6 * lvl, "gold": 20 + 8 * lvl, "jade": 0}
+	else:
+		h.losses = int(h.losses) + 1
+		out.rewards = {"exp": 5 + 2 * lvl, "gold": 0, "jade": 0}
+	out.levels = _grant(out.rewards)
+	Game.save()
+	# publish the new score (fire and forget)
+	if Cloud.enabled():
+		Cloud.put_my_doc(Duel.collection(), Duel.fields(h))
+	Game.goto(ResultScreen.new(out))
