@@ -13,6 +13,7 @@ const REWARDED_UNIT := "ca-app-pub-3940256099942544/5224354917"   # TODO real un
 
 var _android := OS.get_name() == "Android"
 var _started := false
+var _sdk_ready := false   # next-gen SDK: nothing may load before initialize completes
 var _ad: RewardedAd
 var _loading := false
 var _retry := 0.0
@@ -113,11 +114,15 @@ func _start() -> void:
 	if _started:
 		return
 	_started = true
-	MobileAds.initialize()
+	var l := OnInitializationCompleteListener.new()
+	l.on_initialization_complete = func(_s) -> void:
+		_sdk_ready = true
+		_load()
+	MobileAds.initialize(l)
 	_load()
 
 func _load() -> void:
-	if not _started or _loading or _ad != null:
+	if not _sdk_ready or _loading or _ad != null:
 		return
 	_loading = true
 	RewardedAdLoader.new().load(REWARDED_UNIT, AdRequest.new(), _load_cb)
