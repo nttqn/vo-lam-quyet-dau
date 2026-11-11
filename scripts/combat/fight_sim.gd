@@ -16,6 +16,7 @@ var rng := RandomNumberGenerator.new()
 var phase := INTRO
 var pf := 0                 # frames in phase
 var round_no := 1
+var round_frames := ROUND_FRAMES   # tower rules can shorten rounds
 var timer := ROUND_FRAMES
 var wins := [0, 0]
 var rounds_to_win := 2
@@ -39,7 +40,7 @@ func _reset_positions() -> void:
 	f[0].reset_round(-1.8, 1)
 	f[1].reset_round(1.8, -1)
 	projs.clear()
-	timer = ROUND_FRAMES
+	timer = round_frames
 
 ## Advance one tick with both inputs.
 func tick(in0: Dictionary, in1: Dictionary) -> void:

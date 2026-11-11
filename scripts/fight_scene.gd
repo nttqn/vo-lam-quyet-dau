@@ -48,6 +48,9 @@ func _ready() -> void:
 	var fe := make_fighter(cfg.e)
 	sim = FightSim.new(fp, fe, cfg.get("seed", 0))
 	sim.rounds_to_win = cfg.get("rounds", 2)
+	if cfg.get("rule", "") == "time":
+		sim.round_frames = 30 * 60
+		sim.timer = sim.round_frames
 	ai = FightAI.new(fe, cfg.e.get("ai", 0.5))
 	if cfg.get("autoplay", false) or Game.autoplay:
 		ai_p = FightAI.new(fp, 0.8)
@@ -203,6 +206,8 @@ func _physics_process(_delta: float) -> void:
 		inp = _script.get(_frames, {})
 		ein = {}
 	sim.tick(inp, ein)
+	if cfg.get("rule", "") == "regen" and sim.phase == FightSim.FIGHT and not sim.f[1].dead:
+		sim.f[1].hp = minf(sim.f[1].st.hp_max, sim.f[1].hp + sim.f[1].st.hp_max * 0.012 / 60.0)
 	if cfg.get("training", false):
 		sim.timer = FightSim.ROUND_FRAMES
 		for ff in sim.f:
@@ -222,7 +227,9 @@ func _events() -> void:
 	for e in sim.events:
 		match e.t:
 			"round":
-				hud.banner("Hiệp %d" % e.n, "", 1.3)
+				hud.banner("Hiệp %d" % e.n, Tower.RULES[cfg.rule][0] if Tower.RULES.has(cfg.get("rule", "")) else "", 1.3)
+				if cfg.get("rule", "") == "low_hp":
+					sim.f[0].hp = sim.f[0].st.hp_max * 0.6
 				fx.clear_projs()
 				Game.sfx("gong")
 			"fight":

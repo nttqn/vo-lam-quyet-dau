@@ -63,7 +63,13 @@ func _ready() -> void:
 		Game.autoplay = true
 		Game.slot = 2
 		Game.hero = Hero.create("Kiểm Thử", "nga_mi")
-		Flow.start_stage(0, 0)
+		var tw := -1
+		for a in args:
+			if a.begins_with("--tower="): tw = int(a.substr(8))
+		if tw > 0:
+			Flow.start_tower(tw)
+		else:
+			Flow.start_stage(0, 0)
 		return
 	if screen != "":
 		_demo_screen(screen, args)
@@ -98,6 +104,7 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 		"map": Game.goto(MapScreen.new())
 		"char": Game.goto(CharacterScreen.new())
 		"skill": Game.goto(SkillScreen.new())
+		"tower": Game.goto(TowerScreen.new())
 		"daily":
 			Daily.track(Game.hero, "fight", 3)
 			Game.goto(DailyScreen.new())

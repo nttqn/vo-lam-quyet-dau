@@ -101,3 +101,43 @@ static func start_training() -> void:
 		Daily.on_fight(Game.hero, "train", _res)
 		Game.save()
 		Game.goto(HubScreen.new()))
+
+# ------------------------------------------------------------- tower
+static func start_tower(f: int) -> void:
+	var h := Game.hero
+	var p := Hero.side(h)
+	var r := Tower.rule(f)
+	if r == "no_skill":
+		p.skills = [null, null, null]
+	elif r == "glass":
+		p.stats.hp_max *= 0.5
+	var themes := ["temple", "peak", "snow", "night", "demon"]
+	var cfg := {"p": p, "e": Tower.side(f), "theme": themes[(f / 10) % themes.size()], "rounds": 1, "seed": randi(), "rule": r}
+	_launch(cfg, func(res: Dictionary): _tower_done(f, res))
+
+static func _tower_done(f: int, res: Dictionary) -> void:
+	var h := Game.hero
+	h.fights = int(h.fights) + 1
+	var out := {"mode": "tower", "f": f, "won": res.won, "res": res}
+	Daily.on_fight(h, "tower", res)
+	if res.won:
+		h.wins = int(h.wins) + 1
+		var first := f > Tower.best(h)
+		var rw := Tower.reward(f) if first else {"gold": 0, "exp": int(Tower.reward(f).exp * 0.2), "jade": 0, "item": -1}
+		if first:
+			h.tower = {"best": f}
+		out.rewards = rw
+		out.levels = _grant(rw)
+		if int(rw.get("item", -1)) >= 0:
+			var rng := RandomNumberGenerator.new()
+			rng.randomize()
+			var slot: String = Items.SLOTS[rng.randi_range(0, Items.SLOTS.size() - 1)]
+			var it := Items.make(slot, clampi(1 + int((Tower.level(f) - 1) / 5.5), 1, 7), int(rw.item), 0)
+			h.bag.append(it)
+			out.drop = it
+	else:
+		h.losses = int(h.losses) + 1
+		out.rewards = {"exp": 0, "gold": 0, "jade": 0}
+		out.levels = 0
+	Game.save()
+	Game.goto(ResultScreen.new(out))

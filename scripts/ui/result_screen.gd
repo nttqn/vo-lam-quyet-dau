@@ -43,6 +43,8 @@ func _ready() -> void:
 			var st := UI.label("★".repeat(stars) + "☆".repeat(3 - stars), 54, UI.GOLD)
 			right.add_child(st)
 			right.add_child(UI.label("★ thắng  ★★ còn ≥50% sinh lực  ★★★ thắng tuyệt đối", 16, Color(0.75, 0.72, 0.66)))
+	elif out.mode == "tower":
+		right.add_child(UI.label("Tháp Thí Luyện — Tầng %d" % int(out.f) + (" · vượt tầng mới!" if out.won and int(out.f) == Tower.best(h) else ""), 26, UI.GOLD, UI.bold))
 	elif out.mode == "arena":
 		right.add_child(UI.label("Lôi Đài — liên thắng %d trận" % int(out.streak), 26, UI.GOLD, UI.bold))
 	var res: Dictionary = out.res
@@ -93,6 +95,12 @@ func _ready() -> void:
 		if next_ok:
 			row.add_child(UI.gold_button("Trận kế", func(): Flow.start_stage(out.r, out.s + 1), 24, 170))
 		row.add_child(UI.button("Bản đồ", func(): Game.goto(MapScreen.new()), 24, 150))
+	elif out.mode == "tower":
+		if out.won:
+			row.add_child(UI.gold_button("Tầng kế", func(): Flow.start_tower(int(out.f) + 1), 24, 170))
+		else:
+			row.add_child(UI.button("Đấu lại", func(): Flow.start_tower(int(out.f)), 24, 160))
+		row.add_child(UI.button("Về tháp", func(): Game.goto(TowerScreen.new()), 24, 150))
 	else:
 		if out.won:
 			row.add_child(UI.gold_button("Đấu tiếp", func(): Flow.start_arena(int(out.n) + 1, out.get("revived", false)), 24, 190))
@@ -106,7 +114,7 @@ func _ready() -> void:
 	if out.won:
 		Game.sfx("coin")
 	if Game.autoplay:
-		print("FLOWTEST result: won=%s stars=%s rewards=%s level=%d" % [out.won, out.get("stars", 0), out.get("rewards", {}), int(h.level)])
+		print("FLOWTEST result: mode=%s won=%s stars=%s rewards=%s level=%d daily=%s" % [out.mode, out.won, out.get("stars", 0), out.get("rewards", {}), int(h.level), h.get("daily", {}).get("prog", {})])
 		get_tree().create_timer(0.5).timeout.connect(get_tree().quit)
 
 func back() -> void:

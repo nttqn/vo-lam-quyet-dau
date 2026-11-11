@@ -55,11 +55,15 @@ func _ready() -> void:
 	b2.custom_minimum_size.y = 72
 	b2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(b2)
+	var bt := UI.button("Tháp", func(): Game.goto(TowerScreen.new()), 26)
+	bt.custom_minimum_size.y = 72
+	bt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(bt)
 	var b3 := UI.button("Luyện Công", func(): Flow.start_training(), 26)
 	b3.custom_minimum_size.y = 72
 	b3.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(b3)
-	right.add_child(UI.label("Lôi đài kỷ lục: %d trận liên thắng" % int(h.arena_best), 18, Color(0.85, 0.82, 0.75)))
+	right.add_child(UI.label("Lôi đài kỷ lục: %d trận  ·  Tháp: tầng %d" % [int(h.arena_best), Tower.best(h)], 18, Color(0.85, 0.82, 0.75)))
 	var sp := Control.new()
 	sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right.add_child(sp)
