@@ -109,3 +109,9 @@ static func npc_gear(level: int, boss: bool, rng: RandomNumberGenerator) -> Dict
 		var rar := clampi(int(level / 9.0) + (1 if boss else 0) + lucky - 1, 0, 4)
 		g[slot] = make(slot, tier, rar, clampi(int(level / 4.0) + (2 if boss and level >= 6 else 0), 0, MAX_PLUS))
 	return g
+
+## Painted icon of an item, if the game has one (assets/ui/items/).
+## Weapons depend on the sect style: weapon_<style>_<tier>.png
+static func icon(it: Dictionary, style := "sword") -> Texture2D:
+	var p := "res://assets/ui/items/%s_%d.png" % [("weapon_" + style) if it.slot == "weapon" else str(it.slot), clampi(int(it.tier), 1, 7)]
+	return load(p) if ResourceLoader.exists(p) else null

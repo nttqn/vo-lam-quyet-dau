@@ -48,6 +48,23 @@ func _card(it: Dictionary, buttons: Array, note := "") -> Control:
 	var p := UI.panel(Color(0.07, 0.05, 0.06, 0.9), Items.RARITY_COL[rar].darkened(0.3))
 	var row := UI.hbox(10)
 	p.add_child(row)
+	var tex := Items.icon(it, _style())
+	if tex:
+		# painted icon on a tile tinted by rarity
+		var tile := Panel.new()
+		tile.custom_minimum_size = Vector2(64, 64)
+		tile.add_theme_stylebox_override("panel", UI.box(Items.RARITY_COL[rar].darkened(0.7), Items.RARITY_COL[rar], 2, 10, 0))
+		var tr := TextureRect.new()
+		tr.texture = tex
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		tr.offset_left = 4
+		tr.offset_top = 4
+		tr.offset_right = -4
+		tr.offset_bottom = -4
+		tile.add_child(tr)
+		row.add_child(tile)
 	var info := UI.vbox(2)
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(info)

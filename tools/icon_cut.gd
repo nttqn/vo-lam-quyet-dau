@@ -1,31 +1,46 @@
 extends SceneTree
-## Cuts the ChatGPT skill icon sheets (assets_src/skills/<sect>.png: 6 round
-## icons, 3 on top + 3 below, transparent background) into
-## assets/ui/skills/<sect>_<0..5>.png, 256 square.
+## Cuts ChatGPT icon sheets (transparent background, icons in rows, reading
+## order) from assets_src/skills/ and assets_src/items/ into 256-square PNGs.
+##   skills: <sect>.png        -> assets/ui/skills/<sect>_<0..5>.png   (3 + 3)
+##   weapons: weapon_<style>.png -> assets/ui/items/weapon_<style>_<1..7>.png (4 + 3)
 ##   godot --headless --path . --script res://tools/icon_cut.gd [-- thieu_lam]
 
-const SRC := "res://assets_src/skills/"
-const OUT := "res://assets/ui/skills/"
-const SECTS := ["thieu_lam", "vo_dang", "nga_mi", "cai_bang", "duong_mon"]
-const N := 6
+## sheet -> [source, output pattern (%d = index), count, icons per row, first index]
+const SHEETS := {
+	"thieu_lam": ["res://assets_src/skills/thieu_lam.png", "res://assets/ui/skills/thieu_lam_%d.png", 6, [3, 3], 0],
+	"vo_dang": ["res://assets_src/skills/vo_dang.png", "res://assets/ui/skills/vo_dang_%d.png", 6, [3, 3], 0],
+	"nga_mi": ["res://assets_src/skills/nga_mi.png", "res://assets/ui/skills/nga_mi_%d.png", 6, [3, 3], 0],
+	"cai_bang": ["res://assets_src/skills/cai_bang.png", "res://assets/ui/skills/cai_bang_%d.png", 6, [3, 3], 0],
+	"duong_mon": ["res://assets_src/skills/duong_mon.png", "res://assets/ui/skills/duong_mon_%d.png", 6, [3, 3], 0],
+	"weapon_staff": ["res://assets_src/items/weapon_staff.png", "res://assets/ui/items/weapon_staff_%d.png", 7, [4, 3], 1],
+	"weapon_sword": ["res://assets_src/items/weapon_sword.png", "res://assets/ui/items/weapon_sword_%d.png", 7, [4, 3], 1],
+	"weapon_dual": ["res://assets_src/items/weapon_dual.png", "res://assets/ui/items/weapon_dual_%d.png", 7, [4, 3], 1],
+	"weapon_palm": ["res://assets_src/items/weapon_palm.png", "res://assets/ui/items/weapon_palm_%d.png", 7, [4, 3], 1],
+	"weapon_dagger": ["res://assets_src/items/weapon_dagger.png", "res://assets/ui/items/weapon_dagger_%d.png", 7, [4, 3], 1],
+	"armor": ["res://assets_src/items/armor.png", "res://assets/ui/items/armor_%d.png", 7, [4, 3], 1],
+	"hat": ["res://assets_src/items/hat.png", "res://assets/ui/items/hat_%d.png", 7, [4, 3], 1],
+	"boots": ["res://assets_src/items/boots.png", "res://assets/ui/items/boots_%d.png", 7, [4, 3], 1],
+	"jade": ["res://assets_src/items/jade.png", "res://assets/ui/items/jade_%d.png", 7, [4, 3], 1],
+}
 const SIZE := 256
 
 func _init() -> void:
 	var only := OS.get_cmdline_user_args()
-	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
-	for s in SECTS:
+	for s in SHEETS:
 		if not only.is_empty() and not s in only:
 			continue
-		var p := ProjectSettings.globalize_path(SRC + s + ".png")
+		var job: Array = SHEETS[s]
+		var p := ProjectSettings.globalize_path(job[0])
 		if not FileAccess.file_exists(p):
 			print("missing ", s)
 			continue
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(String(job[1]).get_base_dir()))
 		var img := Image.load_from_file(p)
 		img.convert(Image.FORMAT_RGBA8)
-		print(s, ": ", _cut(img, s))
+		print(s, ": ", _cut(img, job[1], int(job[2]), job[3], int(job[4])))
 	quit()
 
-func _cut(img: Image, sect: String) -> String:
+func _cut(img: Image, out_pat: String, N: int, rows: Array, first: int) -> String:
 	var w := img.get_width()
 	var h := img.get_height()
 	# A painted checkerboard / white instead of real transparency: clear the
@@ -109,13 +124,16 @@ func _cut(img: Image, sect: String) -> String:
 	if blobs.size() < N:
 		return "only %d icons found" % blobs.size()
 	var icons: Array = blobs.slice(0, N)
-	# reading order: top row by x, then bottom row by x
+	# reading order: rows by height (sizes from `rows`), each row left to right
 	icons.sort_custom(func(a, b): return a.y0 + a.y1 < b.y0 + b.y1)
-	var top: Array = icons.slice(0, 3)
-	var bot: Array = icons.slice(3, 6)
-	top.sort_custom(func(a, b): return a.x0 < b.x0)
-	bot.sort_custom(func(a, b): return a.x0 < b.x0)
-	icons = top + bot
+	var ordered: Array = []
+	var at := 0
+	for n in rows:
+		var row: Array = icons.slice(at, at + int(n))
+		row.sort_custom(func(a, b): return a.x0 < b.x0)
+		ordered.append_array(row)
+		at += int(n)
+	icons = ordered
 	var sizes := []
 	for i in N:
 		var b: Dictionary = icons[i]
@@ -126,6 +144,6 @@ func _cut(img: Image, sect: String) -> String:
 		sq.fill(Color(0, 0, 0, 0))
 		sq.blit_rect(part, Rect2i(Vector2i.ZERO, r.size), Vector2i((side - r.size.x) / 2, (side - r.size.y) / 2))
 		sq.resize(SIZE, SIZE, Image.INTERPOLATE_LANCZOS)
-		sq.save_png(ProjectSettings.globalize_path(OUT + "%s_%d.png" % [sect, i]))
+		sq.save_png(ProjectSettings.globalize_path(out_pat % (i + first)))
 		sizes.append(side)
 	return "ok, icon sizes %s" % [sizes]

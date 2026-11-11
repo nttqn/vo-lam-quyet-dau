@@ -15,3 +15,5 @@ assets_src/characters/*.import
 *.gd.uid.tmp
 assets_src/skills/*.png
 assets_src/skills/*.import
+assets_src/items/*.png
+assets_src/items/*.import
