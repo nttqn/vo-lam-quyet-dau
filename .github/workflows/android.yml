@@ -5,9 +5,14 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     env:
       GODOT_VERSION: "4.7.2"
     steps:
@@ -61,9 +66,6 @@ jobs:
           ./godot --headless --path . --import || true
           ./godot --headless --path . --import || true
 
-      - name: Android build template (gradle)
-        run: ./godot --headless --path . --install-android-build-template && ls android/build | head
-
       - name: Balance smoke test (AI vs AI)
         run: ./godot --headless --path . --script res://tools/sim.gd -- --n=1 --lvl=12
 
@@ -93,10 +95,10 @@ jobs:
       - name: Export APK
         run: |
           mkdir -p build
-          ./godot --headless --path . --export-$EXPORT_MODE "Android" build/vo-lam-quyet-dau.apk
+          ./godot --headless --path . --install-android-build-template --export-$EXPORT_MODE "Android" build/vo-lam-quyet-dau.apk
           # Play Store bundle from the same preset
           sed -i 's|^gradle_build/export_format=0|gradle_build/export_format=1|' export_presets.cfg
-          ./godot --headless --path . --export-$EXPORT_MODE "Android" build/vo-lam-quyet-dau.aab
+          ./godot --headless --path . --install-android-build-template --export-$EXPORT_MODE "Android" build/vo-lam-quyet-dau.aab
           ls -la build
 
       - uses: actions/upload-artifact@v4
