@@ -54,6 +54,9 @@ func _ready() -> void:
 				if b.begins_with("--e="): es = b.substr(4)
 				if b.begins_with("--theme="): th = b.substr(8)
 			var p := Npc.side(ps, 20, "Thử Nghiệm", 0.7, "", false, 5)
+			for b in args:
+				if b.begins_with("--outfit="):
+					p.look["model"] = Outfits.model_for(ps, b.substr(9))
 			p.skills = [Sects.get_sect(ps).skills[0], Sects.get_sect(ps).skills[2], Sects.get_sect(ps).skills[5]]
 			var e := Npc.side(es, 20, "Đối Thủ", 0.7, "bandit", true, 9)
 			var fs := FightScene.new({"p": p, "e": e, "theme": th, "autoplay": true, "seed": 3})

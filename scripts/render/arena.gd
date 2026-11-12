@@ -169,7 +169,7 @@ func _ground(th: Dictionary) -> void:
 		gm.albedo_texture = tex
 	gm.albedo_color = Color.WHITE
 	gm.uv1_scale = Vector3(8, 6, 1)
-	_mesh(pm, gm, Vector3(0, 0, -10), Vector3.ZERO, Vector3.ONE, false)
+	_mesh(pm, gm, Vector3(0, -0.01, -10), Vector3.ZERO, Vector3.ONE, false)   # just under the floor slabs
 	# fighting floor: stone slabs / platform for most themes
 	if theme in ["temple", "peak", "demon", "night"] and not Diag.on("no_floor"):
 		var slab := m(g.darkened(0.02) if theme != "demon" else Color(0.3, 0.22, 0.2), 0.8)
@@ -177,7 +177,7 @@ func _ground(th: Dictionary) -> void:
 		for ix in range(-9, 10):
 			for iz in range(-3, 2):
 				var mm := slab if (ix + iz) % 2 == 0 else slab2
-				_mesh(box(1.96, 0.08, 1.96), mm, Vector3(ix * 2.0, 0.0, iz * 2.0 + 0.5), Vector3.ZERO, Vector3.ONE, false)
+				_mesh(box(1.96, 0.08, 1.96), mm, Vector3(ix * 2.0, -0.035, iz * 2.0 + 0.5), Vector3.ZERO, Vector3.ONE, false)   # top face = ground (fighters stand at y 0)
 
 func _mountains(th: Dictionary) -> void:
 	# a painted backdrop (assets/art/bg_<theme>) replaces the built mountains
@@ -245,7 +245,7 @@ func pagoda(pos: Vector3, floors: int, s := 1.0, wall := Color(0.62, 0.15, 0.12)
 	_mesh(cyl(0.0, 0.25 * s, 1.2 * s, 6), m(Color(0.8, 0.62, 0.2), 0.4), pos + Vector3(0, y + 0.6 * s, 0))
 
 func tree(pos: Vector3, s := 1.0, col := Color(0.22, 0.4, 0.22)) -> void:
-	if _prop("tree", pos, 4.6 * s, rng.randf_range(0, 360)):
+	if _prop("tree", pos, 4.6 * s, rng.randf_range(0, 360)) or _prop("pine", pos, 4.6 * s, rng.randf_range(0, 360)):
 		return
 	_mesh(cyl(0.12 * s, 0.2 * s, 2.0 * s, 6), m(Color(0.32, 0.22, 0.14)), pos + Vector3(0, 1.0 * s, 0))
 	for i in 3:
@@ -345,7 +345,7 @@ func _river() -> void:
 	_water = _mesh(pm, wm, Vector3(0, 0.03, -14), Vector3.ZERO, Vector3.ONE, false)
 	# wooden pier as the fight floor
 	for ix in range(-10, 11):
-		_mesh(box(1.9, 0.12, 4.0), m(Color(0.5, 0.36, 0.22) if ix % 2 == 0 else Color(0.45, 0.32, 0.2)), Vector3(ix * 2.0, 0.06, 0.3), Vector3.ZERO, Vector3.ONE, false)
+		_mesh(box(1.9, 0.12, 4.0), m(Color(0.5, 0.36, 0.22) if ix % 2 == 0 else Color(0.45, 0.32, 0.2)), Vector3(ix * 2.0, -0.06, 0.3), Vector3.ZERO, Vector3.ONE, false)
 	for x in range(-18, 19, 4):
 		_mesh(cyl(0.12, 0.12, 1.2, 6), m(Color(0.35, 0.25, 0.15)), Vector3(x, 0.3, -1.8))
 	# boats

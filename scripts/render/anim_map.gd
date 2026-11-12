@@ -18,8 +18,29 @@ static func idle_clip(style: String) -> Array:
 		return ["a/Sword_Idle", 0.0, 1.0]
 	return ["a/Punch_Enter", 0.82, 1.0]
 
+## Mixamo attack clips (assets_src/animation), timed from tools/hand_check.gd:
+## move key -> [clip, from, hit (hand/weapon fully out), to]
+const MIX := {
+	"jab": ["m/Jab", 0.08, 0.25, 0.55], "jab_w": ["m/Jab", 0.08, 0.25, 0.55],
+	"cross": ["m/Cross", 0.3, 0.55, 0.8], "cross_w": ["m/Cross", 0.3, 0.55, 0.8],
+	"lowpunch": ["m/Jab", 0.08, 0.25, 0.55],
+	"upper": ["m/Uppercut", 0.18, 0.38, 0.72],
+	"palm": ["m/Palm", 0.2, 0.45, 0.75],
+	"dpalm": ["m/Double_Palm", 0.25, 0.48, 0.8],
+	"slash_h": ["m/Slash_H", 0.2, 0.42, 0.75], "staff_sweep": ["m/Slash_H", 0.2, 0.42, 0.75],
+	"slash_hi": ["m/Slash_Hi", 0.05, 0.24, 0.5],
+	"rising": ["m/Rising", 0.3, 0.52, 0.8],
+	"spin": ["m/Spin_Attack", 0.05, 0.55, 0.8],
+	"thrust": ["m/Thrust", 0.2, 0.45, 0.7], "staff_poke": ["m/Thrust", 0.2, 0.45, 0.7],
+	"staff_over": ["m/Overhead", 0.1, 0.38, 0.7],
+	"toss": ["m/Throw", 0.3, 0.43, 0.7],
+}
+
 static func attack(key: String, style: String) -> Dictionary:
 	var weapon := style in WEAPON_STYLES
+	if MIX.has(key) and Avatar.has_clip(MIX[key][0]) and not (key == "lowpunch"):
+		var mx: Array = MIX[key]
+		return {"clip": mx[0], "from": mx[1], "hit": mx[2], "to": mx[3]}
 	match key:
 		"jab", "jab_w":
 			return {"clip": "a/Punch_Jab", "from": 0.05, "hit": 0.38, "to": 0.95}
