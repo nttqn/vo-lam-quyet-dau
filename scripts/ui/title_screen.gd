@@ -35,8 +35,20 @@ func _ready() -> void:
 	v.offset_left = -500
 	v.offset_right = 500
 	ui.add_child(v)
-	var t := UI.heading("Võ Lâm Quyết Đấu", 92)
-	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var t: Control
+	var logo_p := "res://assets/art/logo.png"
+	if ResourceLoader.exists(logo_p):
+		# painted calligraphy title (assets/art/logo.png)
+		var lr := TextureRect.new()
+		lr.texture = load(logo_p)
+		lr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		lr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		lr.custom_minimum_size = Vector2(0, 170)
+		t = lr
+	else:
+		var hl := UI.heading("Võ Lâm Quyết Đấu", 92)
+		hl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		t = hl
 	v.add_child(t)
 	var sub := UI.label("Ngũ phái tranh hùng  ·  Một kiếm định giang hồ", 24, UI.PAPER, UI.med)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

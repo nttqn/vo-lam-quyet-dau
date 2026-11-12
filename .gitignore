@@ -20,3 +20,6 @@ assets_src/items/*.import
 assets_src/weapons/*.glb
 assets_src/weapons/*.png
 assets_src/weapons/*.import
+assets_src/scenery/*.png
+assets_src/scenery/*.glb
+assets_src/scenery/*.import

@@ -180,6 +180,27 @@ func _ground(th: Dictionary) -> void:
 				_mesh(box(1.96, 0.08, 1.96), mm, Vector3(ix * 2.0, 0.0, iz * 2.0 + 0.5), Vector3.ZERO, Vector3.ONE, false)
 
 func _mountains(th: Dictionary) -> void:
+	# a painted backdrop (assets/art/bg_<theme>) replaces the built mountains
+	var bg := Props.backdrop(theme)
+	if bg:
+		var qm := QuadMesh.new()
+		# camera: ~66 m away, 42° fov -> ~51 m tall view; keep the painting's horizon
+		# (asked for at ~1/3 up from its bottom) near the arena's horizon (y ~ 0)
+		var aspect := bg.get_width() / float(bg.get_height())
+		var hh := 56.0
+		# phones are ~20:9 wide: repeat the (horizontally seamless) painting so the
+		# sides never run out while the camera pans
+		qm.size = Vector2(hh * aspect * 2.0, hh)
+		var bm := StandardMaterial3D.new()
+		bm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		bm.albedo_texture = bg
+		bm.disable_fog = true
+		bm.texture_repeat = true
+		bm.uv1_scale = Vector3(2, 1, 1)
+		bm.uv1_offset = Vector3(-0.5, 0, 0)
+		var q := _mesh(qm, bm, Vector3(0, hh * 0.5 - hh * 0.32, -60), Vector3.ZERO, Vector3.ONE, false)
+		q.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		return
 	var far: Color = (th.sky_top as Color).lerp(th.fog, 0.35).darkened(0.15)
 	for i in 14:
 		var x := -60.0 + i * 9.0 + rng.randf_range(-3, 3)
@@ -199,6 +220,8 @@ func _mountains(th: Dictionary) -> void:
 
 # ------------------------------------------------------------ props
 func pagoda(pos: Vector3, floors: int, s := 1.0, wall := Color(0.62, 0.15, 0.12), roof := Color(0.2, 0.22, 0.26)) -> void:
+	if _prop("pagoda", pos, (floors * 1.9 + 1.4) * s, 0.0):
+		return
 	var y := 0.0
 	var w := 4.0 * s
 	_mesh(box(w + 0.6, 0.5 * s, w + 0.6), m(Color(0.6, 0.58, 0.52)), pos + Vector3(0, 0.25 * s, 0))
@@ -222,25 +245,24 @@ func pagoda(pos: Vector3, floors: int, s := 1.0, wall := Color(0.62, 0.15, 0.12)
 	_mesh(cyl(0.0, 0.25 * s, 1.2 * s, 6), m(Color(0.8, 0.62, 0.2), 0.4), pos + Vector3(0, y + 0.6 * s, 0))
 
 func tree(pos: Vector3, s := 1.0, col := Color(0.22, 0.4, 0.22)) -> void:
+	if _prop("tree", pos, 4.6 * s, rng.randf_range(0, 360)):
+		return
 	_mesh(cyl(0.12 * s, 0.2 * s, 2.0 * s, 6), m(Color(0.32, 0.22, 0.14)), pos + Vector3(0, 1.0 * s, 0))
 	for i in 3:
 		var r := (1.5 - i * 0.35) * s
 		_mesh(cyl(0.0, r, 1.6 * s, 7), m(col.lightened(i * 0.05)), pos + Vector3(0, (2.0 + i * 0.9) * s, 0), Vector3(0, i * 20, 0))
 
 func pine(pos: Vector3, s := 1.0, snow := false) -> void:
+	if _prop("pine", pos, 3.6 * s, rng.randf_range(0, 360)):
+		return
 	_mesh(cyl(0.08 * s, 0.14 * s, 1.0 * s, 6), m(Color(0.3, 0.2, 0.13)), pos + Vector3(0, 0.5 * s, 0))
 	for i in 4:
 		var col := Color(0.16, 0.3, 0.2) if not snow else Color(0.85, 0.9, 0.95)
 		_mesh(cyl(0.0, (1.2 - i * 0.25) * s, 1.1 * s, 7), m(col.lightened(i * 0.04)), pos + Vector3(0, (1.0 + i * 0.7) * s, 0), Vector3(0, i * 25, 0))
 
 func lantern(pos: Vector3, col := Color(0.95, 0.3, 0.15), light := false) -> void:
-	_mesh(cyl(0.04, 0.04, 2.4, 6), m(Color(0.2, 0.15, 0.1)), pos + Vector3(0, 1.2, 0))
-	var lm := StandardMaterial3D.new()
-	lm.albedo_color = col
-	lm.emission_enabled = true
-	lm.emission = col
-	lm.emission_energy_multiplier = 1.6
-	_mesh(SphereMesh.new(), lm, pos + Vector3(0, 2.5, 0), Vector3.ZERO, Vector3(0.36, 0.48, 0.36), false)
+	if not _prop("lantern", pos, 2.8, 0.0):
+		_lantern_shape(pos, col)
 	if light and not Diag.on("no_lights"):
 		var l := OmniLight3D.new()
 		l.light_color = col
@@ -249,18 +271,38 @@ func lantern(pos: Vector3, col := Color(0.95, 0.3, 0.15), light := false) -> voi
 		l.position = pos + Vector3(0, 2.5, 0.3)
 		add_child(l)
 
+func _lantern_shape(pos: Vector3, col: Color) -> void:
+	_mesh(cyl(0.04, 0.04, 2.4, 6), m(Color(0.2, 0.15, 0.1)), pos + Vector3(0, 1.2, 0))
+	var lm := StandardMaterial3D.new()
+	lm.albedo_color = col
+	lm.emission_enabled = true
+	lm.emission = col
+	lm.emission_energy_multiplier = 1.6
+	_mesh(SphereMesh.new(), lm, pos + Vector3(0, 2.5, 0), Vector3.ZERO, Vector3(0.36, 0.48, 0.36), false)
+
 func rock(pos: Vector3, s := 1.0, col := Color(0.45, 0.43, 0.42)) -> void:
+	if _prop("rock", pos - Vector3(0, 0.25 * s, 0), 1.1 * s, rng.randf_range(0, 360)):
+		return
 	var sm := SphereMesh.new()
 	sm.radial_segments = 6
 	sm.rings = 3
 	_mesh(sm, m(col), pos, Vector3(rng.randf_range(0, 40), rng.randf_range(0, 180), 0), Vector3(1.4, 0.8, 1.1) * s)
 
 func gate(pos: Vector3, s := 1.0, col := Color(0.65, 0.14, 0.1)) -> void:
+	if _prop("gate", pos, 4.4 * s, 0.0):
+		return
 	for px in [-1, 1]:
 		_mesh(cyl(0.2 * s, 0.2 * s, 4.0 * s, 8), m(col), pos + Vector3(px * 2.2 * s, 2.0 * s, 0))
 	_mesh(box(5.6 * s, 0.3 * s, 0.4 * s), m(col), pos + Vector3(0, 3.4 * s, 0))
 	_mesh(box(6.4 * s, 0.35 * s, 0.6 * s), m(Color(0.18, 0.18, 0.2)), pos + Vector3(0, 4.1 * s, 0))
 	_mesh(box(1.2 * s, 0.6 * s, 0.1 * s), m(Color(0.1, 0.1, 0.1)), pos + Vector3(0, 3.75 * s, 0.25 * s))
+
+## Meshy prop if the game has one: <name>_<theme> first, then <name>.
+func _prop(name: String, pos: Vector3, height: float, yaw: float) -> bool:
+	for n in [name + "_" + theme, name]:
+		if Props.has(n):
+			return Props.place(self, n, pos, height, yaw) != null
+	return false
 
 # ------------------------------------------------------------ themes
 func _temple() -> void:
@@ -274,7 +316,8 @@ func _temple() -> void:
 	for x in [-16, 15, -20, 20]:
 		tree(Vector3(x, 0, -11 + rng.randf_range(-2, 2)), rng.randf_range(0.9, 1.3), Color(0.3, 0.45, 0.25))
 	# incense burner
-	_mesh(cyl(0.5, 0.35, 0.7, 8), m(Color(0.35, 0.3, 0.2), 0.5), Vector3(-6.5, 0.35, -5.5))
+	if not _prop("incense", Vector3(-6.5, 0, -5.5), 0.9, 0.0):
+		_mesh(cyl(0.5, 0.35, 0.7, 8), m(Color(0.35, 0.3, 0.2), 0.5), Vector3(-6.5, 0.35, -5.5))
 
 func _bamboo() -> void:
 	for i in 140:
@@ -307,6 +350,8 @@ func _river() -> void:
 		_mesh(cyl(0.12, 0.12, 1.2, 6), m(Color(0.35, 0.25, 0.15)), Vector3(x, 0.3, -1.8))
 	# boats
 	for b in [Vector3(-8, 0.1, -12), Vector3(9, 0.1, -16)]:
+		if _prop("boat", b - Vector3(0, 0.3, 0), 1.6, 90.0):
+			continue
 		_mesh(box(4, 0.5, 1.2), m(Color(0.4, 0.27, 0.15)), b)
 		_mesh(cyl(0.6, 0.6, 2.0, 8), m(Color(0.75, 0.65, 0.45)), b + Vector3(0, 0.6, 0), Vector3(90, 0, 90), Vector3(1, 1, 0.6))
 	for x in [-20, -14, 14, 21]:
@@ -349,7 +394,8 @@ func _desert() -> void:
 	# ruined fort wall
 	for i in 7:
 		var h := rng.randf_range(2.5, 4.5)
-		_mesh(box(3.0, h, 1.2), m(Color(0.7, 0.55, 0.38)), Vector3(-12 + i * 3.2, h * 0.5, -14))
+		if not _prop("wall", Vector3(-12 + i * 3.2, 0, -14), h, 0.0):
+			_mesh(box(3.0, h, 1.2), m(Color(0.7, 0.55, 0.38)), Vector3(-12 + i * 3.2, h * 0.5, -14))
 	gate(Vector3(10, 0, -12), 1.0, Color(0.55, 0.35, 0.22))
 	for i in 5:
 		rock(Vector3(rng.randf_range(-14, 14), 0.2, rng.randf_range(-6, -3)), rng.randf_range(0.4, 0.9), Color(0.62, 0.48, 0.34))
@@ -359,7 +405,8 @@ func _demon() -> void:
 	for x in [-8, -4, 4, 8]:
 		lantern(Vector3(x, 0, -6), Color(1.0, 0.2, 0.1), true)
 	for x in [-13, 13]:
-		_mesh(cyl(0.6, 0.8, 1.0, 8), m(Color(0.2, 0.18, 0.18)), Vector3(x, 0.5, -5))
+		if not _prop("brazier", Vector3(x, 0, -5), 1.2, 0.0):
+			_mesh(cyl(0.6, 0.8, 1.0, 8), m(Color(0.2, 0.18, 0.18)), Vector3(x, 0.5, -5))
 		var f := CPUParticles3D.new()
 		f.amount = 40
 		f.lifetime = 0.8
