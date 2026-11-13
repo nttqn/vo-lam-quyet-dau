@@ -133,8 +133,17 @@ func _play(i: int) -> void:
 	if Game.load_slot(i):
 		Game.goto(HubScreen.new())
 
+var _quit_ms := -10000
+
+## Back on the title quits only on a second press within 2 s, so backing out of
+## the hub (or a stray press) never closes the game outright.
 func back() -> void:
-	get_tree().quit()
+	var now := Time.get_ticks_msec()
+	if now - _quit_ms < 2000:
+		get_tree().quit()
+		return
+	_quit_ms = now
+	toast("Bấm quay lại lần nữa để thoát game")
 
 # ------------------------------------------------------------- cloud
 func _status_text() -> String:

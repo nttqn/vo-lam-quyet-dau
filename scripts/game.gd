@@ -41,11 +41,10 @@ func goto(node: Node) -> void:
 ## render view swallows KEYCODE_BACK and it becomes an InputEventKey KEY_BACK
 ## (no WM_GO_BACK_REQUEST at all); with predictive back (Android 16+) it comes
 ## as WM_GO_BACK_REQUEST. Handle both here (plus Esc on desktop) and route to
-## the open modal or the current screen's back(). If one press ever arrives
-## both ways, the second copy (other source, within 300 ms) is dropped; quick
-## repeated presses from the same source all count.
+## the open modal or the current screen's back(). One physical press can reach
+## us twice (key + WM, or a repeated key on some phones), so any back within
+## 400 ms of the last one is dropped.
 var _back_ms := -10000
-var _back_src := ""
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
@@ -59,10 +58,9 @@ func _input(event: InputEvent) -> void:
 
 func _go_back(src: String) -> void:
 	var now := Time.get_ticks_msec()
-	if src != _back_src and now - _back_ms < 300:
+	if now - _back_ms < 400:
 		return
 	_back_ms = now
-	_back_src = src
 	var modals := get_tree().get_nodes_in_group("modal")
 	modals.reverse()   # newest (last in tree order) first
 	for m in modals:

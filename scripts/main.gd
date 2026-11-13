@@ -114,16 +114,34 @@ func _back_test() -> void:
 	ok = _check("fight resumes", fs != null and not fs.paused) and ok
 	Game._notification(NOTIFICATION_WM_GO_BACK_REQUEST)
 	ok = _check("predictive back pauses", fs != null and fs.paused) and ok
+	await _real_wait(450)
+	# one press delivered twice (key + WM) must act once: hub -> title, not quit
+	Game.goto(HubScreen.new())
+	await get_tree().process_frame
+	await _press_back(true)
+	ok = _check("double-delivered back: hub -> title only", Game._current is TitleScreen) and ok
+	await _press_back()
+	ok = _check("single back on title only warns", Game._current is TitleScreen and not get_tree().paused) and ok
 	print("BACKTEST ", "ALL PASS" if ok else "FAILED")
 	get_tree().quit(0 if ok else 1)
 
-func _press_back() -> void:
+## twice: the same press also arrives as WM_GO_BACK_REQUEST right after the key.
+func _press_back(twice := false) -> void:
 	for down in [true, false]:
 		var k := InputEventKey.new()
 		k.keycode = KEY_BACK
 		k.pressed = down
 		Input.parse_input_event(k)
-	await get_tree().create_timer(0.4).timeout
+	await get_tree().process_frame
+	if twice:
+		Game._notification(NOTIFICATION_WM_GO_BACK_REQUEST)
+	await _real_wait(450)
+
+## Headless timers run on game time; the back debounce uses wall-clock ticks.
+func _real_wait(ms: int) -> void:
+	var end := Time.get_ticks_msec() + ms
+	while Time.get_ticks_msec() < end:
+		await get_tree().process_frame
 
 func _check(what: String, cond: bool) -> bool:
 	print("BACKTEST %s %s" % ["PASS" if cond else "FAIL", what])
