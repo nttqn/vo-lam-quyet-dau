@@ -3,6 +3,7 @@ extends Control
 ## Modal settings overlay (sound, music, vibration).
 
 func _ready() -> void:
+	add_to_group("modal")   # Android back closes it (Game._go_back)
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	theme = UI.theme()
 	var dim := ColorRect.new()

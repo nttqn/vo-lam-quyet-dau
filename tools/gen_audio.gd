@@ -1,5 +1,6 @@
 extends SceneTree
-## Synthesises every sound effect and the two music loops into
+## Synthesises the UI sounds and the two music loops (fight hits, swings, blocks
+## and voices are real recordings built by tools/sfx/build.mjs) into
 ## res://assets/audio/*.wav.  Run:
 ##   godot --headless --path . --script res://tools/gen_audio.gd
 
@@ -9,20 +10,9 @@ var rng := RandomNumberGenerator.new()
 func _init() -> void:
 	rng.seed = 42
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://assets/audio"))
-	save("hit", hit(0.16, 140.0, 0.9))
-	save("hit_heavy", mix([hit(0.32, 80.0, 1.0), noise_burst(0.25, 0.5, 900.0)]))
-	save("slash", mix([sweep_noise(0.18, 5000.0, 1800.0, 0.7), hit(0.12, 180.0, 0.5)]))
-	save("swing", sweep_noise(0.2, 900.0, 2600.0, 0.35))
-	save("block", metal(0.35, [820.0, 1240.0, 1975.0], 0.5))
-	save("gong", gong(2.6, 98.0, 0.8))
 	save("click", pluck(0.12, 1046.0, 0.35))
-	save("ko", mix([gong(2.0, 73.0, 0.8), hit(0.5, 55.0, 1.0)]))
-	save("boom", mix([noise_burst(0.7, 0.9, 400.0), hit(0.6, 45.0, 1.0)]))
-	save("throw", sweep_noise(0.14, 3000.0, 6000.0, 0.3))
 	save("skill", shimmer(0.7, [523.0, 659.0, 784.0, 1046.0], 0.45))
 	save("heal", shimmer(0.9, [784.0, 988.0, 1175.0, 1568.0], 0.4))
-	save("land", hit(0.22, 70.0, 0.7))
-	save("counter", mix([metal(0.4, [1200.0, 1800.0], 0.5), sweep_noise(0.2, 2000.0, 5000.0, 0.3)]))
 	save("start", mix([drum(0.5, 0.9), drum_at(0.5, 0.12, 0.8)]))
 	save("coin", shimmer(0.4, [1318.0, 1760.0], 0.4))
 	save("levelup", arp(1.2, [523.0, 659.0, 784.0, 1046.0, 1318.0], 0.11, 0.45))

@@ -22,10 +22,7 @@ func _init_ui(theme_3d := "") -> void:
 	if show:
 		ui.add_child(UI.vignette(0.45))
 
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
-		back()
-
+## Android back / Esc (routed by Game._go_back).
 func back() -> void:
 	pass
 

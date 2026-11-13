@@ -1,0 +1,10 @@
+{
+  "name": "vlqd-sfx",
+  "private": true,
+  "type": "module",
+  "description": "Builds assets/audio fight sounds from CC0 recordings in assets_src/audio",
+  "dependencies": {
+    "@wasm-audio-decoders/ogg-vorbis": "^0.1.16",
+    "mpg123-decoder": "^1.0.3"
+  }
+}

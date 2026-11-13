@@ -31,6 +31,7 @@ var _shot_frames: Array = []
 var _script := {}             # --inputs=frame:keys;... scripted player input (tests), enemy idles
 var _quit_after_shot := false
 var _ui_layer: CanvasLayer
+var _voice_ms := [-10000, -10000]   # last hurt/kiai voice per fighter (Time ticks)
 
 func _init(p_cfg: Dictionary) -> void:
 	cfg = p_cfg
@@ -147,10 +148,12 @@ func toggle_pause() -> void:
 		_pause_layer.queue_free()
 		_pause_layer = null
 
+## Android back / Esc (routed by Game._go_back): pause, or resume when paused.
+func back() -> void:
+	toggle_pause()
+
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
-		toggle_pause()
-	elif what == NOTIFICATION_APPLICATION_PAUSED and not paused and not _done:
+	if what == NOTIFICATION_APPLICATION_PAUSED and not paused and not _done:
 		toggle_pause()
 
 func _show_pause() -> void:
@@ -243,16 +246,16 @@ func _events() -> void:
 				_shake = maxf(_shake, 0.16 if e.heavy else 0.06)
 				if e.combo >= 2:
 					hud.combo(e.by, e.combo)
-				Game.sfx("hit_heavy" if e.heavy else ("slash" if e.fx == "slash" else "hit"))
+				_hit_sfx(e)
 				if e.by == 0:
 					Game.vibrate(30 if e.heavy else 15)
 			"block":
 				fx.spark(Vector3(e.x, e.y, 0.2), Color(0.6, 0.8, 1.0), false, "block")
-				Game.sfx("block")
+				Game.sfx(_block_sfx(e.i, e.fx))
 			"armor":
 				fx.text(Vector3(sim.f[e.i].x, 2.2, 0.3), "Bá Thể", Color(1, 0.8, 0.3))
 				views[e.i].body.flash(0.4)
-				Game.sfx("block")
+				Game.sfx("block_body")
 			"counter":
 				fx.ring(Vector3(e.x, 1.2, 0.2), Color(0.6, 0.9, 1.0), 1.5)
 				fx.text(Vector3(e.x, 2.3, 0.3), "Phản Đòn!", Color(0.6, 0.9, 1.0))
@@ -265,12 +268,13 @@ func _events() -> void:
 						_ults_used += 1
 				var f: Fighter = sim.f[e.i]
 				fx.ground_ring(f.x, f.sect.elem)
-				Game.sfx("skill")
+				Game.sfx("skill", 0.08, 0.6)
+				_voice(e.i, "kiai", 0.75 if not e.ult else 1.0)
 				if e.ult:
 					_zoom_t = 1.0
 					hud.banner(e.name, "Tuyệt Kỹ", 1.0, f.sect.elem)
 			"swing":
-				Game.sfx("swing")
+				Game.sfx(_swing_sfx(e.i, e.fx), 0.1, 0.8)
 			"buff":
 				var f2: Fighter = sim.f[e.i]
 				fx.ground_ring(f2.x, f2.sect.elem)
@@ -283,7 +287,7 @@ func _events() -> void:
 			"blink":
 				fx.dust(e.from)
 				fx.dust(e.to)
-				Game.sfx("swing")
+				Game.sfx("swing_body")
 			"proj":
 				var p: Dictionary = e.p
 				var owner: Fighter = sim.f[p.owner]
@@ -298,6 +302,7 @@ func _events() -> void:
 				Game.sfx("boom")
 			"clash":
 				fx.spark(Vector3(e.x, e.y, 0.2), Color.WHITE, false, "hit")
+				Game.sfx("block_metal", 0.12, 0.7)
 			"land":
 				fx.dust(e.x)
 				_shake = maxf(_shake, 0.05)
@@ -305,7 +310,7 @@ func _events() -> void:
 			"wall":
 				fx.dust(e.x)
 				_shake = 0.18
-				Game.sfx("hit_heavy")
+				Game.sfx("wall")
 			"ko":
 				_slowmo = 1.4
 				if e.timeup:
@@ -319,6 +324,66 @@ func _events() -> void:
 				hud.banner("Chiến Thắng" if won else "Thất Bại", "", 3.0, UI.GOLD if won else Color(0.7, 0.7, 0.75))
 				Game.sfx("win" if won else "lose")
 	sim.events.clear()
+
+# ------------------------------------------------------------- sound choice
+func _look(i: int) -> Dictionary:
+	return cfg.p.look if i == 0 else cfg.e.look
+
+func _weapon(i: int) -> String:
+	return str(_look(i).get("weapon", "none"))
+
+## Voice follows the body on screen: a sect model (Meshy) has the sect's gender,
+## whatever the NPC's random appearance flag says.
+func _female(i: int) -> bool:
+	var lk := _look(i)
+	if Avatar.model_path(str(lk.get("model", ""))) != "":
+		return bool(sim.f[i].sect.look.get("female", false))
+	return bool(lk.get("female", false))
+
+## Whoosh that matches the attacker's weapon: blade, small blades, staff or limbs.
+func _swing_sfx(i: int, kind: String) -> String:
+	match kind:
+		"slash":
+			return "swing_light" if _weapon(i) in ["dual", "daggers"] else "swing_blade"
+		"blunt":
+			return "swing_staff"
+		"kick", "punch", "palm", "hit":
+			return "swing_body"
+	return ""
+
+func _hit_sfx(e: Dictionary) -> void:
+	var s: String = {"slash": "hit_slash", "blunt": "hit_blunt", "kick": "hit_kick", "palm": "hit_palm",
+		"roar": "hit_palm", "lotus": "hit_palm", "fire": "boom"}.get(e.fx, "hit_punch")
+	Game.sfx(s, 0.1)
+	if e.heavy or e.crit:
+		Game.sfx("hit_heavy", 0.1, 0.75)
+	if sim.f[e.i].dead:
+		_voice(e.i, "ko")
+	elif e.heavy or e.crit:
+		_voice(e.i, "hurtbig")
+	else:
+		_voice(e.i, "hurt", 0.65)
+
+## Block: steel on steel, wood on a staff, or a forearm/body guard.
+func _block_sfx(def: int, kind: String) -> String:
+	var w := _weapon(def)
+	if w == "none" or kind in ["kick", "punch", "palm", "hit"]:
+		return "block_body"
+	if w == "staff" or kind == "blunt":
+		return "block_wood"
+	return "block_metal"
+
+## Fighter voice: kind = hurt | hurtbig | ko | kiai, female or male take. Light
+## hurts and kiai are throttled so fast combos don't turn into a choir.
+func _voice(i: int, kind: String, chance := 1.0) -> void:
+	var now := Time.get_ticks_msec()
+	if kind in ["hurt", "kiai"] and now - int(_voice_ms[i]) < 550:
+		return
+	var name := "%s_%s" % [kind, "f" if _female(i) else "m"]
+	if not Game.has_sfx(name) or randf() > chance:   # no female kiai take yet
+		return
+	_voice_ms[i] = now
+	Game.sfx(name, 0.05, 0.9)
 
 func _finish(won: bool, forfeit := false) -> void:
 	var fp: Fighter = sim.f[0]

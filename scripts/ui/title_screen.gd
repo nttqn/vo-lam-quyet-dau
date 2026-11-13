@@ -167,6 +167,7 @@ func _resolve(i: int) -> void:
 	var dim := ColorRect.new()
 	dim.color = Color(0, 0, 0, 0.65)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.add_to_group("modal")
 	ui.add_child(dim)
 	var cc := CenterContainer.new()
 	cc.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

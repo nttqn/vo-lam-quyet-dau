@@ -65,6 +65,9 @@ func _ready() -> void:
 			var fs := FightScene.new({"p": p, "e": e, "theme": th, "autoplay": true, "seed": 3})
 			Game.goto(fs)
 			return
+	if "--backtest" in args:
+		_back_test()
+		return
 	if "--flowtest" in args:
 		Game.autoplay = true
 		Game.slot = 2
@@ -84,6 +87,47 @@ func _ready() -> void:
 		_demo_screen(screen, args)
 		return
 	Game.goto(TitleScreen.new())
+
+## -- --backtest: the Android back key (KEY_BACK, as Godot delivers it) leaves a
+## sub-screen, closes a modal before the screen, and pauses / resumes a fight.
+func _back_test() -> void:
+	Game.slot = 2
+	Game.hero = Hero.create("Kiểm Thử", "vo_dang")
+	var ok := true
+	Game.goto(GearScreen.new(false))
+	await get_tree().process_frame
+	await _press_back()
+	ok = _check("gear -> hub", Game._current is HubScreen) and ok
+	var hub: Screen = Game._current
+	var sp := SettingsPanel.new()
+	hub.ui.add_child(sp)
+	await get_tree().process_frame
+	await _press_back()
+	ok = _check("back closes settings first", not is_instance_valid(sp) and Game._current == hub) and ok
+	Game.autoplay = true   # skip the story dialogue
+	Flow.start_stage(0, 0)
+	await get_tree().create_timer(0.5).timeout
+	var fs := Game._current as FightScene
+	await _press_back()
+	ok = _check("fight pauses", fs != null and fs.paused) and ok
+	await _press_back()
+	ok = _check("fight resumes", fs != null and not fs.paused) and ok
+	Game._notification(NOTIFICATION_WM_GO_BACK_REQUEST)
+	ok = _check("predictive back pauses", fs != null and fs.paused) and ok
+	print("BACKTEST ", "ALL PASS" if ok else "FAILED")
+	get_tree().quit(0 if ok else 1)
+
+func _press_back() -> void:
+	for down in [true, false]:
+		var k := InputEventKey.new()
+		k.keycode = KEY_BACK
+		k.pressed = down
+		Input.parse_input_event(k)
+	await get_tree().create_timer(0.4).timeout
+
+func _check(what: String, cond: bool) -> bool:
+	print("BACKTEST %s %s" % ["PASS" if cond else "FAIL", what])
+	return cond
 
 func _demo_screen(screen: String, args: PackedStringArray) -> void:
 	var sect := "thieu_lam"

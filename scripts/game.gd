@@ -36,11 +36,53 @@ func goto(node: Node) -> void:
 	Engine.time_scale = 1.0
 	root.add_child(node)
 
+# ------------------------------------------------------------- back button
+## Android back arrives two ways in Godot 4.7: with the classic back key the
+## render view swallows KEYCODE_BACK and it becomes an InputEventKey KEY_BACK
+## (no WM_GO_BACK_REQUEST at all); with predictive back (Android 16+) it comes
+## as WM_GO_BACK_REQUEST. Handle both here (plus Esc on desktop) and route to
+## the open modal or the current screen's back(). If one press ever arrives
+## both ways, the second copy (other source, within 300 ms) is dropped; quick
+## repeated presses from the same source all count.
+var _back_ms := -10000
+var _back_src := ""
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		_go_back("wm")
+
+func _input(event: InputEvent) -> void:
+	var k := event as InputEventKey
+	if k and k.pressed and not k.echo and (k.keycode == KEY_BACK or k.keycode == KEY_ESCAPE):
+		get_viewport().set_input_as_handled()
+		_go_back("key")
+
+func _go_back(src: String) -> void:
+	var now := Time.get_ticks_msec()
+	if src != _back_src and now - _back_ms < 300:
+		return
+	_back_ms = now
+	_back_src = src
+	var modals := get_tree().get_nodes_in_group("modal")
+	modals.reverse()   # newest (last in tree order) first
+	for m in modals:
+		if m.is_inside_tree() and not m.is_queued_for_deletion() and (m as CanvasItem).is_visible_in_tree():
+			m.queue_free()
+			return
+	if _current and is_instance_valid(_current) and _current.has_method("back"):
+		_current.back()
+
 # ------------------------------------------------------------- audio
-const SFX_NAMES := ["hit", "hit_heavy", "slash", "swing", "block", "gong", "click", "ko", "boom", "throw", "skill", "heal", "land", "win", "lose", "start", "counter", "coin", "levelup", "music_menu", "music_fight"]
+## Single sounds: synthesised UI / music (tools/gen_audio.gd) and a few fight
+## sounds from real recordings (tools/sfx/build.mjs).
+const SFX_NAMES := ["gong", "click", "ko", "boom", "skill", "heal", "win", "lose", "start", "counter", "coin", "levelup", "wall", "music_menu", "music_fight"]
+## Recorded fight sounds that come as variants <name>_1.._n; sfx(name) picks one at random.
+const SFX_VARIANTS := ["swing_blade", "swing_light", "swing_staff", "swing_body", "hit_slash", "hit_blunt",
+	"hit_punch", "hit_kick", "hit_palm", "hit_heavy", "block_metal", "block_wood", "block_body", "throw", "land",
+	"hurt_m", "hurtbig_m", "ko_m", "kiai_m", "hurt_f", "hurtbig_f", "ko_f"]
 
 func _load_audio() -> void:
-	for i in 8:
+	for i in 12:
 		var p := AudioStreamPlayer.new()
 		add_child(p)
 		_players.append(p)
@@ -49,16 +91,31 @@ func _load_audio() -> void:
 	for n in SFX_NAMES:
 		var path := "res://assets/audio/%s.wav" % n
 		if ResourceLoader.exists(path):
-			_sfx[n] = load(path)
+			_sfx[n] = [load(path)]
+	for n in SFX_VARIANTS:
+		var list := []
+		for i in range(1, 13):
+			var path := "res://assets/audio/%s_%d.wav" % [n, i]
+			if not ResourceLoader.exists(path):
+				break
+			list.append(load(path))
+		if not list.is_empty():
+			_sfx[n] = list
 
-func sfx(name: String, pitch_var := 0.08) -> void:
-	var s: AudioStream = _sfx.get(name)
-	if s == null or float(settings.sfx) <= 0.0:
+func has_sfx(name: String) -> bool:
+	return _sfx.has(name)
+
+## vol: linear gain on top of the sound setting.
+func sfx(name: String, pitch_var := 0.08, vol := 1.0) -> void:
+	var list: Array = _sfx.get(name, [])
+	if list.is_empty() and name != "":
+		push_warning("sfx missing: " + name)
+	if list.is_empty() or float(settings.sfx) <= 0.0:
 		return
 	var p := _players[_rr]
 	_rr = (_rr + 1) % _players.size()
-	p.stream = s
-	p.volume_db = linear_to_db(float(settings.sfx))
+	p.stream = list[randi() % list.size()]
+	p.volume_db = linear_to_db(float(settings.sfx) * vol)
 	p.pitch_scale = 1.0 + randf_range(-pitch_var, pitch_var)
 	p.play()
 
@@ -66,7 +123,7 @@ func music(name: String) -> void:
 	if name == _music_name and _music_player.playing:
 		return
 	_music_name = name
-	var s: AudioStream = _sfx.get("music_" + name)
+	var s: AudioStream = _sfx.get("music_" + name, [null])[0]
 	if s == null:
 		_music_player.stop()
 		return

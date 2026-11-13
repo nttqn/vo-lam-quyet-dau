@@ -23,3 +23,4 @@ assets_src/weapons/*.import
 assets_src/scenery/*.png
 assets_src/scenery/*.glb
 assets_src/scenery/*.import
+tools/sfx/node_modules/
