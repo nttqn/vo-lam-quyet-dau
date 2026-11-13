@@ -53,7 +53,8 @@ static func sph(r: float) -> SphereMesh:
 ## standing straight up with the handle at the bottom; scaled to the length
 ## below and gripped at the given fraction of it, measured from the bottom.
 const MODEL_DIR := "res://assets/models/weapons/"
-const SPEC := {"sword": [1.0, 0.09], "dual_blade": [0.64, 0.12], "staff": [1.8, 0.29], "dagger": [0.36, 0.18], "saber": [0.95, 0.1], "spear": [2.0, 0.3]}
+## kind -> [length m, grip fraction from the bottom, girth (cross-section scale)]
+const SPEC := {"sword": [1.0, 0.09, 1.0], "dual_blade": [0.64, 0.12, 1.0], "staff": [1.8, 0.29, 0.5], "dagger": [0.36, 0.18, 1.0], "saber": [0.95, 0.1, 1.0], "spear": [2.0, 0.3, 0.6]}
 const BAKED_LIT := 0.6
 
 static func stage(tier: int) -> int:
@@ -104,9 +105,10 @@ static func _model(kind: String, tier: int, g: Node3D) -> Node3D:
 	var holder := Node3D.new()
 	holder.rotation_degrees = Vector3(180, 0, 0)   # model up -> blade along -Y
 	g.add_child(holder)
-	inst.scale = Vector3.ONE * k
+	var girth: float = SPEC[kind][2]
+	inst.scale = Vector3(k * girth, k, k * girth)   # thinner staffs: Meshy makes them chunky
 	var c := box.get_center()
-	inst.position = -Vector3(c.x, grip_y, c.z) * k
+	inst.position = -Vector3(c.x * girth, grip_y, c.z * girth) * k
 	holder.add_child(inst)
 	var tip := Node3D.new()
 	tip.position = Vector3(0, -(box.end.y - grip_y) * k, 0)

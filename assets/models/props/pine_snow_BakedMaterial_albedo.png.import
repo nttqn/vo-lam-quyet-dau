@@ -2,7 +2,7 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bybs40vr44s04"
+uid="uid://c1b61x03khu8"
 path.s3tc="res://.godot/imported/pine_snow_BakedMaterial_albedo.png-7d40204c9d33af4048d5699a0cf20e5d.s3tc.ctex"
 path.etc2="res://.godot/imported/pine_snow_BakedMaterial_albedo.png-7d40204c9d33af4048d5699a0cf20e5d.etc2.ctex"
 metadata={
@@ -10,7 +10,7 @@ metadata={
 "vram_texture": true
 }
 generator_parameters={
-"md5": "b3cb861b36c72c3030062ac829bb0233"
+"md5": "2c53b99e371dd8e967759ef3e05ab930"
 }
 
 [deps]
@@ -41,5 +41,5 @@ process/premult_alpha=false
 process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
-process/size_limit=1024
+process/size_limit=0
 detect_3d/compress_to=1

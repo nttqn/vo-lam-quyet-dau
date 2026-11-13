@@ -120,10 +120,12 @@ func save() -> void:
 	hero["saved_at"] = Time.get_unix_time_from_system()
 	_write_json(SAVE_PATH % slot, hero)
 	Cloud.queue_upload(slot)
+	Ranks.publish(hero, slot)
 
 func delete_slot(i: int) -> void:
 	park_slot(i)
 	Cloud.delete_slot(i)
+	Ranks.remove(i)
 
 ## Cloud pull: replace a slot's file with data from the server.
 func write_slot(i: int, data: Dictionary) -> void:

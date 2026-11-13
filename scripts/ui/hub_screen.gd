@@ -80,6 +80,7 @@ func _ready() -> void:
 		["Tiệm Binh Khí", func(): Game.goto(GearScreen.new(true))],
 		["Y Phục", func(): Game.goto(WardrobeScreen.new())],
 		["Nhiệm Vụ" + (" (%d)" % dq if dq > 0 else ""), func(): Game.goto(DailyScreen.new())],
+		["Xếp Hạng", func(): Game.goto(RankScreen.new())],
 		["Cài Đặt", func(): ui.add_child(SettingsPanel.new())],
 		["Rời Đi", back],
 	]

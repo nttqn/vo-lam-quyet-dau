@@ -130,6 +130,9 @@ var _face: MeshInstance3D
 var expr := ""                   # set each frame by the view
 var _expr_w := {}                # blend shape index -> current weight
 var _blink_t := 0.0
+var _vroot: Node3D             # the external model instance (lifted to keep soles on the ground)
+var _soles: Array = []         # [bone index, sole depth below the bone at rest, skeleton space]
+var _gfix := 0.0
 
 func _build_vrm(path: String) -> void:
 	# invisible animation driver
@@ -141,6 +144,7 @@ func _build_vrm(path: String) -> void:
 			skel.remove_child(m)
 			m.free()
 	var v: Node3D = load(path).instantiate()
+	_vroot = v
 	for a in v.find_children("*", "AnimationPlayer", true, false):
 		a.get_parent().remove_child(a)
 		a.free()
@@ -196,8 +200,47 @@ func _build_vrm(path: String) -> void:
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	var hsc: float = look.get("height", 1.0)
 	scale = Vector3(hsc, hsc, hsc)
+	_measure_soles()
 	_stylise(vskel)
 	_weapons_and_anim()
+
+## Retargeted legs of a model with other proportions bend lower than the
+## driver: in a crouched stance the soles end up under the floor. Remember
+## how far each foot bone sits above the sole at rest...
+func _measure_soles() -> void:
+	_soles.clear()
+	var inv := vskel.global_transform.affine_inverse()
+	var bottom := INF
+	for mi in _vroot.find_children("*", "MeshInstance3D", true, false):
+		var m3 := mi as MeshInstance3D
+		var bb: AABB = (inv * m3.global_transform) * m3.get_aabb()
+		bottom = minf(bottom, bb.position.y)
+	if bottom == INF:
+		return
+	for ub in ["ball_l", "ball_r", "foot_l", "foot_r"]:
+		var bi := vskel.find_bone(str(_vmap.get(ub, "")))
+		if bi >= 0:
+			_soles.append([bi, vskel.get_bone_global_rest(bi).origin.y - bottom])
+
+## ...and each frame lift / lower the model so the lowest sole touches the
+## ground while the fighter is on (or near) it.
+func _ground_feet(delta: float) -> void:
+	if _soles.is_empty() or _vroot == null:
+		return
+	var xf := vskel.global_transform
+	var sy := xf.basis.get_scale().y
+	var low := INF
+	for s in _soles:
+		var p := xf * vskel.get_bone_global_pose(s[0]).origin
+		low = minf(low, p.y - float(s[1]) * sy)
+	low -= global_position.y
+	var k := global_transform.basis.get_scale().y
+	if low < 0.05:
+		_gfix -= low / maxf(0.01, k)
+	else:
+		_gfix = move_toward(_gfix, 0.0, delta * 0.6)
+	_gfix = clampf(_gfix, -0.08, 0.25)
+	_vroot.position.y = _gfix
 
 func _retarget() -> void:
 	for e in _rt:
@@ -592,6 +635,7 @@ func finish(delta: float) -> void:
 		skel.set_bone_pose_scale(_head_bone, _face_scale)
 	if vskel != skel and vskel != null and not Diag.on("no_retarget"):
 		_retarget()
+		_ground_feet(delta)
 		if _face:
 			_update_face(delta)
 	for sm in _shaders:

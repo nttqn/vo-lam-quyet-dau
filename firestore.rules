@@ -14,13 +14,28 @@ service cloud.firestore {
     // shadows, each player writes only their own
     match /{coll}/{uid} {
       allow read: if request.auth != null && coll.matches('duel_[0-9]{4}w[0-9]{2}');
-      allow write: if request.auth != null && request.auth.uid == uid
+      allow delete: if request.auth != null && request.auth.uid == uid
+        && coll.matches('duel_[0-9]{4}w[0-9]{2}');
+      allow create, update: if request.auth != null && request.auth.uid == uid
         && coll.matches('duel_[0-9]{4}w[0-9]{2}')
-        && request.resource.data.data is string
-        && request.resource.data.data.size() < 20000
-        && request.resource.data.score is int
-        && request.resource.data.name is string
-        && request.resource.data.name.size() <= 24;
+        && goodDuel(request.resource.data);
+    }
+    function goodDuel(d) {
+      return d.data is string && d.data.size() < 20000 && d.score is int
+        && d.name is string && d.name.size() <= 24;
+    }
+    // Bảng xếp hạng: rank/{uid}_{slot}, readable by everyone signed in
+    match /rank/{id} {
+      allow read: if request.auth != null;
+      allow delete: if request.auth != null
+        && id in [request.auth.uid + '_0', request.auth.uid + '_1', request.auth.uid + '_2'];
+      allow create, update: if request.auth != null
+        && id in [request.auth.uid + '_0', request.auth.uid + '_1', request.auth.uid + '_2']
+        && goodRank(request.resource.data);
+    }
+    function goodRank(d) {
+      return d.name is string && d.name.size() <= 24 && d.sect is string
+        && d.level is int && d.power is int && d.tower is int && d.stars is int;
     }
   }
 }

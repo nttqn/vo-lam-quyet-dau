@@ -32,6 +32,9 @@ func _ready() -> void:
 		if a == "--skillshots":
 			add_child(load("res://tools/skill_shots.gd").new())
 			return
+		if a == "--feetprobe":
+			add_child(load("res://tools/feet_probe.gd").new())
+			return
 		if a == "--memmodels":
 			add_child(load("res://tools/mem_models.gd").new())
 			return
@@ -111,6 +114,7 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 		"char": Game.goto(CharacterScreen.new())
 		"skill": Game.goto(SkillScreen.new())
 		"tower": Game.goto(TowerScreen.new())
+		"rank": Game.goto(RankScreen.new())
 		"wardrobe": Game.goto(WardrobeScreen.new())
 		"dialog": Game.goto(DialogScreen.new(5, "boss", Journey.stage_side(5, 5), func(): pass))
 		"duel": Game.goto(DuelScreen.new())

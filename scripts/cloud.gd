@@ -162,6 +162,8 @@ func delete_account() -> bool:
 	for i in Game.SLOTS:
 		await _req(HTTPClient.METHOD_DELETE, _doc_url(i), "", true)
 	await _req(HTTPClient.METHOD_DELETE, _base_url() + "%s/%s" % [Duel.collection(), uid], "", true)
+	for i in Game.SLOTS:
+		await _req(HTTPClient.METHOD_DELETE, _base_url() + "%s/%s_%d" % [Ranks.COLLECTION, uid, i], "", true)
 	var r := await _req(HTTPClient.METHOD_POST, _auth_url("accounts:delete"), JSON.stringify({"idToken": _id_token}))
 	if r.code != 200:
 		last_error = _auth_error(r.body)
@@ -364,15 +366,41 @@ static func _auth_error(body) -> String:
 # ------------------------------------------------------------- shared docs (Tỉ Võ)
 ## Writes collection/{uid} with plain fields (String/int/float values).
 func put_my_doc(collection: String, fields: Dictionary) -> bool:
+	return await put_doc(collection, "", fields)
+
+## Writes collection/{uid + suffix} (e.g. "_0" for save slot 0).
+func put_doc(collection: String, suffix: String, fields: Dictionary) -> bool:
 	if not await _ensure_token():
 		return false
 	var f := {}
 	for k in fields:
 		f[k] = _fs_value(fields[k])
-	var r := await _req(HTTPClient.METHOD_PATCH, _base_url() + "%s/%s" % [collection, uid], JSON.stringify({"fields": f}), true)
+	var r := await _req(HTTPClient.METHOD_PATCH, _base_url() + "%s/%s%s" % [collection, uid, suffix], JSON.stringify({"fields": f}), true)
 	if r.code != 200:
 		last_error = "HTTP %d" % r.code
 	return r.code == 200
+
+func delete_doc(collection: String, suffix: String) -> void:
+	if await _ensure_token():
+		await _req(HTTPClient.METHOD_DELETE, _base_url() + "%s/%s%s" % [collection, uid, suffix], "", true)
+
+## How many documents have `field` greater than v (rank = count + 1); -1 on error.
+func count_above(collection: String, field: String, v) -> int:
+	if not await _ensure_token():
+		return -1
+	var body := {"structuredAggregationQuery": {
+		"structuredQuery": {"from": [{"collectionId": collection}],
+			"where": {"fieldFilter": {"field": {"fieldPath": field}, "op": "GREATER_THAN", "value": _fs_value(v)}}},
+		"aggregations": [{"alias": "n", "count": {}}]}}
+	var url := "https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents:runAggregationQuery" % project_id
+	var r := await _req(HTTPClient.METHOD_POST, url, JSON.stringify(body), true)
+	if r.code != 200:
+		return -1
+	for row in r.get("list", []):
+		var res = (row as Dictionary).get("result")
+		if res is Dictionary:
+			return int(_fs_plain(res.get("aggregateFields", {}).get("n", {})))
+	return -1
 
 ## Documents of a collection ordered by `order_field` (descending), optionally
 ## with order_field between lo and hi. Returns plain dicts with "_id" = doc id.
