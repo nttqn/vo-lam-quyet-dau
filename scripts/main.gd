@@ -130,7 +130,7 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 		"result":
 			Game.goto(ResultScreen.new({"mode": "stage", "r": 1, "s": 5, "won": true, "stars": 2,
 				"res": {"max_combo": 7, "seconds": 74}, "rewards": {"exp": 420, "gold": 380, "jade": 3},
-				"levels": 1, "drop": Items.make("weapon", 3, 2, 0), "unlock": "Trường Giang Độ Khẩu"}))
+				"levels": 1, "book": "manh", "drop": Items.make("weapon", 3, 2, 0), "unlock": "Trường Giang Độ Khẩu"}))
 
 func _process(_d: float) -> void:
 	if _shot == "":

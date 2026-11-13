@@ -31,49 +31,64 @@ func _ready() -> void:
 	right.offset_top = 40
 	right.offset_bottom = -30
 	ui.add_child(right)
-	var title := UI.heading("Chiến Thắng" if out.won else "Thất Bại", 78)
+	var sc := ScrollContainer.new()
+	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	right.add_child(sc)
+	var body := UI.vbox(8)
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc.add_child(body)
+	var title := UI.heading("Chiến Thắng" if out.won else "Thất Bại", 64)
 	if not out.won:
 		title.add_theme_color_override("font_color", Color(0.75, 0.75, 0.8))
-	right.add_child(title)
+	body.add_child(title)
 	if out.mode == "stage":
 		var foe: Array = Journey.REGIONS[out.r].foes[out.s]
-		right.add_child(UI.label(("Đã hạ " if out.won else "Không địch nổi ") + "%s — %s" % [foe[0], foe[1]], 24))
+		body.add_child(UI.label(("Đã hạ " if out.won else "Không địch nổi ") + "%s — %s" % [foe[0], foe[1]], 24))
 		if out.won:
 			var stars: int = out.stars
-			var st := UI.label("★".repeat(stars) + "☆".repeat(3 - stars), 54, UI.GOLD)
-			right.add_child(st)
-			right.add_child(UI.label("★ thắng  ★★ còn ≥50% sinh lực  ★★★ thắng tuyệt đối", 16, Color(0.75, 0.72, 0.66)))
+			var srow := UI.hbox(14)
+			srow.add_child(UI.label("★".repeat(stars) + "☆".repeat(3 - stars), 40, UI.GOLD))
+			var leg := UI.label("★ thắng · ★★ còn ≥50% sinh lực · ★★★ thắng tuyệt đối", 15, Color(0.75, 0.72, 0.66))
+			leg.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			leg.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			leg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			srow.add_child(leg)
+			body.add_child(srow)
 	elif out.mode == "duel":
 		var dl := int(out.delta)
-		right.add_child(UI.label("Tỉ Võ với %s" % out.foe, 24))
-		right.add_child(UI.label("Điểm tỉ võ %s%d  →  %d (%s)" % ["+" if dl >= 0 else "", dl, int(h.duel.score), Duel.tier(int(h.duel.score))[0]], 26, Color(0.6, 1, 0.6) if dl >= 0 else Color(1, 0.6, 0.5), UI.bold))
+		body.add_child(UI.label("Tỉ Võ với %s" % out.foe, 24))
+		body.add_child(UI.label("Điểm tỉ võ %s%d  →  %d (%s)" % ["+" if dl >= 0 else "", dl, int(h.duel.score), Duel.tier(int(h.duel.score))[0]], 26, Color(0.6, 1, 0.6) if dl >= 0 else Color(1, 0.6, 0.5), UI.bold))
 	elif out.mode == "tower":
-		right.add_child(UI.label("Tháp Thí Luyện — Tầng %d" % int(out.f) + (" · vượt tầng mới!" if out.won and int(out.f) == Tower.best(h) else ""), 26, UI.GOLD, UI.bold))
+		body.add_child(UI.label("Tháp Thí Luyện — Tầng %d" % int(out.f) + (" · vượt tầng mới!" if out.won and int(out.f) == Tower.best(h) else ""), 26, UI.GOLD, UI.bold))
 	elif out.mode == "arena":
-		right.add_child(UI.label("Lôi Đài — liên thắng %d trận" % int(out.streak), 26, UI.GOLD, UI.bold))
+		body.add_child(UI.label("Lôi Đài — liên thắng %d trận" % int(out.streak), 26, UI.GOLD, UI.bold))
 	var res: Dictionary = out.res
-	right.add_child(UI.label("Liên kích cao nhất: %d   ·   Thời gian: %ds" % [int(res.max_combo), int(res.seconds)], 20, Color(0.85, 0.82, 0.76)))
+	body.add_child(UI.label("Liên kích cao nhất: %d   ·   Thời gian: %ds" % [int(res.max_combo), int(res.seconds)], 18, Color(0.85, 0.82, 0.76)))
 	var rw: Dictionary = out.get("rewards", {})
 	var rp := UI.panel(Color(0.08, 0.05, 0.04, 0.85))
 	var rv := UI.vbox(6)
 	rp.add_child(rv)
 	rv.add_child(UI.label("Phần thưởng", 22, UI.GOLD, UI.bold))
-	rv.add_child(UI.label("Kinh nghiệm +%d" % int(rw.get("exp", 0)), 22))
+	var wrow := UI.hbox(22)
+	rv.add_child(wrow)
+	wrow.add_child(UI.label("Kinh nghiệm +%d" % int(rw.get("exp", 0)), 22))
 	if int(rw.get("gold", 0)) > 0:
-		rv.add_child(UI.label("Vàng +%d" % int(rw.gold), 22, UI.GOLD))
+		wrow.add_child(UI.label("Vàng +%d" % int(rw.gold), 22, UI.GOLD))
 	if int(rw.get("jade", 0)) > 0:
-		rv.add_child(UI.label("Ngọc +%d" % int(rw.jade), 22, Color(0.5, 1.0, 0.8)))
+		wrow.add_child(UI.label("Ngọc +%d" % int(rw.jade), 22, Color(0.5, 1.0, 0.8)))
 	if out.has("drop"):
 		var it: Dictionary = out.drop
 		var l := UI.label("Chiến lợi phẩm: %s (%s)" % [Items.item_name(it, s.style), Items.RARITY[int(it.rar)]], 22, Items.RARITY_COL[int(it.rar)], UI.bold)
 		rv.add_child(l)
 	if out.has("book"):
 		rv.add_child(UI.label("%s: %s" % [Books.name_of(out.book), Books.KINDS[out.book][1]], 21, Books.COLOR[out.book], UI.bold))
-	right.add_child(rp)
+	body.add_child(rp)
 	# rewarded ad: double the experience and gold of a won fight
 	if out.won and (int(rw.get("exp", 0)) > 0 or int(rw.get("gold", 0)) > 0):
-		var dbl := UI.gold_button("▶ Xem quảng cáo: nhân đôi kinh nghiệm và vàng", func(): pass, 19)
+		var dbl := UI.gold_button("▶ Xem quảng cáo: x2 kinh nghiệm & vàng", func(): pass, 19)
 		dbl.disabled = not Ads.is_ready()
+		dbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		dbl.pressed.connect(_double.bind(dbl, rw))
 		Ads.ready_changed.connect(func():
 			if is_instance_valid(dbl) and dbl.text.begins_with("▶"):
@@ -82,17 +97,17 @@ func _ready() -> void:
 	if int(out.get("levels", 0)) > 0:
 		var lv := UI.label("Thăng cấp! Đạt cấp %d  (+%d điểm tiềm năng, +%d điểm võ công)" % [int(h.level), int(out.levels) * Build.POINTS_PER_LEVEL, int(out.levels)], 22, Color(0.6, 1.0, 0.6), UI.bold)
 		lv.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		right.add_child(lv)
+		body.add_child(lv)
 		Game.sfx("levelup")
 	if out.has("unlock"):
-		right.add_child(UI.label("Mở khóa vùng mới: %s" % out.unlock, 22, UI.GOLD, UI.bold))
+		body.add_child(UI.label("Mở khóa vùng mới: %s" % out.unlock, 22, UI.GOLD, UI.bold))
 	if not out.won and out.mode == "stage":
 		var tip := UI.label("Mẹo: cộng điểm tiềm năng, nâng võ công, cường hóa trang bị hoặc lên Lôi Đài rèn luyện thêm.", 18, Color(0.85, 0.8, 0.7))
 		tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		right.add_child(tip)
-	var sp := Control.new()
-	sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	right.add_child(sp)
+		body.add_child(tip)
+	for c in body.get_children() + rv.get_children():
+		if c is Label:
+			(c as Label).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var row := UI.hbox(12)
 	right.add_child(row)
 	if out.mode == "stage":
