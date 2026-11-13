@@ -77,7 +77,7 @@ const SFX_NAMES := ["gong", "click", "ko", "boom", "skill", "heal", "win", "lose
 ## Recorded fight sounds that come as variants <name>_1.._n; sfx(name) picks one at random.
 const SFX_VARIANTS := ["swing_blade", "swing_light", "swing_staff", "swing_body", "hit_slash", "hit_blunt",
 	"hit_punch", "hit_kick", "hit_palm", "hit_heavy", "block_metal", "block_wood", "block_body", "throw", "land",
-	"hurt_m", "hurtbig_m", "ko_m", "kiai_m", "hurt_f", "hurtbig_f", "ko_f"]
+	"hurt_m", "hurtbig_m", "ko_m", "kiai_m", "hurt_f", "hurtbig_f", "ko_f", "kiai_f"]
 
 func _load_audio() -> void:
 	for i in 12:

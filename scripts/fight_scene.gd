@@ -380,7 +380,7 @@ func _voice(i: int, kind: String, chance := 1.0) -> void:
 	if kind in ["hurt", "kiai"] and now - int(_voice_ms[i]) < 550:
 		return
 	var name := "%s_%s" % [kind, "f" if _female(i) else "m"]
-	if not Game.has_sfx(name) or randf() > chance:   # no female kiai take yet
+	if not Game.has_sfx(name) or randf() > chance:
 		return
 	_voice_ms[i] = now
 	Game.sfx(name, 0.05, 0.9)

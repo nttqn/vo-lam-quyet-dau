@@ -24,3 +24,5 @@ assets_src/scenery/*.png
 assets_src/scenery/*.glb
 assets_src/scenery/*.import
 tools/sfx/node_modules/
+# Marti Topmade voice pack: free to use with credit, but the raw recordings may not be redistributed
+assets_src/audio/voice_f/topmademarti/

@@ -97,8 +97,6 @@ const IM = (n) => `impact/impact.${n}.ogg`;
 const C = (n) => `cc0_100/${n}.ogg`;
 const K = (n) => `kenney_rpg/${n}.ogg`;
 const VM = (n) => `voice_m/${n}.wav`;
-const SCREAM = 'voice_f/screams.ogg';
-const SCREAM_AT = [0.05, 1.78, 3.40, 5.20]; // the four takes in screams.ogg
 
 const R = {};
 // --- weapon swings (whooshes). Blade = thin and quick, staff = deep "vù", body = cloth + air.
@@ -164,7 +162,7 @@ R.ko = [[
 R.boom = [[{ f: C('explosion') }, { f: C('slam_06'), speed: 0.8, gain: 0.6 }], 0.95];
 R.gong = [[{ f: C('gong_01'), speed: 0.7, fade: 0.5 }], 0.8];
 
-// --- voices. Male: HaelDB grunts/yells. Female: short takes of the CC0 female scream.
+// --- voices. Male: HaelDB grunts/yells (CC0).
 ['3grunt1', '3grunt4', '3grunt5', '1yell1', '1yell9', '3yell3', '1yell16'].forEach((n, i) =>
   R[`hurt_m_${i + 1}`] = [[{ f: VM(n), len: 0.42, fade: 0.12 }], 0.75]);
 ['1yell2', '3yell4', '1yell7', 'yell12'].forEach((n, i) =>
@@ -172,9 +170,17 @@ R.gong = [[{ f: C('gong_01'), speed: 0.7, fade: 0.5 }], 0.8];
 ['3yell1', 'yell11'].forEach((n, i) => R[`ko_m_${i + 1}`] = [[{ f: VM(n), len: 1.2, fade: 0.4 }], 0.85]);
 ['yell2', 'yell5', '3yell15', '1yell4'].forEach((n, i) =>
   R[`kiai_m_${i + 1}`] = [[{ f: VM(n), len: 0.55, fade: 0.18 }], 0.7]);
-SCREAM_AT.forEach((t, i) => R[`hurt_f_${i + 1}`] = [[{ f: SCREAM, at: t, len: 0.3, fade: 0.12 }], 0.6]);
-[0, 2].forEach((k, i) => R[`hurtbig_f_${i + 1}`] = [[{ f: SCREAM, at: SCREAM_AT[k], len: 0.55, fade: 0.2 }], 0.7]);
-R.ko_f_1 = [[{ f: SCREAM, at: SCREAM_AT[1], len: 1.0, fade: 0.4 }], 0.75];
+// Female: Marti Topmade's free combat voice sample (credit required, raw files
+// not redistributable -> gitignored; get it from topmademarti.itch.io).
+const VF = (n) => `voice_f/topmademarti/combat_${n}_.wav`;
+['pain_light_02', 'grunt_01', 'grunt_03'].forEach((n, i) =>
+  R[`hurt_f_${i + 1}`] = [[{ f: VF(n), len: 0.4, fade: 0.12 }], 0.7]);
+R.hurt_f_4 = [[{ f: VF('pain_light_02'), len: 0.4, speed: 1.06, fade: 0.12 }], 0.7];
+['pain_01', 'pain_02'].forEach((n, i) => R[`hurtbig_f_${i + 1}`] = [[{ f: VF(n), len: 0.7, fade: 0.2 }], 0.8]);
+R.ko_f_1 = [[{ f: VF('pain_01'), speed: 0.9, fade: 0.3 }], 0.8];
+R.ko_f_2 = [[{ f: VF('pain_02'), speed: 0.88, fade: 0.3 }], 0.8];
+['attack_02', 'swing_01', 'swing_04'].forEach((n, i) =>
+  R[`kiai_f_${i + 1}`] = [[{ f: VF(n), len: 0.6, fade: 0.18 }], 0.75]);
 
 // ------------------------------------------------------------- main
 fs.mkdirSync(OUT, { recursive: true });

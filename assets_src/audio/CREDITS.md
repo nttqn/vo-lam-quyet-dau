@@ -1,4 +1,4 @@
-# Fight sound sources (all CC0 / public domain)
+# Fight sound sources (CC0, except the female voice: free with credit)
 
 Built into `assets/audio/` by `tools/sfx/build.mjs` (`cd tools/sfx && npm install && node build.mjs`).
 Credit is not required by CC0; listed here as a courtesy and for re-downloading.
@@ -13,7 +13,7 @@ Credit is not required by CC0; listed here as a courtesy and for re-downloading.
 | cc0_100/ | 100 CC0 SFX | rubberduck | https://opengameart.org/content/100-cc0-sfx |
 | kenney_rpg/ | 50 RPG Sound Effects | Kenney (kenney.nl) | https://opengameart.org/content/50-rpg-sound-effects |
 | voice_m/ | Male Grunt/Yelling sounds | HaelDB | https://opengameart.org/content/male-gruntyelling-sounds |
-| voice_f/screams.ogg | Female high-pitched scream SFX | WuxiaScrub | https://opengameart.org/content/female-high-pitched-scream-sfx |
+| voice_f/topmademarti/ (gitignored) | Combat Female Voice Pack (free sample) | Marti Topmade, **credit required**, raw files may not be redistributed | https://topmademarti.itch.io/female-combat-voice-pack-free-version |
 
 To replace a sound, drop a new CC0 / owned file in a folder here, point its
 recipe in `tools/sfx/build.mjs` at it and rebuild.
