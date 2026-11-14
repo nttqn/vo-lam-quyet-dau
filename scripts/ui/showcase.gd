@@ -71,7 +71,7 @@ func _process(delta: float) -> void:
 			else:
 				b.pose(h.clip, b.clip_len(h.clip) * fr, 0.2)
 		else:
-			var ic := AnimMap.idle_clip(styles[i])
+			var ic := AnimMap.idle_clip(styles[i], str(b.look.get("model", "")))
 			if ic[0] == "a/Punch_Enter":
 				var ph := fposmod(_t * 0.6 + i, 2.0)
 				var fr2: float = ic[1] + (ic[2] - ic[1]) * (ph if ph < 1.0 else 2.0 - ph)

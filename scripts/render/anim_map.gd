@@ -10,8 +10,13 @@ const WEAPON_STYLES := ["sword", "staff", "dual", "dagger", "saber", "spear"]
 
 const SECT_IDLE := {"staff": "m/ThieuLam_Idle", "sword": "m/VoDang_Idle", "dual": "m/NgaMi_Idle", "palm": "m/CaiBang_Idle", "dagger": "m/DuongMon_Idle"}
 
-static func idle_clip(style: String) -> Array:
+static func idle_clip(style: String, model := "") -> Array:
 	# [clip, fraction-from, fraction-to] looped by the view
+	# 1) the model's own stance: m/<Model>_Idle (outfits "<Model>_<Id>" use their base model's)
+	if model != "":
+		for m in [model, model.get_slice("_", 0)]:
+			if Avatar.has_clip("m/%s_Idle" % m):
+				return ["m/%s_Idle" % m, 0.0, 1.0]
 	if SECT_IDLE.has(style) and Avatar.has_clip(SECT_IDLE[style]):
 		return [SECT_IDLE[style], 0.0, 1.0]
 	if style in WEAPON_STYLES:

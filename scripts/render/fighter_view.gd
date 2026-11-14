@@ -84,7 +84,7 @@ func _sync(delta: float) -> void:
 			elif f.hold_back:
 				body.pose("m/Block", body.clip_len("m/Block") * 0.4, blend)
 			else:
-				var ic: Array = ["m/CaiBang_Drunk_Idle", 0.0, 1.0] if _drunk() else AnimMap.idle_clip(style)
+				var ic: Array = ["m/CaiBang_Drunk_Idle", 0.0, 1.0] if _drunk() else AnimMap.idle_clip(style, str(body.look.get("model", "")))
 				var L := body.clip_len(ic[0])
 				var a: float = ic[1]
 				var b: float = ic[2]
@@ -144,7 +144,7 @@ func _sync(delta: float) -> void:
 		Fighter.WIN:
 			body.pose("m/Victory", minf(st_t, body.clip_len("m/Victory") * 0.5), 0.25)
 		_:
-			body.pose(AnimMap.idle_clip(style)[0], _t, blend)
+			body.pose(AnimMap.idle_clip(style, str(body.look.get("model", "")))[0], _t, blend)
 	match f.state:
 		Fighter.HITSTUN, Fighter.AIRHIT, Fighter.LYING, Fighter.THROWN: body.expr = "hurt"
 		Fighter.KO: body.expr = "ko"
