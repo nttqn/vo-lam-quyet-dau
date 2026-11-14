@@ -32,7 +32,7 @@ func _next() -> void:
 	var ps: String = SECTS[i % 5]
 	var es: String = SECTS[(i * 3 + 1) % 5]
 	var p := Npc.side(ps, 30, "Soak", 0.8, "", false, 5)
-	p.skills = [Sects.get_sect(ps).skills[0], Sects.get_sect(ps).skills[2], Sects.get_sect(ps).skills[5]]
+	p.skills = [Sects.get_sect(ps).skills[0], Sects.get_sect(ps).skills[2], Sects.get_sect(ps).skills[3], Sects.get_sect(ps).skills[5]]
 	var e := Npc.side(es, 30, "Đối Thủ", 0.8, "bandit", true, 9)
 	fs = FightScene.new({"p": p, "e": e, "theme": ["temple", "night", "bamboo"][i % 3], "autoplay": true, "seed": i + 1})
 	Game.goto(fs)

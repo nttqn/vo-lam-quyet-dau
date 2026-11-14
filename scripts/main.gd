@@ -63,7 +63,7 @@ func _ready() -> void:
 			for b in args:
 				if b.begins_with("--outfit="):
 					p.look["model"] = Outfits.model_for(ps, b.substr(9))
-			p.skills = [Sects.get_sect(ps).skills[0], Sects.get_sect(ps).skills[2], Sects.get_sect(ps).skills[5]]
+			p.skills = [Sects.get_sect(ps).skills[0], Sects.get_sect(ps).skills[2], Sects.get_sect(ps).skills[3], Sects.get_sect(ps).skills[5]]
 			for b in args:
 				if b.begins_with("--skills="):   # e.g. --skills=1,3,5 (sect skill slots 0-5)
 					p.skills = []

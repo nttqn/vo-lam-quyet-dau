@@ -81,7 +81,9 @@ static func snapshot(h: Dictionary) -> Dictionary:
 	if Insight.foreign_slot(h) >= 0:
 		var fk: String = Insight.foreign_key(h)
 		fx = [Insight.foreign_slot(h), fk, Insight.tier(Insight.points(h, fk))]
-	return {"sect": h.sect, "name": h.name, "level": int(h.level), "stats": Hero.stats(h), "skills": sk, "fx": fx,
+	# the ultimate rides in its own Tuyệt Kỹ slot: [tầng, bí kíp]
+	var ult := [int(h.skill_lv[Hero.ULT]), Books.mod_of(h, Hero.ULT)] if int(h.skill_lv[Hero.ULT]) > 0 else []
+	return {"sect": h.sect, "name": h.name, "level": int(h.level), "stats": Hero.stats(h), "skills": sk, "fx": fx, "ult": ult,
 		"color": int(h.get("color", 0)), "wrar": int(w.get("rar", 0)), "wtier": int(w.get("tier", 1)), "outfit": str(h.get("outfit", ""))}
 
 static func fields(h: Dictionary) -> Dictionary:
@@ -110,6 +112,9 @@ static func side(doc: Dictionary) -> Dictionary:
 			# the snapshot lists own skills packed; the foreign one keeps its slot
 			sk.insert(at, fm)
 			sk.resize(3)
+	# Tuyệt Kỹ slot (older snapshots kept the ultimate among the 3 normal skills)
+	var ult: Array = snap.get("ult", [])
+	sk.append(Hero.skill_scaled(s.skills[Hero.ULT], int(ult[0]), str(ult[1]) if ult.size() > 1 else "") if ult.size() > 0 else null)
 	var lk: Dictionary = s.look.duplicate()
 	var c := int(snap.get("color", 0))
 	if c > 0:
@@ -140,15 +145,19 @@ static func bots(h: Dictionary, n := 4) -> Array:
 		var lvl := maxi(1, int(h.level) + rng.randi_range(-2, 2))
 		var npc := Npc.side(sid, lvl, first[rng.randi_range(0, 5)] + " " + last[rng.randi_range(0, 5)], AI, "", false, rng.randi())
 		var sk := []
+		var ult := []
 		var all_sk: Array = Sects.get_sect(sid).skills
 		for m in npc.skills:
 			if m == null:
 				continue
 			for j in all_sk.size():
 				if all_sk[j].name == m.name:
-					sk.append([j, int(m.get("lv", 1))])
+					if j == Hero.ULT:
+						ult = [int(m.get("lv", 1)), ""]
+					else:
+						sk.append([j, int(m.get("lv", 1))])
 					break
-		var snap := {"sect": sid, "name": npc.name, "level": lvl, "stats": npc.stats, "skills": sk, "color": 0, "wrar": 0}
+		var snap := {"sect": sid, "name": npc.name, "level": lvl, "stats": npc.stats, "skills": sk, "ult": ult, "color": 0, "wrar": 0}
 		var sc := int(d.score) + rng.randi_range(-80, 80)
 		out.append({"_id": "bot%d" % i, "data": JSON.stringify(snap), "score": sc, "name": npc.name, "sect": sid, "level": lvl, "power": Build.power(npc.stats), "bot": true})
 	return out

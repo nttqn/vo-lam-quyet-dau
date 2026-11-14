@@ -37,7 +37,24 @@ static func migrate(d: Dictionary) -> Dictionary:
 		d.skill_lv[i] = int(d.skill_lv[i])
 	for i in d.equip.size():
 		d.equip[i] = int(d.equip[i])
+		if d.equip[i] == ULT:
+			d.equip[i] = -1   # the ultimate has its own slot now
+	_fill_slots(d)
 	return d
+
+## Slot index of the ultimate (always the sect's 6th skill). It is never put in
+## the 3 normal slots: once learned it sits in the fixed "Tuyệt Kỹ" slot (s4).
+const ULT := 5
+
+## Put learned, unequipped normal skills into empty slots (not the foreign one).
+static func _fill_slots(h: Dictionary) -> void:
+	for i in mini(ULT, h.skill_lv.size()):
+		if int(h.skill_lv[i]) == 0 or h.equip.has(i):
+			continue
+		for k in 3:
+			if int(h.equip[k]) == -1 and k != Insight.foreign_slot(h):
+				h.equip[k] = i
+				break
 
 static func sect(h: Dictionary) -> Dictionary:
 	return Sects.get_sect(h.sect)
@@ -63,11 +80,8 @@ static func _unlock_skills(h: Dictionary) -> void:
 	for i in s.skills.size():
 		if int(h.skill_lv[i]) == 0 and int(h.level) >= int(s.skills[i].lvl):
 			h.skill_lv[i] = 1
-			# auto-equip into an empty slot
-			for k in 3:
-				if int(h.equip[k]) == -1 and k != Insight.foreign_slot(h):
-					h.equip[k] = i
-					break
+	# auto-equip new normal skills into empty slots (the ultimate has its own)
+	_fill_slots(h)
 
 static func stats(h: Dictionary) -> Dictionary:
 	return Build.stats(int(h.level), h.pts, sect(h), Items.total(h.gear))
@@ -93,6 +107,11 @@ static func equipped_skills(h: Dictionary) -> Array:
 			out.append(skill_scaled(s.skills[i], int(h.skill_lv[i]), Books.mod_of(h, i)))
 		else:
 			out.append(null)
+	# 4th button: the ultimate, once learned
+	if int(h.skill_lv[ULT]) > 0:
+		out.append(skill_scaled(s.skills[ULT], int(h.skill_lv[ULT]), Books.mod_of(h, ULT)))
+	else:
+		out.append(null)
 	return out
 
 static func look(h: Dictionary) -> Dictionary:

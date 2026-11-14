@@ -286,7 +286,7 @@ func _try_button(b: String, opp: Fighter, sim) -> bool:
 				vx = -facing * 7.0 * speed_mult()
 				dodge_cd = 32
 			return true
-		"s1", "s2", "s3":
+		"s1", "s2", "s3", "s4":
 			var si := int(b.substr(1)) - 1
 			_consume()
 			if skill_ready(si):

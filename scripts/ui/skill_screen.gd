@@ -136,7 +136,7 @@ func _build() -> void:
 	# --- equipped slots
 	for c in _slots.get_children():
 		c.queue_free()
-	_slots.add_child(UI.label("Ô chiêu", 22, UI.GOLD, UI.bold))
+	# (no "Ô chiêu" caption: the numbered chips 1-2-3-TK speak for themselves and the row must fit 16:9)
 	var fslot := Insight.foreign_slot(h)
 	for k in 3:
 		var i := int(h.equip[k])
@@ -148,7 +148,7 @@ func _build() -> void:
 			fsl.add_child(fh)
 			fh.add_child(UI.label(str(k + 1), 24, Color(0.6, 0.85, 1.0), UI.title))
 			fh.add_child(icon(Sects.get_sect(fp[0]), fp[1], 44))
-			fh.add_child(UI.label(Insight.skill_of(fk).name, 18, Color(0.75, 0.9, 1.0)))
+			fh.add_child(_slot_name(Insight.skill_of(fk).name, Color(0.75, 0.9, 1.0)))
 			_slots.add_child(fsl)
 			continue
 		var slot := UI.panel(Color(0.1, 0.07, 0.09, 0.92), UI.GOLD if i == _sel and i >= 0 else UI.GOLD_D)
@@ -157,8 +157,17 @@ func _build() -> void:
 		sh.add_child(UI.label(str(k + 1), 24, UI.GOLD, UI.title))
 		if i >= 0:
 			sh.add_child(icon(s, i, 44))
-		sh.add_child(UI.label(s.skills[i].name if i >= 0 else "(trống)", 18, UI.PAPER if i >= 0 else Color(0.6, 0.58, 0.55)))
+		sh.add_child(_slot_name(s.skills[i].name if i >= 0 else "(trống)", UI.PAPER if i >= 0 else Color(0.6, 0.58, 0.55)))
 		_slots.add_child(slot)
+	# fixed Tuyệt Kỹ slot: the ultimate, once learned
+	var ul := int(h.skill_lv[Hero.ULT]) > 0
+	var us := UI.panel(Color(0.14, 0.1, 0.04, 0.92), UI.GOLD if _sel == Hero.ULT else Color(0.75, 0.55, 0.1))
+	var uh := UI.hbox(8)
+	us.add_child(uh)
+	uh.add_child(UI.label("TK", 22, Color(1.0, 0.8, 0.3), UI.title))
+	uh.add_child(icon(s, Hero.ULT, 44, not ul))
+	uh.add_child(_slot_name(s.skills[Hero.ULT].name if ul else "Cấp %d" % int(s.skills[Hero.ULT].lvl), UI.PAPER if ul else Color(0.6, 0.58, 0.55)))
+	_slots.add_child(us)
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_slots.add_child(sp)
@@ -201,8 +210,9 @@ func _card(s: Dictionary, i: int) -> Control:
 	img.add_child(ic)
 	v.add_child(img)
 	var eq: int = h.equip.find(i)
-	if eq >= 0:
-		var badge := UI.label(str(eq + 1), 22, UI.INK, UI.title)
+	var ult_on := i == Hero.ULT and lv > 0
+	if eq >= 0 or ult_on:
+		var badge := UI.label("TK" if ult_on else str(eq + 1), 22 if not ult_on else 17, UI.INK, UI.title)
 		badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		badge.add_theme_stylebox_override("normal", UI.box(UI.GOLD, UI.INK, 2, 16, 0))
@@ -274,8 +284,11 @@ func _build_detail(s: Dictionary) -> void:
 	var eq: int = h.equip.find(i)
 	var er := UI.hbox(8)
 	_detail.add_child(er)
-	er.add_child(UI.label("Lắp vào ô", 18, UI.GOLD, UI.bold))
-	for k in 3:
+	if i == Hero.ULT:
+		er.add_child(UI.label("Luôn ở ô TK riêng, không chiếm ô chiêu.", 17, Color(1.0, 0.82, 0.4)))
+	else:
+		er.add_child(UI.label("Lắp vào ô", 18, UI.GOLD, UI.bold))
+	for k in (0 if i == Hero.ULT else 3):
 		var kk := k
 		var b := UI.button(str(k + 1), func(): _equip(i, kk), 20)
 		b.custom_minimum_size = Vector2(52, 48)
@@ -468,3 +481,12 @@ func _up(i: int) -> void:
 
 func back() -> void:
 	Game.goto(HubScreen.new())
+
+## Skill name inside an equipped-slot chip: fixed width, trimmed with "…" so the
+## 3 slots + Tuyệt Kỹ + Ngộ Chiêu + points fit one row on 16:9 screens.
+static func _slot_name(t: String, col: Color) -> Label:
+	var l := UI.label(t, 16, col)
+	l.clip_text = true
+	l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	l.custom_minimum_size.x = 112
+	return l

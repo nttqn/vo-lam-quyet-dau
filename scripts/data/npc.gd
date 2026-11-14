@@ -22,12 +22,12 @@ static func side(sect_id: String, level: int, name: String, ai: float, faction :
 	var n_sk := (2 if not boss else 3) if level >= 4 else ((1 if level >= 3 else 0) if not boss else 2)
 	for i in avail.slice(0, n_sk):
 		sk.append(Hero.skill_scaled(s.skills[i], clampi(1 + level / 10, 1, Hero.SKILL_MAX)))
-	if (boss or level >= 30) and level >= int(s.skills[5].lvl):
-		if sk.size() >= 3:
-			sk[2] = Hero.skill_scaled(s.skills[5], clampi(1 + level / 10, 1, Hero.SKILL_MAX))
-		else:
-			sk.append(Hero.skill_scaled(s.skills[5], 1))
 	while sk.size() < 3:
+		sk.append(null)
+	# ultimate in its own 4th slot, like the hero's Tuyệt Kỹ button
+	if (boss or level >= 30) and level >= int(s.skills[Hero.ULT].lvl):
+		sk.append(Hero.skill_scaled(s.skills[Hero.ULT], clampi(1 + level / 10, 1, Hero.SKILL_MAX)))
+	else:
 		sk.append(null)
 	var nlook := Appearance.apply(Looks.npc(sect_id, faction, rng), random_look(sect_id, rng, faction))
 	nlook["wtier"] = clampi(1 + int((level - 1) / 5.5), 1, 7)

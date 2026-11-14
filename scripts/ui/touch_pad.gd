@@ -35,6 +35,8 @@ func buttons() -> Array:
 	var sk_pos := [Vector2(W - 445, H - 82), Vector2(W - 345, H - 240), Vector2(W - 245, H - 345)]
 	for i in 3:
 		b.append({"id": "s%d" % (i + 1), "c": sk_pos[i], "r": 50.0 if i < 2 else 56.0, "t": "", "col": Color(0.35, 0.2, 0.5), "skill": i})
+	# fixed ultimate slot (Tuyệt Kỹ), above the dodge button
+	b.append({"id": "s4", "c": Vector2(W - 100, H - 452), "r": 58.0, "t": "", "col": Color(0.75, 0.55, 0.1), "skill": 3, "ult": true})
 	return b
 
 func pop_btn() -> String:
@@ -99,7 +101,7 @@ func poll() -> Dictionary:
 	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT): kmx += 1
 	var kup := Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP) or Input.is_physical_key_pressed(KEY_SPACE)
 	var kdown := Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)
-	for pair in [[KEY_J, "p"], [KEY_K, "k"], [KEY_L, "d"], [KEY_U, "s1"], [KEY_I, "s2"], [KEY_O, "s3"]]:
+	for pair in [[KEY_J, "p"], [KEY_K, "k"], [KEY_L, "d"], [KEY_U, "s1"], [KEY_I, "s2"], [KEY_O, "s3"], [KEY_P, "s4"]]:
 		var now := Input.is_physical_key_pressed(pair[0])
 		if now and not _keys_prev.get(pair[0], false):
 			_press(pair[1])

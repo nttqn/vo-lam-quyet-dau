@@ -135,7 +135,7 @@ static func start_tower(f: int) -> void:
 	var p := Hero.side(h)
 	var r := Tower.rule(f)
 	if r == "no_skill":
-		p.skills = [null, null, null]
+		p.skills = [null, null, null, null]
 	elif r == "glass":
 		p.stats.hp_max *= 0.5
 	var themes := ["temple", "peak", "snow", "night", "demon"]
