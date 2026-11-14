@@ -119,14 +119,14 @@ func _tile(title: String, sub: String, ic: String, col: Color, cb: Callable, hgt
 	sheen.offset_top = 3
 	sheen.offset_bottom = -3
 	b.add_child(sheen)
-	var row := UI.hbox(10)
+	var row := UI.hbox(8)
 	row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	row.offset_left = 10
+	row.offset_left = 8
 	row.offset_right = -10
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.alignment = BoxContainer.ALIGNMENT_BEGIN
 	b.add_child(row)
-	var isz := hgt - 30.0 if hgt > 120 else 52.0
+	var isz := hgt - 30.0 if hgt > 120 else 62.0
 	var em := _emblem(ic, title, col, isz)
 	em.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(em)
