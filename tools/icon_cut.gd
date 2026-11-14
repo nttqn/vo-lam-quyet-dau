@@ -12,6 +12,7 @@ const SHEETS := {
 	"nga_mi": ["res://assets_src/skills/nga_mi.png", "res://assets/ui/skills/nga_mi_%d.png", 6, [3, 3], 0],
 	"cai_bang": ["res://assets_src/skills/cai_bang.png", "res://assets/ui/skills/cai_bang_%d.png", 6, [3, 3], 0],
 	"duong_mon": ["res://assets_src/skills/duong_mon.png", "res://assets/ui/skills/duong_mon_%d.png", 6, [3, 3], 0],
+	"vovinam": ["res://assets_src/skills/vovinam.png", "res://assets/ui/skills/vovinam_%d.png", 6, [3, 3], 0],
 	"weapon_staff": ["res://assets_src/items/weapon_staff.png", "res://assets/ui/items/weapon_staff_%d.png", 7, [4, 3], 1],
 	"weapon_sword": ["res://assets_src/items/weapon_sword.png", "res://assets/ui/items/weapon_sword_%d.png", 7, [4, 3], 1],
 	"weapon_dual": ["res://assets_src/items/weapon_dual.png", "res://assets/ui/items/weapon_dual_%d.png", 7, [4, 3], 1],

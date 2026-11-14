@@ -40,6 +40,12 @@ Beggar Sect fighter, sturdy middle-aged man with short stubble beard, cheerful r
 Tang Clan hidden-weapon assassin, lean young man, sharp eyes. Tight dark green and black tunic, leather bracers on the forearms, black belt with small flat pouches, dark trousers, black boots. Short black hair tied back, a dark cloth mask covering the lower half of the face.
 ```
 
+**Vovinam** (nam, phái ẩn → file `Vovinam.fbx`)
+Trong PHẦN CHUNG đổi câu "Ancient Chinese wuxia martial artist." thành "Vietnamese martial artist." rồi dán:
+```
+Vietnamese Vovinam martial artist, athletic young man, determined friendly face, tanned skin. Plain royal blue martial arts uniform: wrap-over jacket with short collar, sleeves to the wrist, matching royal blue trousers, a yellow cloth belt tied in a flat knot at the front. Barefoot. Short neat black hair. No emblem, no logo, no text on the clothes.
+```
+
 **Thiếu Lâm** (đã có — làm lại khi cần)
 ```
 Shaolin warrior monk, young man, bald with incense burn dots on the forehead. Saffron orange tunic with cream trim, dark brown sash, wooden prayer bead necklace worn tight around the neck, brown wide trousers with white leg wraps, brown cloth shoes.

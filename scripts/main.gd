@@ -14,6 +14,9 @@ func _ready() -> void:
 	var screen := ""
 	for a in args:
 		if a.begins_with("--shot="): _shot = a.substr(7)
+		if a == "--unlockall":
+			for hid in Sects.HIDDEN:
+				Game.settings["unlock_" + hid] = true
 		if a.begins_with("--delay="): _delay = int(a.substr(8))
 		if a.begins_with("--screen="): screen = a.substr(9)
 	for a in args:
@@ -174,7 +177,7 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 		"create2":
 			var cs := CreateScreen.new(0)
 			Game.goto(cs)
-			cs._pick.call_deferred("nga_mi")
+			cs._pick.call_deferred(sect if sect != "thieu_lam" else "nga_mi")
 		"hub": Game.goto(HubScreen.new())
 		"map": Game.goto(MapScreen.new())
 		"char": Game.goto(CharacterScreen.new())

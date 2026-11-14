@@ -67,6 +67,7 @@ var press := [0.0, 0.0, 0.0]    # pressure per zone
 var seal := [0, 0, 0]           # frames left sealed per zone
 var insight_sent := false       # this move already taught the defender once
 var last_hit := ""              # name of the move that last damaged this fighter
+var ripost := 0                 # Cương Nhu: frames left of the empowered next hit
 
 func setup(p_sect: Dictionary, p_stats: Dictionary, p_skills: Array) -> void:
 	sect = p_sect
@@ -99,6 +100,7 @@ func reset_round(px: float, face: int) -> void:
 	press = [0.0, 0.0, 0.0]
 	seal = [0, 0, 0]
 	last_hit = ""
+	ripost = 0
 
 # ------------------------------------------------------------- queries
 func grounded() -> bool:
@@ -341,6 +343,8 @@ func step(opp: Fighter, sim) -> void:
 			buffs.remove_at(i)
 	if not dead:
 		en = minf(EN_MAX, en + 1.6 * st.get("en_gain", 1.0) * en_mult() * DT)
+	if ripost > 0:
+		ripost -= 1
 	for z in 3:
 		if seal[z] > 0:
 			seal[z] -= 1
@@ -505,6 +509,8 @@ func take_hit(att: Fighter, m: Dictionary, dmg: float, sim, crit: bool) -> void:
 		vx = dir * 4.0
 		return
 	var armored: bool = (armor_left > 0 and state == ATTACK and sf < move.st + move.act) or has_buff("armor")
+	if armored and att.sect.get("passive", "") == "am_khi" and m.get("kind", "") in ["proj", "rain"]:
+		armored = false   # Đường Môn: ám khí xuyên giáp
 	if armored and m.launch <= 0.0 and not m.kd and m.get("kind", "") != "throw":
 		if armor_left > 0 and armor_left < 99:
 			armor_left -= 1

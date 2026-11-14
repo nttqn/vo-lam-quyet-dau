@@ -337,6 +337,12 @@ func _events() -> void:
 			"cleanse":
 				var fc: Fighter = sim.f[e.i]
 				fx.text(Vector3(fc.x, 2.7, 0.3), "Giải Huyệt", Color(0.6, 1.0, 0.7))
+			"cuongnhu":
+				var fcn: Fighter = sim.f[e.i]
+				if e.on:
+					fx.text(Vector3(fcn.x, 2.6, 0.3), "Cương Nhu", Color(0.55, 0.75, 1.0))
+				else:
+					fx.ring(Vector3(fcn.x, 1.2, 0.2), Color(0.45, 0.7, 1.0), 1.0)
 			"insight":
 				if e.i == 0 and not cfg.get("training", false):
 					var k := Insight.key(e.sect, e.slot)

@@ -4,7 +4,21 @@ extends RefCounted
 ## six skills each. Frame data is at 60 ticks/s; reach is metres beyond the
 ## attacker's body edge; dmg multiplies ATK (normals) or QI (skills).
 
-const IDS := ["thieu_lam", "vo_dang", "nga_mi", "cai_bang", "duong_mon"]
+const IDS := ["thieu_lam", "vo_dang", "nga_mi", "cai_bang", "duong_mon", "vovinam"]
+## Phái ẩn: locked at character creation until unlocked (see Sects.unlocked).
+const HIDDEN := ["vovinam"]
+## TẠM THỜI: mở mọi phái ẩn để test. Đặt lại false trước khi phát hành.
+const TEST_UNLOCK_ALL := true
+## Passive per sect (shown on the create / skill screens).
+const PASSIVE := {
+	"duong_mon": ["Ám Khí Xuyên Giáp", "Ám khí phá được hộ thể (giáp) của đối thủ; chiêu ám khí bị đỡ vẫn gây 30% sát thương."],
+	"vovinam": ["Cương Nhu Phối Triển", "Đỡ được đòn thì đòn đánh trúng kế tiếp (trong 1,5 giây) mạnh thêm 35% và hồi nội lực."],
+}
+const UNLOCK_HINT := "Đánh bại trùm Trường Giang Độ Khẩu (vùng 3) bằng bất kỳ nhân vật nào để mở."
+
+static func passive(id: String) -> String:
+	return str(get_sect(id).get("passive", ""))
+
 
 static var _data: Dictionary = {}
 
@@ -150,7 +164,7 @@ static func _build() -> void:
 		},
 		"skills": [
 			sk("Hàng Ma Chưởng", "dpalm_w", "dpalm", 12, 5, 22, 2.4, 1.3, "mid", 25, 4.5, {"kd": true, "launch": 5.0, "push": 6.5, "armor": true, "tip": "hand_r", "fx": "palm"}),
-			sk("Túy Quyền", "upper_w", "cross", 8, 28, 18, 0.65, 1.1, "mid", 30, 6.0, {"hits": 4, "lunge": 1.5, "tip": "hand_r", "lvl": 3, "fx": "punch"}),
+			sk("Túy Quyền", "upper_w", "cross", 8, 28, 18, 0.6, 1.1, "mid", 30, 6.0, {"hits": 4, "lunge": 1.5, "tip": "hand_r", "lvl": 3, "fx": "punch"}),
 			sk("Long Hống Chưởng", "dpalm_w", "dpalm", 14, 3, 22, 1.7, 0.0, "mid", 30, 5.0, {"kind": "proj", "proj": {"speed": 9.0, "y": 1.0, "n": 1, "vis": "dragon"}, "lvl": 6, "fx": "palm"}),
 			sk("Đả Cẩu Phản Kích", "block", "block", 3, 40, 12, 2.4, 1.0, "mid", 30, 8.0, {"kind": "counter", "tip": "hand_r", "lvl": 10, "fx": "palm", "seal": "chan", "seal_amt": 100}),
 			sk("Tửu Thần Cuồng Khí", "cast_w", "victory", 12, 2, 14, 0.0, 0.0, "mid", 25, 16.0, {"kind": "buff", "buff": {"atk": 1.35, "spd": 1.12, "t": 420}, "lvl": 15}),
@@ -164,27 +178,53 @@ static func _build() -> void:
 		"desc": "Ám khí tầm xa, độc dược. Giữ khoảng cách, tiêu hao đối thủ.",
 		"elem": Color(0.55, 1.0, 0.45),
 		"bias": {"luc": 0, "than": 2, "noi": 2, "the": 0},
-		"speed": 1.1,
+		"speed": 1.1, "passive": "am_khi",
 		"look": {"model": "DuongMon", "robe": Color(0.24, 0.17, 0.3), "trim": Color(0.58, 0.16, 0.22), "pants": Color(0.13, 0.11, 0.16), "head_style": "hood", "outfit": "Ranger", "robe_len": 0.0, "weapon": "daggers", "sash": Color(0.58, 0.16, 0.22)},
 		"moves": {
 			"p1": mv("Chủy Thủ Thích", "jab_w", "cross", 5, 3, 11, 1.0, 1.1, "mid", {"next": "p2", "fx": "slash"}),
 			"p2": mv("Hồi Đao Trảm", "slash_h_w", "slash_h", 7, 3, 13, 1.1, 1.1, "high", {"next": "p3", "fx": "slash"}),
 			"p3": mv("Thượng Khiêu Đao", "rising_w", "rising", 10, 4, 20, 1.6, 1.05, "mid", {"launch": 6.5, "fx": "slash"}),
-			"fp": mv("Phi Đao", "toss_w", "toss", 9, 2, 16, 0.85, 0.0, "high", {"kind": "proj", "proj": {"speed": 15.0, "y": 1.3, "n": 1, "vis": "knife"}, "fx": "slash"}),
+			"fp": mv("Phi Đao", "toss_w", "toss", 9, 2, 17, 0.8, 0.0, "high", {"kind": "proj", "proj": {"speed": 15.0, "y": 1.3, "n": 1, "vis": "knife"}, "fx": "slash"}),
 			"dp": mv("Địa Xà Thích", "jab_w", "lowpunch", 6, 3, 12, 0.8, 0.95, "low", {"fx": "slash"}),
 			"jp": mv("Không Trung Phi Đao", "jump", "toss", 6, 2, 12, 0.65, 0.0, "mid", {"air": true, "kind": "proj", "proj": {"speed": 14.0, "y": 0.0, "vy": -6.0, "n": 1, "vis": "knife"}, "fx": "slash"}),
 		},
 		"skills": [
-			sk("Phi Đao Tam Liên", "toss_w", "toss", 9, 3, 18, 0.7, 0.0, "mid", 25, 4.0, {"kind": "proj", "proj": {"speed": 15.0, "y": 1.2, "n": 3, "gap": 5, "vis": "knife"}}),
-			sk("Đoạt Mệnh Độc Châm", "toss_w", "toss", 9, 2, 16, 0.5, 0.0, "high", 25, 8.0, {"kind": "proj", "proj": {"speed": 18.0, "y": 1.35, "n": 1, "vis": "needle"}, "poison": 0.07, "lvl": 3, "seal": "tay", "seal_amt": 100}),
-			sk("Ảnh Tung Bộ", "dodge", "cross", 10, 4, 18, 1.4, 1.0, "mid", 30, 6.0, {"kind": "blink", "lvl": 6, "fx": "slash"}),
+			sk("Phi Đao Tam Liên", "toss_w", "toss", 9, 3, 18, 0.75, 0.0, "mid", 25, 4.0, {"kind": "proj", "proj": {"speed": 15.0, "y": 1.2, "n": 3, "gap": 5, "vis": "knife"}}),
+			sk("Đoạt Mệnh Độc Châm", "toss_w", "toss", 9, 2, 16, 0.5, 0.0, "high", 25, 8.0, {"kind": "proj", "proj": {"speed": 18.0, "y": 1.35, "n": 1, "vis": "needle"}, "poison": 0.1, "lvl": 3, "seal": "tay", "seal_amt": 100}),
+			sk("Ảnh Tung Bộ", "dodge", "cross", 10, 4, 22, 0.95, 1.0, "mid", 30, 8.0, {"kind": "blink", "lvl": 6, "fx": "slash"}),
 			sk("Lôi Hỏa Đạn", "toss_w", "toss", 12, 2, 20, 1.8, 0.0, "mid", 35, 8.0, {"kind": "proj", "proj": {"speed": 6.5, "y": 1.4, "vy": 6.0, "grav": 16.0, "n": 1, "vis": "bomb"}, "kd": true, "launch": 6.0, "unblockable": true, "lvl": 10, "fx": "fire"}),
 			sk("Bạo Vũ Lê Hoa", "cast_w", "toss", 12, 3, 22, 0.35, 0.0, "mid", 35, 7.0, {"kind": "proj", "proj": {"speed": 16.0, "y": 1.1, "n": 7, "gap": 2, "spread": 0.35, "vis": "needle"}, "lvl": 15, "seal": "chan", "seal_amt": 20}),
 			sk("Vạn Độc Thiên La", "cast_w", "toss", 18, 40, 30, 0.75, 0.0, "mid", 100, 30.0, {"kind": "rain", "proj": {"n": 10, "gap": 4, "vis": "knife"}, "poison": 0.12, "unblockable": true, "ult": true, "lvl": 20, "fx": "slash"}),
 		],
 	}
 	dm.moves.merge(_kicks("Quỷ Ảnh Cước"))
-	for s in [tl, vd, nm, cb, dm]:
+	# --------------------------------------------------------------- Vovinam
+	var vn := {
+		"id": "vovinam", "name": "Vovinam", "weapon_name": "Quyền Cước", "style": "palm",
+		"desc": "Việt Võ Đạo, phái ẩn của người Việt. Quyền cước nhanh gọn, đòn chân kẹp cổ quật ngã đối thủ.",
+		"elem": Color(0.35, 0.6, 1.0),
+		"bias": {"luc": 1, "than": 1, "noi": 1, "the": 1},
+		"speed": 1.08, "passive": "cuong_nhu",
+		"look": {"model": "Vovinam", "outfit": "Peasant", "robe": Color(0.14, 0.28, 0.66), "trim": Color(0.2, 0.36, 0.78), "pants": Color(0.12, 0.24, 0.58), "boots": Color(0.1, 0.12, 0.2), "head_style": "headband", "weapon": "none", "sash": Color(0.95, 0.78, 0.18)},
+		"moves": {
+			"p1": mv("Đấm Thẳng", "jab_w", "jab", 5, 3, 10, 0.95, 1.0, "mid", {"next": "p2", "tip": "hand_l", "fx": "punch"}),
+			"p2": mv("Chém Cạnh Tay", "cross_w", "cross", 7, 3, 12, 1.15, 1.05, "high", {"next": "p3", "tip": "hand_r", "fx": "palm"}),
+			"p3": mv("Đá Tạt Vòng Cầu", "round_w", "round", 11, 4, 19, 1.9, 1.1, "high", {"push": 5.0, "tip": "foot_r", "fx": "kick"}),
+			"fp": mv("Đá Đạp Tống", "skick_w", "skick", 12, 4, 18, 1.55, 1.15, "mid", {"lunge": 4.5, "push": 5.0, "tip": "foot_l", "fx": "kick"}),
+			"dp": mv("Đá Quét Thấp", "sweep_w", "sweep", 10, 4, 17, 0.9, 1.1, "low", {"tip": "foot_r", "fx": "kick"}),
+			"jp": mv("Phi Cước Song Đầu", "jump", "jkick", 6, 7, 9, 1.3, 0.95, "over", {"air": true, "tip": "foot_l", "fx": "kick"}),
+		},
+		"skills": [
+			sk("Liên Hoàn Đấm Chỏ", "jab_w", "cross", 8, 20, 16, 0.72, 1.05, "mid", 25, 4.5, {"hits": 4, "lunge": 2.2, "kd": true, "tip": "hand_r", "fx": "punch"}),
+			sk("Phản Đòn Gạt Đá", "block", "block", 3, 40, 12, 2.3, 1.1, "mid", 30, 8.0, {"kind": "counter", "lvl": 3, "tip": "foot_r", "fx": "kick", "seal": "tay", "seal_amt": 100}),
+			sk("Lên Gối Hạ Chỏ", "upper_w", "upper", 8, 6, 24, 1.7, 0.95, "high", 30, 6.0, {"launch": 8.5, "lunge": 2.5, "lvl": 6, "tip": "hand_r", "fx": "punch"}),
+			sk("Đòn Chân Kẹp Cổ", "jump", "jkick", 10, 10, 22, 2.1, 1.2, "over", 35, 8.0, {"kind": "leap", "kd": true, "unblockable": true, "lvl": 10, "tip": "foot_l", "fx": "kick", "seal": "chan", "seal_amt": 100}),
+			sk("Tâm Pháp Việt Võ", "cast_w", "victory", 10, 2, 14, 0.0, 0.0, "mid", 25, 16.0, {"kind": "buff", "buff": {"atk": 1.2, "def": 1.15, "spd": 1.1, "t": 360}, "lvl": 15}),
+			sk("Liên Hoàn Đòn Chân", "round_w", "round", 16, 34, 30, 1.3, 1.2, "mid", 100, 30.0, {"kind": "rush", "hits": 6, "lunge": 6.5, "armor": true, "ult": true, "launch": 9.0, "lvl": 20, "tip": "foot_r", "fx": "kick"}),
+		],
+	}
+	vn.moves.merge(_kicks("Đá Tạt"))
+	for s in [tl, vd, nm, cb, dm, vn]:
 		# skill unlock levels default: first skill at 1
 		for i in s.skills.size():
 			var m: Dictionary = s.skills[i]

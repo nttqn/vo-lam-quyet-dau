@@ -29,8 +29,10 @@ func _ready() -> void:
 	left.offset_bottom = -20
 	ui.add_child(left)
 	for s in Sects.all():
-		var b := UI.button(s.name + "  ·  " + s.weapon_name, func(): _pick(s.id), 22)
-		b.custom_minimum_size.y = 64
+		var open := Game.sect_unlocked(s.id)
+		var label: String = (s.name + "  ·  " + s.weapon_name) if open else "???  ·  Phái ẩn"
+		var b := UI.button(label, func(): _pick(s.id), 22)
+		b.custom_minimum_size.y = 56
 		b.toggle_mode = true
 		left.add_child(b)
 		_sect_btns[s.id] = b
@@ -57,7 +59,8 @@ func _pick(id: String) -> void:
 	for k in _sect_btns:
 		(_sect_btns[k] as Button).button_pressed = k == id
 	show.clear()
-	show.add_body(Sects.get_sect(id).look.duplicate(), Sects.get_sect(id).style, -1.6, -0.55)
+	if Game.sect_unlocked(id):
+		show.add_body(Sects.get_sect(id).look.duplicate(), Sects.get_sect(id).style, -1.6, -0.55)
 	show.spin = true
 	show.set_focus(-1.6)
 	_build()
@@ -66,6 +69,14 @@ func _build() -> void:
 	for c in _panel.get_children():
 		c.queue_free()
 	var s := Sects.get_sect(sect_id)
+	if not Game.sect_unlocked(sect_id):
+		_panel.add_child(UI.heading("Phái Ẩn", 56))
+		var lk := UI.label("Một môn phái thất truyền, chỉ hiện thân với người đã hành tẩu giang hồ đủ lâu.
+
+" + Sects.UNLOCK_HINT, 22)
+		lk.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_panel.add_child(lk)
+		return
 	_panel.add_child(UI.heading(s.name, 56))
 	var d := UI.label(s.desc, 22)
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -77,6 +88,10 @@ func _build() -> void:
 		var col := UI.PAPER if v == 0 else (Color(0.5, 1, 0.5) if v > 0 else Color(1, 0.5, 0.45))
 		bl.add_child(UI.label("%s %s%d" % [names[k], "+" if v >= 0 else "", v], 20, col, UI.bold))
 	_panel.add_child(bl)
+	if Sects.PASSIVE.has(s.id):
+		var pv := UI.label("Nội tại — %s: %s" % Sects.PASSIVE[s.id], 19, Color(0.6, 0.85, 1.0))
+		pv.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		_panel.add_child(pv)
 	_panel.add_child(UI.label("Võ công trấn phái:", 22, UI.GOLD, UI.bold))
 	for m in s.skills:
 		var t := "• %s  (cấp %d)" % [m.name, m.lvl]

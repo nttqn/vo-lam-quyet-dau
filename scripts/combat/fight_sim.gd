@@ -231,9 +231,17 @@ func resolve(a: Fighter, d: Fighter, m: Dictionary, last := true) -> void:
 		d.stun = m.bs
 		d.vx = a.facing * absf(m.push) * 0.6
 		var chip := 0.0
-		if m.get("skill", false):
+		if a.sect.get("passive", "") == "am_khi" and m.get("skill", false) and kind_of(m) in ["proj", "rain"]:
+			chip = _damage(a, d, m, false) * 0.3
+		elif m.get("skill", false):
 			chip = _damage(a, d, m, false) * 0.12
+		if chip > 0.0:
 			d.hp = maxf(1.0, d.hp - chip)
+		if d.sect.get("passive", "") == "cuong_nhu":
+			if d.ripost <= 0:
+				emit({"t": "cuongnhu", "i": d.idx, "on": true})
+			d.ripost = 90
+			d.en = minf(Fighter.EN_MAX, d.en + 1.0 * d.en_mult())
 		d.en = minf(Fighter.EN_MAX, d.en + 2.0 * d.en_mult())
 		a.en = minf(Fighter.EN_MAX, a.en + 1.5 * a.en_mult())
 		_wall_push(a, d, m)
@@ -243,6 +251,10 @@ func resolve(a: Fighter, d: Fighter, m: Dictionary, last := true) -> void:
 		return
 	var crit: bool = rng.randf() < float(a.st.get("crit", 0.05))
 	var dmg := _damage(a, d, m, crit)
+	if a.ripost > 0:
+		a.ripost = 0
+		a.en = minf(Fighter.EN_MAX, a.en + 4.0 * a.en_mult())
+		emit({"t": "cuongnhu", "i": a.idx, "on": false})
 	var mm := m
 	if not last and m.get("hits", 1) > 1:
 		# intermediate hits of a multi-hit only stagger
@@ -271,6 +283,8 @@ func _wall_push(a: Fighter, d: Fighter, m: Dictionary) -> void:
 func _damage(a: Fighter, d: Fighter, m: Dictionary, crit: bool) -> float:
 	var power: float = a.st.qi if m.get("skill", false) else a.st.atk
 	power *= a.buff_mult("atk")
+	if a.ripost > 0:
+		power *= 1.35
 	if a.seal[0] > 0:
 		power *= 0.75 if not m.get("skill", false) else 0.88
 	var defv: float = d.st.def * d.buff_mult("def")

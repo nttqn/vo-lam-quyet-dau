@@ -157,6 +157,21 @@ func _load_settings() -> void:
 func save_settings() -> void:
 	_write_json(SETTINGS_PATH, settings)
 
+## Hidden sect (Sects.HIDDEN) unlocked once any save slot has beaten the
+## region-3 boss; the flag then sticks in settings.
+func sect_unlocked(id: String) -> bool:
+	if not id in Sects.HIDDEN or Sects.TEST_UNLOCK_ALL:
+		return true
+	if settings.get("unlock_" + id, false):
+		return true
+	for i in SLOTS:
+		var d := slot_info(i)
+		if Dictionary(d.get("stars", {})).has("2_5") or (i == slot and Dictionary(hero.get("stars", {})).has("2_5")):
+			settings["unlock_" + id] = true
+			save_settings()
+			return true
+	return false
+
 func slot_info(i: int) -> Dictionary:
 	var d = _read_json(SAVE_PATH % i)
 	return d if d is Dictionary else {}

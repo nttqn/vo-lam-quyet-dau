@@ -100,6 +100,10 @@ func _ready() -> void:
 		var ll := UI.label(txt % [lm.name, ls.name] if int(l[1]) == 1 else txt % [lm.name, ls.name, int(l[1])], 22, Color(0.55, 0.85, 1.0), UI.bold)
 		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		rv.add_child(ll)
+	if out.has("unlocked_sect"):
+		var us := UI.label("Phái ẩn %s đã mở! Tạo nhân vật mới để bái sư." % Sects.get_sect(str(out.unlocked_sect)).name, 22, Color(0.5, 0.75, 1.0), UI.bold)
+		us.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		rv.add_child(us)
 	body.add_child(rp)
 	# rewarded ad: double the experience and gold of a won fight
 	if out.won and (int(rw.get("exp", 0)) > 0 or int(rw.get("gold", 0)) > 0):

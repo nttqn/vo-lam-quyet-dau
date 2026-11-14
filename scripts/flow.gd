@@ -47,6 +47,12 @@ static func _stage_done(r: int, s: int, res: Dictionary) -> void:
 		var rw := Journey.rewards(r, s, first, stars)
 		h.stars[sid] = maxi(prev, stars)
 		out.stars = stars
+		if r == 2 and s == 5:
+			for hid in Sects.HIDDEN:
+				if not Game.settings.get("unlock_" + hid, false):
+					Game.settings["unlock_" + hid] = true
+					Game.save_settings()
+					out.unlocked_sect = hid
 		out.rewards = rw
 		out.levels = _grant(rw)
 		if first and s == 5:

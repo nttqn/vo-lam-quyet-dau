@@ -23,6 +23,11 @@ const PALETTES := {
 		{"robe": Color(0.3, 0.32, 0.36), "trim": Color(0.75, 0.35, 0.2), "pants": Color(0.25, 0.25, 0.28), "sash": Color(0.75, 0.35, 0.2)},
 		{"robe": Color(0.55, 0.25, 0.12), "trim": Color(0.25, 0.4, 0.25), "pants": Color(0.35, 0.22, 0.12), "sash": Color(0.2, 0.35, 0.2)},
 	],
+	"vovinam": [
+		{},
+		{"robe": Color(0.1, 0.18, 0.42), "trim": Color(0.14, 0.24, 0.5), "pants": Color(0.08, 0.14, 0.34), "sash": Color(0.8, 0.12, 0.1)},
+		{"robe": Color(0.2, 0.4, 0.8), "trim": Color(0.26, 0.48, 0.88), "pants": Color(0.18, 0.36, 0.74), "sash": Color(0.92, 0.92, 0.95)},
+	],
 	"duong_mon": [
 		{},
 		{"robe": Color(0.15, 0.25, 0.2), "trim": Color(0.6, 0.85, 0.3), "pants": Color(0.1, 0.14, 0.12), "sash": Color(0.6, 0.85, 0.3)},
