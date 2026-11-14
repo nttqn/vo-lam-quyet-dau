@@ -4,7 +4,11 @@ extends RefCounted
 
 static func _launch(cfg: Dictionary, on_done: Callable) -> void:
 	var fs := FightScene.new(cfg)
-	fs.finished.connect(on_done)
+	fs.finished.connect(func(res: Dictionary):
+		# ngộ chiêu: techniques read during the fight (win or lose, not training/forfeit)
+		if not cfg.get("training", false) and not res.get("forfeit", false) and Game.hero:
+			res["learned"] = Insight.apply(Game.hero, res.get("insight", {}))
+		on_done.call(res))
 	Game.goto(fs)
 
 # ------------------------------------------------------------- story

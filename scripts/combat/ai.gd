@@ -166,6 +166,9 @@ func _new_plan(dist: float, reach: float) -> void:
 		_plan = "retreat"
 		_plan_t = rng.randi_range(10, 25)
 
+func _sealed() -> bool:
+	return me.seal[0] > 0 or me.seal[1] > 0 or me.seal[2] > 0
+
 func _best_reach() -> float:
 	return float(me.moves.p1.reach) + Fighter.RADIUS * 2.0
 
@@ -198,9 +201,9 @@ func _pick_skill(dist: float, o: Fighter) -> int:
 			"proj", "rain":
 				score += 0.6 if dist > 2.0 else -0.2
 			"heal":
-				score += 1.0 if me.hp < me.st.hp_max * 0.5 else -2.0
+				score += 1.0 if me.hp < me.st.hp_max * 0.5 or _sealed() else -2.0
 			"buff":
-				score += 0.3 if me.buffs.is_empty() else -2.0
+				score += (0.3 if me.buffs.is_empty() else -2.0) + (2.2 if _sealed() else 0.0)
 			"counter":
 				score += 0.3 if o.state == Fighter.ATTACK or dist < 1.5 else -0.5
 			"blink":

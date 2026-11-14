@@ -12,7 +12,7 @@ static func create(name: String, sect_id: String) -> Dictionary:
 		"pts": {"luc": 0, "than": 0, "noi": 0, "the": 0}, "free_pts": 0,
 		"gold": 150, "jade": 5, "skill_pts": 0,
 		"skill_lv": [1, 0, 0, 0, 0, 0], "equip": [0, -1, -1],
-		"gear": {}, "bag": [],
+		"gear": {}, "bag": [], "insight": {}, "foreign": {},
 		"stars": {}, "region": 0,
 		"arena_best": 0, "wins": 0, "losses": 0, "fights": 0,
 		"color": 0, "created": Time.get_unix_time_from_system(),
@@ -65,7 +65,7 @@ static func _unlock_skills(h: Dictionary) -> void:
 			h.skill_lv[i] = 1
 			# auto-equip into an empty slot
 			for k in 3:
-				if int(h.equip[k]) == -1:
+				if int(h.equip[k]) == -1 and k != Insight.foreign_slot(h):
 					h.equip[k] = i
 					break
 
@@ -83,9 +83,13 @@ static func skill_scaled(m: Dictionary, lv: int, book := "") -> Dictionary:
 static func equipped_skills(h: Dictionary) -> Array:
 	var s := sect(h)
 	var out := []
+	var fs: int = Insight.foreign_slot(h)
 	for k in 3:
 		var i: int = int(h.equip[k])
-		if i >= 0 and int(h.skill_lv[i]) > 0:
+		if k == fs:
+			var fk: String = Insight.foreign_key(h)
+			out.append(Insight.scaled(fk, Insight.tier(Insight.points(h, fk))))
+		elif i >= 0 and int(h.skill_lv[i]) > 0:
 			out.append(skill_scaled(s.skills[i], int(h.skill_lv[i]), Books.mod_of(h, i)))
 		else:
 			out.append(null)

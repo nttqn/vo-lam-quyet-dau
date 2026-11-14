@@ -34,6 +34,8 @@ func _init() -> void:
 		score[p[0]] += table[key]
 		score[p[1]] += n - table[key]
 	print("avg match seconds: %.1f" % (total_frames / 60.0 / matches))
+	for k in counts:
+		print("%s per match: %.2f" % [k, float(counts[k]) / matches])
 	for id in ids:
 		print("%-10s win%% %.0f" % [id, 100.0 * score[id] / (n * 2 * (ids.size() - 1))])
 	for key in table:
@@ -59,6 +61,8 @@ func make(id: String, lvl: int, seed_: int) -> Fighter:
 	f.name = s.name
 	return f
 
+var counts := {}
+
 func run_match(a: String, b: String, lvl: int, la: float, lb: float, seed_: int) -> Dictionary:
 	var fa := make(a, lvl, seed_)
 	var fb := make(b, lvl, seed_ + 1000)
@@ -68,6 +72,9 @@ func run_match(a: String, b: String, lvl: int, la: float, lb: float, seed_: int)
 	var frames := 0
 	while sim.phase != FightSim.MATCH_END and frames < 60 * 60 * 5:
 		sim.tick(ia.decide(sim), ib.decide(sim))
+		for e in sim.events:
+			if e.t in ["seal", "insight", "cleanse"]:
+				counts[e.t] = int(counts.get(e.t, 0)) + 1
 		sim.events.clear()
 		frames += 1
 	return {"winner": sim.winner, "frames": frames}

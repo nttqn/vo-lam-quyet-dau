@@ -154,6 +154,8 @@ func _hits(a: Fighter, d: Fighter) -> void:
 	if a.sf - m.st < a.hits_done * interval:
 		return
 	if not _can_be_hit(d):
+		if d.state == Fighter.DODGE and d.inv > 0 and _in_reach(a, d, m):
+			insight(a, d, m, 2)     # read the technique while slipping past it
 		return
 	if not _in_reach(a, d, m):
 		return
@@ -182,6 +184,17 @@ func _in_reach(a: Fighter, d: Fighter, m: Dictionary) -> bool:
 static func kind_of(m: Dictionary) -> String:
 	return m.get("kind", "strike")
 
+## Ngộ chiêu: defender d blocked / dodged / countered a foreign sect's skill.
+## Once per move instance; ultimates can't be learned.
+func insight(a: Fighter, d: Fighter, m: Dictionary, pts: int) -> void:
+	if a.insight_sent or not m.get("skill", false) or m.get("ult", false) or not m.has("slot"):
+		return
+	var origin: String = m.get("from", a.sect.id)
+	if origin == d.sect.id:
+		return
+	a.insight_sent = true
+	emit({"t": "insight", "i": d.idx, "sect": origin, "slot": int(m.slot), "pts": pts, "name": m.get("name", "")})
+
 func _blocked(d: Fighter, m: Dictionary) -> bool:
 	if m.get("unblockable", false):
 		return false
@@ -209,6 +222,7 @@ func resolve(a: Fighter, d: Fighter, m: Dictionary, last := true) -> void:
 		cm["launch"] = 6.0
 		cm["unblockable"] = true
 		emit({"t": "counter", "i": d.idx, "x": d.x})
+		insight(a, d, m, 2)
 		freeze = 10
 		resolve(d, a, cm, true)
 		return
@@ -220,9 +234,10 @@ func resolve(a: Fighter, d: Fighter, m: Dictionary, last := true) -> void:
 		if m.get("skill", false):
 			chip = _damage(a, d, m, false) * 0.12
 			d.hp = maxf(1.0, d.hp - chip)
-		d.en = minf(Fighter.EN_MAX, d.en + 2.0)
-		a.en = minf(Fighter.EN_MAX, a.en + 1.5)
+		d.en = minf(Fighter.EN_MAX, d.en + 2.0 * d.en_mult())
+		a.en = minf(Fighter.EN_MAX, a.en + 1.5 * a.en_mult())
 		_wall_push(a, d, m)
+		insight(a, d, m, 1)
 		freeze = 3
 		emit({"t": "block", "i": d.idx, "x": (a.x + d.x) * 0.5, "y": 1.2, "fx": m.get("fx", "hit")})
 		return
@@ -238,7 +253,7 @@ func resolve(a: Fighter, d: Fighter, m: Dictionary, last := true) -> void:
 		mm["hs"] = 26
 	d.take_hit(a, mm, dmg, self, crit)
 	a.stats_dealt += dmg
-	a.en = minf(Fighter.EN_MAX, a.en + 5.0 * a.st.get("en_gain", 1.0))
+	a.en = minf(Fighter.EN_MAX, a.en + 5.0 * a.st.get("en_gain", 1.0) * a.en_mult())
 	a._combo_run += 1
 	a.max_combo = maxi(a.max_combo, d.combo_taken)
 	_wall_push(a, d, m)
@@ -256,6 +271,8 @@ func _wall_push(a: Fighter, d: Fighter, m: Dictionary) -> void:
 func _damage(a: Fighter, d: Fighter, m: Dictionary, crit: bool) -> float:
 	var power: float = a.st.qi if m.get("skill", false) else a.st.atk
 	power *= a.buff_mult("atk")
+	if a.seal[0] > 0:
+		power *= 0.75 if not m.get("skill", false) else 0.88
 	var defv: float = d.st.def * d.buff_mult("def")
 	var dmg: float = m.dmg * power * 100.0 / (100.0 + defv)
 	dmg *= rng.randf_range(0.93, 1.07)
@@ -296,6 +313,8 @@ func _step_projs() -> void:
 		var dead: bool = p.life <= 0 or absf(p.x) > WALL + 2.0 or p.y < -0.1
 		var d := f[1 - int(p.owner)]
 		var a := f[int(p.owner)]
+		if not dead and d.state == Fighter.DODGE and d.inv > 0 and absf(p.x - d.x) < 0.42:
+			insight(a, d, p.m, 2)
 		if not dead and _can_be_hit(d):
 			var top := d.y + (1.05 if d.crouching() else 1.75)
 			if absf(p.x - d.x) < 0.42 and p.y >= d.y - 0.05 and p.y <= top:
@@ -338,6 +357,7 @@ func _check_round_end() -> void:
 		phase = ROUND_END
 		pf = 0
 		var w := f[rw]
-		emit({"t": "ko", "winner": rw, "perfect": w.hp >= w.st.hp_max - 0.5, "timeup": timer <= 0})
+		emit({"t": "ko", "winner": rw, "perfect": w.hp >= w.st.hp_max - 0.5, "timeup": timer <= 0,
+			"final": wins[rw] >= rounds_to_win, "move": f[1 - rw].last_hit})
 		if w.state not in [Fighter.AIRHIT, Fighter.LYING]:
 			w.set_state(Fighter.WIN)

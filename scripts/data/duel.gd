@@ -77,7 +77,11 @@ static func snapshot(h: Dictionary) -> Dictionary:
 		if i >= 0 and int(h.skill_lv[i]) > 0:
 			sk.append([i, int(h.skill_lv[i]), Books.mod_of(h, i)])
 	var w: Dictionary = h.gear.get("weapon", {})
-	return {"sect": h.sect, "name": h.name, "level": int(h.level), "stats": Hero.stats(h), "skills": sk,
+	var fx := []
+	if Insight.foreign_slot(h) >= 0:
+		var fk: String = Insight.foreign_key(h)
+		fx = [Insight.foreign_slot(h), fk, Insight.tier(Insight.points(h, fk))]
+	return {"sect": h.sect, "name": h.name, "level": int(h.level), "stats": Hero.stats(h), "skills": sk, "fx": fx,
 		"color": int(h.get("color", 0)), "wrar": int(w.get("rar", 0)), "wtier": int(w.get("tier", 1)), "outfit": str(h.get("outfit", ""))}
 
 static func fields(h: Dictionary) -> Dictionary:
@@ -98,6 +102,14 @@ static func side(doc: Dictionary) -> Dictionary:
 			sk.append(Hero.skill_scaled(s.skills[i], int(p[1]), str(p[2]) if p.size() > 2 else ""))
 	while sk.size() < 3:
 		sk.append(null)
+	var fx: Array = snap.get("fx", [])
+	if fx.size() == 3:
+		var fm: Dictionary = Insight.scaled(str(fx[1]), clampi(int(fx[2]), 1, Insight.TIERS.size()))
+		var at := clampi(int(fx[0]), 0, 2)
+		if not fm.is_empty():
+			# the snapshot lists own skills packed; the foreign one keeps its slot
+			sk.insert(at, fm)
+			sk.resize(3)
 	var lk: Dictionary = s.look.duplicate()
 	var c := int(snap.get("color", 0))
 	if c > 0:

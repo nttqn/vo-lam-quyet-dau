@@ -11,6 +11,13 @@ const WALK_SPD := 2.7
 const BACK_SPD := 2.1
 const RADIUS := 0.32
 const EN_MAX := 100.0
+# Điểm huyệt: hits fill pressure on a zone; at SEAL_AT the zone is sealed.
+#   0 tay (arms: weaker blows)  1 chân (legs: slow, no jump/dash)
+#   2 đan điền (qi: no energy gain, no ultimate)
+const ZONE_NAMES := ["Tay", "Chân", "Đan Điền"]
+const SEAL_AT := 100.0
+const SEAL_FRAMES := 300
+const PRESS_DECAY := 9.0        # per second while not sealed
 
 var idx := 0
 var name := ""
@@ -56,6 +63,10 @@ var ko_time := 0
 var stats_dealt := 0.0
 var max_combo := 0
 var _combo_run := 0
+var press := [0.0, 0.0, 0.0]    # pressure per zone
+var seal := [0, 0, 0]           # frames left sealed per zone
+var insight_sent := false       # this move already taught the defender once
+var last_hit := ""              # name of the move that last damaged this fighter
 
 func setup(p_sect: Dictionary, p_stats: Dictionary, p_skills: Array) -> void:
 	sect = p_sect
@@ -85,6 +96,9 @@ func reset_round(px: float, face: int) -> void:
 	combo_taken = 0
 	cds.clear()
 	buf_btn = ""
+	press = [0.0, 0.0, 0.0]
+	seal = [0, 0, 0]
+	last_hit = ""
 
 # ------------------------------------------------------------- queries
 func grounded() -> bool:
@@ -113,7 +127,48 @@ func has_buff(k: String) -> bool:
 	return false
 
 func speed_mult() -> float:
-	return float(sect.get("speed", 1.0)) * st.get("spd", 1.0) * buff_mult("spd")
+	return float(sect.get("speed", 1.0)) * st.get("spd", 1.0) * buff_mult("spd") * (0.7 if seal[1] > 0 else 1.0)
+
+func sealed(z: int) -> bool:
+	return seal[z] > 0
+
+## Energy gain multiplier (đan điền sealed: qi stops flowing).
+func en_mult() -> float:
+	return 0.2 if seal[2] > 0 else 1.0
+
+## Zone a move strikes: its own "seal" target, else by height.
+static func zone_of(m: Dictionary) -> int:
+	var s: String = m.get("seal", "")
+	if s != "":
+		return ["tay", "chan", "dan"].find(s)
+	match str(m.get("h", "mid")):
+		"low": return 1
+		"high", "over": return 0
+	return 2
+
+## Pressure from a landed hit; returns the zone if it just got sealed, else -1.
+func add_press(m: Dictionary) -> int:
+	var z := zone_of(m)
+	if z < 0 or seal[z] > 0:
+		return -1
+	var amt: float
+	if m.get("seal", "") != "":
+		amt = float(m.get("seal_amt", 75.0)) / maxf(1.0, float(m.get("hits", 1)))
+	else:
+		amt = 12.0 * float(m.dmg) * (1.2 if m.get("skill", false) else 1.0)
+	press[z] += amt
+	if press[z] >= SEAL_AT:
+		press[z] = 0.0
+		seal[z] = SEAL_FRAMES
+		return z
+	return -1
+
+## Giải huyệt: buff / heal techniques clear every seal and pressure.
+func clear_seals() -> bool:
+	var had: bool = seal[0] > 0 or seal[1] > 0 or seal[2] > 0
+	press = [0.0, 0.0, 0.0]
+	seal = [0, 0, 0]
+	return had
 
 func move_total() -> int:
 	return move.st + move.act + move.rec
@@ -125,6 +180,8 @@ func skill_ready(i: int) -> bool:
 	if i >= skills.size() or skills[i] == null:
 		return false
 	var m: Dictionary = skills[i]
+	if m.get("ult", false) and seal[2] > 0:
+		return false
 	return en >= m.cost and int(cds.get(i, 0)) <= 0
 
 # ------------------------------------------------------------- input
@@ -152,7 +209,7 @@ func think(inp: Dictionary, opp: Fighter, sim) -> void:
 			hold_back = mx != 0 and mx == -facing
 			if buf_btn != "" and _try_button(buf_btn, opp, sim):
 				return
-			if inp.get("up", false):
+			if inp.get("up", false) and seal[1] <= 0:
 				set_state(JUMP)
 				vy = JUMP_V
 				vx = mx * WALK_SPD * 1.15 * speed_mult()
@@ -217,6 +274,8 @@ func _try_button(b: String, opp: Fighter, sim) -> bool:
 				_start_move("throw", moves["throw"], sim)
 				return true
 			if toward:
+				if seal[1] > 0:
+					return false
 				set_state(DASH)
 				vx = facing * 8.0 * speed_mult()
 				dodge_cd = 20
@@ -246,6 +305,7 @@ func _start_move(key: String, m: Dictionary, sim) -> void:
 	hits_done = 0
 	connected = false
 	whiffed_sent = false
+	insight_sent = false
 	armor_left = 1 if m.get("armor", false) else 0
 	if m.get("ult", false):
 		armor_left = 99
@@ -280,7 +340,14 @@ func step(opp: Fighter, sim) -> void:
 		if buffs[i].t <= 0:
 			buffs.remove_at(i)
 	if not dead:
-		en = minf(EN_MAX, en + 1.6 * st.get("en_gain", 1.0) * DT)
+		en = minf(EN_MAX, en + 1.6 * st.get("en_gain", 1.0) * en_mult() * DT)
+	for z in 3:
+		if seal[z] > 0:
+			seal[z] -= 1
+			if seal[z] == 0:
+				sim.emit({"t": "unseal", "i": idx, "z": z})
+		elif press[z] > 0.0:
+			press[z] = maxf(0.0, press[z] - PRESS_DECAY * DT)
 	if poison_t > 0 and not dead:
 		poison_t -= 1
 		hp -= poison_dps * DT
@@ -373,10 +440,14 @@ func _step_attack(opp: Fighter, sim) -> void:
 						continue
 					buffs.append({"k": k, "v": float(bf[k]) if not (bf[k] is bool) else 1.0, "t": int(bf.t)})
 				sim.emit({"t": "buff", "i": idx})
+				if clear_seals():
+					sim.emit({"t": "cleanse", "i": idx})
 			"heal":
 				var h: float = st.hp_max * m.heal * st.get("heal_mult", 1.0)
 				hp = minf(st.hp_max, hp + h)
 				sim.emit({"t": "heal", "i": idx, "amt": h})
+				if clear_seals():
+					sim.emit({"t": "cleanse", "i": idx})
 			"blink":
 				var nx := opp.x - facing * 0.0 + (1.0 if opp.x < x else -1.0) * -0.9
 				nx = opp.x + (opp.x - x) / maxf(0.01, absf(opp.x - x)) * 0.85
@@ -420,7 +491,12 @@ func take_hit(att: Fighter, m: Dictionary, dmg: float, sim, crit: bool) -> void:
 		poison_dps = att.st.qi * m.poison * 0.5
 	var dir := float(att.facing)
 	hp -= dmg
-	en = minf(EN_MAX, en + 4.0 + dmg / st.hp_max * 30.0)
+	last_hit = str(m.get("name", ""))
+	en = minf(EN_MAX, en + (4.0 + dmg / st.hp_max * 30.0) * en_mult())
+	if hp > 0.0:
+		var z := add_press(m)
+		if z >= 0:
+			sim.emit({"t": "seal", "i": idx, "z": z, "by": att.idx})
 	if hp <= 0.0:
 		hp = 0.0
 		dead = true

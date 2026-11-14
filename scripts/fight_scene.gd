@@ -32,6 +32,10 @@ var _script := {}             # --inputs=frame:keys;... scripted player input (t
 var _quit_after_shot := false
 var _ui_layer: CanvasLayer
 var _voice_ms := [-10000, -10000]   # last hurt/kiai voice per fighter (Time ticks)
+var _insight := {}            # ngộ chiêu points read by the player this fight {key: pts}
+var _ink_rect: ColorRect      # thủy mặc finisher overlay (hidden until the final blow)
+var _ink_mat: ShaderMaterial
+var _pause_btn: Button
 
 func _init(p_cfg: Dictionary) -> void:
 	cfg = p_cfg
@@ -71,7 +75,19 @@ func _ready() -> void:
 	cam.far = 200
 	add_child(cam)
 	_cam_x = 0.0
+	var ink_layer := CanvasLayer.new()
+	ink_layer.layer = 1
+	add_child(ink_layer)
+	_ink_rect = ColorRect.new()
+	_ink_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_ink_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_ink_mat = ShaderMaterial.new()
+	_ink_mat.shader = load("res://assets/shaders/ink.gdshader")
+	_ink_rect.material = _ink_mat
+	_ink_rect.visible = false
+	ink_layer.add_child(_ink_rect)
 	_ui_layer = CanvasLayer.new()
+	_ui_layer.layer = 2
 	add_child(_ui_layer)
 	var root := Control.new()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -99,6 +115,7 @@ func _ready() -> void:
 	pb.offset_bottom = 148
 	pb.pressed.connect(toggle_pause)
 	root.add_child(pb)
+	_pause_btn = pb
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--shot="):
 			_shot = a.substr(7)
@@ -185,10 +202,10 @@ func _show_pause() -> void:
 func _show_help() -> void:
 	var d := AcceptDialog.new()
 	d.title = "Điều khiển"
-	d.dialog_text = "Cần điều khiển (trái): đi / lùi; đẩy lên = nhảy; kéo xuống = ngồi.\nGiữ hướng LÙI để đỡ đòn (ngồi + lùi để đỡ đòn thấp).\n\nQuyền / Cước: bấm liên tục để ra combo.\nTiến + Quyền/Cước: đòn lao tới.  Ngồi + Cước: quét chân.\nNé: lùi né (bất tử ngắn).  Tiến + Né: lướt tới.\nTiến + Né khi sát đối thủ: Cầm Nã (quật ngã, phá đỡ).\n\nTuyệt chiêu tiêu hao Nội Lực (thanh xanh).\nĐánh trúng có thể nối thẳng sang tuyệt chiêu."
+	d.dialog_text = "Cần điều khiển (trái): đi / lùi; đẩy lên = nhảy; kéo xuống = ngồi.\nGiữ hướng LÙI để đỡ đòn (ngồi + lùi để đỡ đòn thấp).\n\nQuyền / Cước: bấm liên tục để ra combo.\nTiến + Quyền/Cước: đòn lao tới.  Ngồi + Cước: quét chân.\nNé: lùi né (bất tử ngắn).  Tiến + Né: lướt tới.\nTiến + Né khi sát đối thủ: Cầm Nã (quật ngã, phá đỡ).\n\nTuyệt chiêu tiêu hao Nội Lực (thanh xanh).\nĐánh trúng có thể nối thẳng sang tuyệt chiêu.\n\nĐiểm huyệt: đánh trúng cao = Tay (đòn yếu), thấp = Chân (chậm, không nhảy/lướt), giữa = Đan Điền (ngừng hồi nội lực, không dùng Tuyệt Kỹ). Đủ lực sẽ phong bế 5 giây; chiêu tăng lực / hồi phục sẽ giải huyệt.\nNgộ chiêu: đỡ, né hoặc phản tuyệt chiêu của phái khác để lĩnh ngộ dần."
 	d.theme = UI.theme()
 	_pause_layer.add_child(d)
-	d.popup_centered(Vector2i(820, 420))
+	d.popup_centered(Vector2i(860, 560))
 
 func _forfeit() -> void:
 	if _pause_layer:
@@ -311,9 +328,27 @@ func _events() -> void:
 				fx.dust(e.x)
 				_shake = 0.18
 				Game.sfx("wall")
+			"seal":
+				var fs_: Fighter = sim.f[e.i]
+				fx.ring(Vector3(fs_.x, 1.2, 0.2), Color(1.0, 0.35, 0.5), 1.2)
+				fx.text(Vector3(fs_.x, 2.5, 0.3), "Phong Huyệt: " + Fighter.ZONE_NAMES[e.z], Color(1.0, 0.45, 0.6))
+				views[e.i].body.flash(0.7)
+				Game.sfx("counter", 0.1, 0.8)
+			"cleanse":
+				var fc: Fighter = sim.f[e.i]
+				fx.text(Vector3(fc.x, 2.7, 0.3), "Giải Huyệt", Color(0.6, 1.0, 0.7))
+			"insight":
+				if e.i == 0 and not cfg.get("training", false):
+					var k := Insight.key(e.sect, e.slot)
+					var had := int(_insight.get(k, 0))
+					if had < Insight.PER_FIGHT:
+						_insight[k] = mini(Insight.PER_FIGHT, had + int(e.pts))
+						fx.text(Vector3(sim.f[0].x, 2.9, 0.3), "Lĩnh ngộ %s +%d" % [e.name, int(_insight[k]) - had], Color(0.6, 0.85, 1.0))
 			"ko":
 				_slowmo = 1.4
-				if e.timeup:
+				if e.get("final", false) and not e.timeup:
+					_finisher(e)
+				elif e.timeup:
 					hud.banner("Hết Giờ", "", 2.0)
 				else:
 					hud.banner("Hạ Gục!", "Toàn thắng" if e.perfect else "", 2.0, Color(1, 0.3, 0.2))
@@ -324,6 +359,92 @@ func _events() -> void:
 				hud.banner("Chiến Thắng" if won else "Thất Bại", "", 3.0, UI.GOLD if won else Color(0.7, 0.7, 0.75))
 				Game.sfx("win" if won else "lose")
 	sim.events.clear()
+
+# ------------------------------------------------------------- finisher
+## Kết liễu thủy mặc: the match-deciding blow turns the frame into an ink
+## painting, slows time and writes the technique's name like calligraphy
+## with a cinnabar seal. Scales animate by transform, never by font size.
+func _finisher(e: Dictionary) -> void:
+	var w: Fighter = sim.f[int(e.winner)]
+	_slowmo = 2.3
+	_zoom_t = 2.2
+	hud.ink = true
+	pad.visible = false
+	_pause_btn.visible = false
+	_ink_rect.visible = true
+	Game.sfx("gong", 0.0, 0.9)
+	if _shot != "":
+		# --shot=…  (with --fighttest --ehp=…): capture the finisher in real time
+		for t in [0.5, 1.2, 2.0]:
+			get_tree().create_timer(t, true, false, true).timeout.connect(func():
+				get_viewport().get_texture().get_image().save_png(_shot.replace(".png", "_ink%d.png" % int(t * 10)))
+				print("ink shot ", t)
+				if t >= 2.0:
+					get_tree().quit())
+	var tw := create_tween().set_ignore_time_scale(true)
+	tw.tween_method(func(v: float): _ink_mat.set_shader_parameter("amt", v), 0.0, 1.0, 0.35)
+	tw.tween_interval(2.0)
+	tw.tween_method(func(v: float): _ink_mat.set_shader_parameter("amt", v), 1.0, 0.0, 0.5)
+	var box := Control.new()
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.theme = UI.theme()
+	_ink_rect.get_parent().add_child(box)
+	tw.tween_callback(func():
+		_ink_rect.visible = false
+		hud.ink = false
+		box.queue_free())
+	var vw := get_viewport().get_visible_rect().size.x
+	var ink := Color(0.07, 0.06, 0.06)
+	var paper := Color(0.92, 0.87, 0.76)
+	var mv: String = str(e.get("move", ""))
+	var nm := UI.label(mv if mv != "" else "Hạ Gục", 92, ink, UI.title)
+	nm.add_theme_color_override("font_outline_color", paper)
+	nm.add_theme_constant_override("outline_size", 14)
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nm.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	nm.offset_top = 70
+	nm.offset_bottom = 190
+	box.add_child(nm)
+	var who := UI.label("—  %s  —" % w.name, 30, ink, UI.bold)
+	who.add_theme_color_override("font_outline_color", paper)
+	who.add_theme_constant_override("outline_size", 8)
+	who.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	who.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	who.offset_top = 190
+	who.offset_bottom = 236
+	box.add_child(who)
+	# cinnabar seal stamp, right of the name
+	var tw_name := UI.title.get_string_size(nm.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 92).x
+	var st := Panel.new()
+	st.add_theme_stylebox_override("panel", UI.box(Color(0.72, 0.1, 0.07, 0.92), Color(0.5, 0.05, 0.03), 4, 10, 0))
+	st.size = Vector2(112, 112)
+	st.pivot_offset = st.size * 0.5
+	st.position = Vector2(minf(vw - 130.0, vw * 0.5 + tw_name * 0.5 + 24.0), 78)
+	st.rotation = -0.12
+	st.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sl := UI.label("Kết\nLiễu", 34, paper, UI.title)
+	sl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	sl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	st.add_child(sl)
+	box.add_child(st)
+	# brush-in: fade + settle from a slight overscale
+	nm.modulate.a = 0.0
+	who.modulate.a = 0.0
+	nm.pivot_offset = Vector2(vw * 0.5, 60)
+	nm.scale = Vector2(1.18, 1.18)
+	st.modulate.a = 0.0
+	st.scale = Vector2(2.2, 2.2)
+	var tt := create_tween().set_ignore_time_scale(true).set_parallel(true)
+	tt.tween_property(nm, "modulate:a", 1.0, 0.4).set_delay(0.15)
+	tt.tween_property(nm, "scale", Vector2.ONE, 0.6).set_delay(0.15).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+	tt.tween_property(who, "modulate:a", 1.0, 0.4).set_delay(0.45)
+	tt.tween_property(st, "modulate:a", 1.0, 0.08).set_delay(0.7)
+	tt.tween_property(st, "scale", Vector2.ONE, 0.18).set_delay(0.7).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tt.tween_callback(func():
+		Game.sfx("hit_heavy", 0.0, 0.8)
+		_shake = 0.12).set_delay(0.85)
 
 # ------------------------------------------------------------- sound choice
 func _look(i: int) -> Dictionary:
@@ -391,6 +512,7 @@ func _finish(won: bool, forfeit := false) -> void:
 		"won": won, "forfeit": forfeit, "rounds_won": sim.wins[0], "rounds_lost": sim.wins[1],
 		"hp_left": fp.hp / fp.st.hp_max, "max_combo": fp.max_combo, "seconds": sim.frame / 60.0,
 		"perfect": won and sim.wins[1] == 0, "skills": _skills_used, "ults": _ults_used,
+		"insight": _insight,
 	}
 	Engine.time_scale = 1.0
 	finished.emit(res)

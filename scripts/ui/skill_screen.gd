@@ -121,6 +121,8 @@ static func describe(m: Dictionary) -> String:
 		parts.append("bá thể khi xuất chiêu")
 	if m.get("poison", 0.0) > 0.0:
 		parts.append("gây độc")
+	if str(m.get("seal", "")) != "":
+		parts.append("điểm huyệt %s" % Fighter.ZONE_NAMES[Fighter.zone_of(m)])
 	if m.get("heal", 0.0) > 0.0 and kind != "heal":
 		parts.append("hồi %d%% sinh lực" % int(m.heal * 100))
 	return "; ".join(parts) + ".  Nội lực %d · Hồi chiêu %ds" % [int(m.cost), int(m.cd / 60)]
@@ -135,8 +137,20 @@ func _build() -> void:
 	for c in _slots.get_children():
 		c.queue_free()
 	_slots.add_child(UI.label("Ô chiêu", 22, UI.GOLD, UI.bold))
+	var fslot := Insight.foreign_slot(h)
 	for k in 3:
 		var i := int(h.equip[k])
+		if k == fslot:
+			var fk := Insight.foreign_key(h)
+			var fp := Insight.parse(fk)
+			var fsl := UI.panel(Color(0.06, 0.08, 0.12, 0.92), Color(0.55, 0.8, 1.0))
+			var fh := UI.hbox(8)
+			fsl.add_child(fh)
+			fh.add_child(UI.label(str(k + 1), 24, Color(0.6, 0.85, 1.0), UI.title))
+			fh.add_child(icon(Sects.get_sect(fp[0]), fp[1], 44))
+			fh.add_child(UI.label(Insight.skill_of(fk).name, 18, Color(0.75, 0.9, 1.0)))
+			_slots.add_child(fsl)
+			continue
 		var slot := UI.panel(Color(0.1, 0.07, 0.09, 0.92), UI.GOLD if i == _sel and i >= 0 else UI.GOLD_D)
 		var sh := UI.hbox(8)
 		slot.add_child(sh)
@@ -148,7 +162,8 @@ func _build() -> void:
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_slots.add_child(sp)
-	_slots.add_child(UI.label("Điểm võ công: %d" % int(h.skill_pts), 22, Color(0.6, 1, 0.6) if int(h.skill_pts) > 0 else UI.PAPER, UI.bold))
+	_slots.add_child(UI.button("Ngộ Chiêu (%d)" % Insight.learned(h).size(), _foreign, 18))
+	_slots.add_child(UI.label("%d điểm" % int(h.skill_pts), 22, Color(0.6, 1, 0.6) if int(h.skill_pts) > 0 else UI.PAPER, UI.bold))
 	# --- skill cards
 	for c in _grid.get_children():
 		c.queue_free()
@@ -343,6 +358,8 @@ func _books(i: int) -> void:
 
 func _equip(i: int, k: int) -> void:
 	var h := Game.hero
+	if Insight.foreign_slot(h) == k:
+		Insight.unequip(h)
 	var cur: int = h.equip.find(i)
 	if cur == k:
 		h.equip[k] = -1
@@ -352,6 +369,87 @@ func _equip(i: int, k: int) -> void:
 		h.equip[k] = i
 	Game.save()
 	_build()
+
+## Ngộ Chiêu: foreign techniques read in fights; one can be bound to a slot.
+func _foreign() -> void:
+	var h := Game.hero
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.65)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.add_to_group("modal")
+	ui.add_child(dim)
+	var cc := CenterContainer.new()
+	cc.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.add_child(cc)
+	var p := UI.panel()
+	cc.add_child(p)
+	var v := UI.vbox(8)
+	v.custom_minimum_size = Vector2(860, 0)
+	p.add_child(v)
+	var hd := UI.hbox(10)
+	v.add_child(hd)
+	var tl := UI.heading("Ngộ Chiêu", 36)
+	tl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hd.add_child(tl)
+	hd.add_child(UI.button("Đóng", dim.queue_free, 18, 110))
+	var note := UI.label("Đỡ (+1), né hoặc phản (+2) tuyệt chiêu của phái khác để lĩnh ngộ, tối đa +%d mỗi chiêu mỗi trận. Đủ %d điểm ngộ ra chiêu (tầng 2: %d, tầng 3: %d). Chỉ lắp được 1 chiêu ngoại môn, uy lực %d%%; Tuyệt Kỹ không thể học lén." % [Insight.PER_FIGHT, Insight.TIERS[0], Insight.TIERS[1], Insight.TIERS[2], int(Insight.POWER * 100)], 16, Color(0.85, 0.82, 0.75))
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(note)
+	var sc := ScrollContainer.new()
+	sc.custom_minimum_size = Vector2(0, 380)
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	v.add_child(sc)
+	var list := UI.vbox(6)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc.add_child(list)
+	var rows: Array = Insight.learned(h) + Insight.progress(h)
+	if rows.is_empty():
+		var e := UI.label("Chưa lĩnh ngộ chiêu nào. Hãy đỡ và né tuyệt chiêu của đối thủ khác phái!", 18, Color(0.7, 0.68, 0.62))
+		e.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		list.add_child(e)
+	var cur := Insight.foreign_key(h)
+	for r in rows:
+		var k: String = r[0]
+		var t: int = r[1]
+		var pts: int = r[2]
+		var pr := Insight.parse(k)
+		var fsect := Sects.get_sect(pr[0])
+		var row := UI.panel(Color(0.07, 0.07, 0.1, 0.9), Color(0.55, 0.8, 1.0) if k == cur else UI.GOLD_D)
+		list.add_child(row)
+		var rh := UI.hbox(10)
+		row.add_child(rh)
+		rh.add_child(icon(fsect, pr[1], 64, t == 0))
+		var info := UI.vbox(2)
+		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		rh.add_child(info)
+		info.add_child(UI.label("%s  ·  %s" % [Insight.skill_of(k).name, fsect.name], 20, UI.GOLD if t > 0 else Color(0.7, 0.68, 0.62), UI.bold))
+		var nxt := Insight.next_need(pts)
+		var prog := ("Tầng %d" % t if t > 0 else "Chưa ngộ") + ("  ·  %d/%d điểm" % [pts, nxt] if nxt > 0 else "  ·  viên mãn")
+		info.add_child(UI.label(prog, 16, Color(0.75, 0.85, 1.0)))
+		if t > 0:
+			var d := UI.label(describe(Insight.scaled(k, t)), 15, Color(0.85, 0.82, 0.75))
+			d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			info.add_child(d)
+			var bh := UI.hbox(6)
+			rh.add_child(bh)
+			for slot in 3:
+				var ss := slot
+				var b := UI.button(str(slot + 1), func():
+					Insight.equip(h, k, ss)
+					Game.sfx("skill")
+					Game.save()
+					dim.queue_free()
+					_build(), 18)
+				b.custom_minimum_size = Vector2(48, 46)
+				b.toggle_mode = true
+				b.button_pressed = k == cur and Insight.foreign_slot(h) == slot
+				bh.add_child(b)
+			if k == cur:
+				bh.add_child(UI.button("Gỡ", func():
+					Insight.unequip(h)
+					Game.save()
+					dim.queue_free()
+					_build(), 16, 64))
 
 func _up(i: int) -> void:
 	var h := Game.hero

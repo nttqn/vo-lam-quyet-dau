@@ -14,6 +14,9 @@ var _banner_t := 0.0
 var _banner_col := UI.GOLD
 var _skill_name := ["", ""]
 var _skill_t := [0.0, 0.0]
+var ink := false            # thủy mặc finisher: only the banner is drawn
+const SEAL_COL := [Color(1.0, 0.62, 0.3), Color(0.55, 0.85, 0.45), Color(0.45, 0.7, 1.0)]
+const SEAL_TAG := ["T", "C", "Đ"]
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -61,6 +64,24 @@ func _text(pos: Vector2, s: String, fs: int, col: Color, font: Font = null, alig
 		draw_string_outline(fnt, p, s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, outline, Color(0, 0, 0, 0.75))
 	draw_string(fnt, p, s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, col)
 
+## Điểm huyệt pips: pressure fills a ring per zone; a sealed zone glows red
+## with its remaining time.
+func _seal_pips(f: Fighter, x0: float, y: float, dir: int) -> void:
+	for z in 3:
+		var c := Vector2(x0 + dir * z * 34.0, y + 2.0)
+		var col: Color = SEAL_COL[z]
+		draw_circle(c, 13, Color(0, 0, 0, 0.7))
+		if f.seal[z] > 0:
+			var pulse := 0.6 + 0.4 * sin(Time.get_ticks_msec() * 0.012)
+			draw_circle(c, 12, Color(0.85, 0.12, 0.2, pulse))
+			draw_arc(c, 14.5, -PI * 0.5, -PI * 0.5 + TAU * float(f.seal[z]) / Fighter.SEAL_FRAMES, 24, Color.WHITE, 2.0)
+			_text(c + Vector2(0, 5), SEAL_TAG[z], 14, Color.WHITE, null, 1, 3)
+		else:
+			var p: float = clampf(f.press[z] / Fighter.SEAL_AT, 0.0, 1.0)
+			if p > 0.01:
+				draw_arc(c, 11.5, -PI * 0.5, -PI * 0.5 + TAU * p, 24, col, 3.5)
+			_text(c + Vector2(0, 5), SEAL_TAG[z], 14, Color(col.r, col.g, col.b, 0.7 + 0.3 * p), null, 1, 3)
+
 func _draw() -> void:
 	if sim == null:
 		return
@@ -68,6 +89,8 @@ func _draw() -> void:
 	var bw := minf(480.0, W * 0.36)
 	var top := 22.0
 	for i in 2:
+		if ink:
+			break
 		var f: Fighter = sim.f[i]
 		var left := i == 0
 		var x0 := 24.0 if left else W - 24.0 - bw
@@ -96,6 +119,7 @@ func _draw() -> void:
 			var qx: float = ex + ew * q
 			draw_line(Vector2(qx, top + 36), Vector2(qx, top + 48), Color(0, 0, 0, 0.6), 2)
 		draw_rect(Rect2(ex, top + 36, ew, 12), Color(0.6, 0.75, 1.0, 0.6), false, 1.5)
+		_seal_pips(f, (ex + ew + 22.0) if left else (ex - 22.0), top + 42, 1 if left else -1)
 		# name + level
 		var nm := "%s  ·  Cấp %d" % [names[i], levels[i]]
 		_text(Vector2(x0 if left else x0 + bw, top + 72), nm, 20, UI.PAPER, null, 0 if left else 2)
@@ -118,12 +142,18 @@ func _draw() -> void:
 			var sx := 40.0 if left else W - 40.0
 			var col: Color = f.sect.elem
 			_text(Vector2(sx, 150), _skill_name[i], 34, Color(col.r, col.g, col.b, a2), UI.title, 0 if left else 2, 7)
+	if ink:
+		_draw_banner()
+		return
 	# timer
 	var secs := int(ceil(sim.timer / 60.0))
 	draw_circle(Vector2(W * 0.5, top + 22), 34, Color(0, 0, 0, 0.6))
 	draw_arc(Vector2(W * 0.5, top + 22), 34, 0, TAU, 40, UI.GOLD, 2.5)
 	_text(Vector2(W * 0.5, top + 36), str(maxi(0, secs)), 36, UI.PAPER if secs > 10 else Color(1, 0.4, 0.3), UI.title, 1)
-	# banner
+	_draw_banner()
+
+func _draw_banner() -> void:
+	var W := size.x
 	if _banner_t > 0:
 		var a3 := clampf(_banner_t * 3.0, 0.0, 1.0)
 		var H := size.y

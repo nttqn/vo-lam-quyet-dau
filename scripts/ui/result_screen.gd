@@ -83,6 +83,23 @@ func _ready() -> void:
 		rv.add_child(l)
 	if out.has("book"):
 		rv.add_child(UI.label("%s: %s" % [Books.name_of(out.book), Books.KINDS[out.book][1]], 21, Books.COLOR[out.book], UI.bold))
+	var gained: Dictionary = res.get("insight", {})
+	if not gained.is_empty() and res.has("learned"):
+		var parts := []
+		for k in gained:
+			var m := Insight.skill_of(k)
+			if not m.is_empty():
+				parts.append("%s +%d" % [m.name, mini(int(gained[k]), Insight.PER_FIGHT)])
+		var il := UI.label("Lĩnh ngộ: " + ", ".join(parts), 19, Color(0.75, 0.85, 1.0))
+		il.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		rv.add_child(il)
+	for l in res.get("learned", []):
+		var lm := Insight.skill_of(str(l[0]))
+		var ls := Sects.get_sect(Insight.parse(str(l[0]))[0])
+		var txt := ("Ngộ ra chiêu mới: %s (%s)!" if int(l[1]) == 1 else "%s (%s) đột phá tầng %d!") 
+		var ll := UI.label(txt % [lm.name, ls.name] if int(l[1]) == 1 else txt % [lm.name, ls.name, int(l[1])], 22, Color(0.55, 0.85, 1.0), UI.bold)
+		ll.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		rv.add_child(ll)
 	body.add_child(rp)
 	# rewarded ad: double the experience and gold of a won fight
 	if out.won and (int(rw.get("exp", 0)) > 0 or int(rw.get("gold", 0)) > 0):

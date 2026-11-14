@@ -10,9 +10,10 @@ const KINDS := {
 	"doc": ["Độc Kinh", "Đòn đánh gây độc", 2],
 	"ha": ["Đảo Sơn", "Đòn đánh hất ngã đối thủ", 2],
 	"pha": ["Phá Giáp", "Đối thủ không thể đỡ", 1],
+	"diem": ["Điểm Huyệt", "Đòn đánh điểm huyệt, dễ phong bế đối thủ", 2],
 }
 const COLOR := {"manh": Color(1, 0.55, 0.35), "toc": Color(0.5, 0.85, 1.0), "tinh": Color(0.55, 1, 0.75),
-	"doc": Color(0.6, 1, 0.35), "ha": Color(1, 0.85, 0.35), "pha": Color(0.9, 0.55, 1.0)}
+	"doc": Color(0.6, 1, 0.35), "ha": Color(1, 0.85, 0.35), "pha": Color(0.9, 0.55, 1.0), "diem": Color(1.0, 0.45, 0.6)}
 const PRICE := 30   # jade, random book
 
 static func name_of(kind: String) -> String:
@@ -62,6 +63,12 @@ static func apply(m: Dictionary, kind: String) -> Dictionary:
 		"doc": m.poison = maxf(float(m.get("poison", 0.0)), 0.06)
 		"ha": m.kd = true
 		"pha": m.unblockable = true
+		"diem":
+			if str(m.get("seal", "")) == "":
+				m.seal = ["tay", "chan", "dan"][Fighter.zone_of(m)]
+				m.seal_amt = 55.0
+			else:
+				m.seal_amt = float(m.get("seal_amt", 75.0)) * 1.4
 	if kind != "":
 		m["book"] = kind
 	return m

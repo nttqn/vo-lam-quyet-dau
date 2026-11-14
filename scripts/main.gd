@@ -62,7 +62,11 @@ func _ready() -> void:
 					p.look["model"] = Outfits.model_for(ps, b.substr(9))
 			p.skills = [Sects.get_sect(ps).skills[0], Sects.get_sect(ps).skills[2], Sects.get_sect(ps).skills[5]]
 			var e := Npc.side(es, 20, "Đối Thủ", 0.7, "bandit", true, 9)
-			var fs := FightScene.new({"p": p, "e": e, "theme": th, "autoplay": true, "seed": 3})
+			var rounds := 2
+			for b in args:
+				if b.begins_with("--ehp="): e.stats.hp_max *= float(b.substr(6))   # quick KO for finisher shots
+				if b.begins_with("--rounds="): rounds = int(b.substr(9))
+			var fs := FightScene.new({"p": p, "e": e, "theme": th, "autoplay": true, "seed": 3, "rounds": rounds})
 			Game.goto(fs)
 			return
 	if "--backtest" in args:
@@ -175,6 +179,13 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 		"map": Game.goto(MapScreen.new())
 		"char": Game.goto(CharacterScreen.new())
 		"skill": Game.goto(SkillScreen.new())
+		"foreign", "foreign2":
+			Game.hero.insight = {"cai_bang:0": 18, "nga_mi:1": 7, "duong_mon:2": 3, "vo_dang:3": 1}
+			Insight.equip(Game.hero, "cai_bang:0", 2)
+			var ss := SkillScreen.new()
+			Game.goto(ss)
+			if screen == "foreign2":
+				ss._foreign.call_deferred()
 		"tower": Game.goto(TowerScreen.new())
 		"rank": Game.goto(RankScreen.new())
 		"wardrobe": Game.goto(WardrobeScreen.new())
