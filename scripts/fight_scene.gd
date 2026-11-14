@@ -225,6 +225,8 @@ func _physics_process(_delta: float) -> void:
 	if not _script.is_empty():
 		inp = _script.get(_frames, {})
 		ein = {}
+	if "--fullen" in OS.get_cmdline_user_args():   # test: skills always affordable
+		sim.f[0].en = Fighter.EN_MAX
 	sim.tick(inp, ein)
 	if cfg.get("rule", "") == "regen" and sim.phase == FightSim.FIGHT and not sim.f[1].dead:
 		sim.f[1].hp = minf(sim.f[1].st.hp_max, sim.f[1].hp + sim.f[1].st.hp_max * 0.012 / 60.0)

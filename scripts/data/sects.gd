@@ -61,7 +61,7 @@ static func _kicks(k2_name := "Toàn Phong Cước") -> Dictionary:
 	return {
 		"k1": mv("Đăng Sơn Cước", "fkick_w", "fkick", 9, 3, 13, 1.1, 0.95, "mid", {"next": "k2", "tip": "foot_r", "fx": "kick"}),
 		"k2": mv(k2_name, "round_w", "round", 12, 4, 18, 1.5, 1.0, "high", {"push": 4.0, "tip": "foot_r", "fx": "kick"}),
-		"fk": mv("Trắc Thích Cước", "skick_w", "skick", 13, 4, 18, 1.6, 1.15, "mid", {"push": 5.0, "lunge": 1.5, "tip": "foot_l", "fx": "kick"}),
+		"fk": mv("Trắc Thích Cước", "skick_w", "skick", 13, 4, 18, 1.6, 1.15, "mid", {"push": 5.0, "lunge": 1.5, "tip": "foot_r", "fx": "kick"}),
 		"dk": mv("Tảo Đường Thối", "sweep_w", "sweep", 12, 4, 22, 1.2, 1.1, "low", {"kd": true, "tip": "foot_r", "fx": "kick"}),
 		"jk": mv("Phi Cước", "jump", "jkick", 6, 8, 8, 1.3, 0.95, "over", {"tip": "foot_l", "fx": "kick", "air": true}),
 		"throw": mv("Cầm Nã Thủ", "grab", "heave", 5, 2, 30, 1.4, 0.55, "mid", {"kind": "throw", "unblockable": true, "tip": "hand_r", "fx": "kick", "launch": 6.5, "push": -3.0}),
@@ -85,12 +85,12 @@ static func _build() -> void:
 			"jp": mv("Thiên Côn Hạ", "jump", "staff_over", 7, 6, 10, 1.3, 1.3, "over", {"air": true, "fx": "blunt"}),
 		},
 		"skills": [
-			sk("La Hán Quyền", "jab_w", "cross", 9, 18, 16, 0.8, 1.0, "mid", 25, 4.0, {"hits": 3, "lunge": 2.0, "tip": "hand_r", "fx": "palm"}),
+			sk("La Hán Quyền", "jab_w", "tl_quad", 9, 18, 16, 0.8, 1.0, "mid", 25, 4.0, {"hits": 3, "lunge": 2.0, "tip": "hand_r", "fx": "palm"}),
 			sk("Kim Cang Hộ Thể", "cast_w", "victory", 10, 2, 14, 0.0, 0.0, "mid", 35, 16.0, {"kind": "buff", "buff": {"def": 1.25, "armor": true, "t": 180}, "lvl": 3}),
-			sk("Phong Ma Côn Pháp", "spin", "slash_h", 12, 30, 20, 0.75, 1.5, "mid", 35, 6.0, {"hits": 4, "armor": true, "lvl": 6, "fx": "blunt"}),
-			sk("Sư Tử Hống", "cast_w", "cast", 16, 6, 24, 0.9, 2.2, "mid", 40, 10.0, {"hs": 70, "bs": 30, "push": 3.0, "unblockable": true, "lvl": 10, "fx": "roar", "seal": "dan", "seal_amt": 70}),
+			sk("Phong Ma Côn Pháp", "spin", "spin", 12, 30, 20, 0.75, 1.5, "mid", 35, 6.0, {"hits": 4, "armor": true, "lvl": 6, "fx": "blunt"}),
+			sk("Sư Tử Hống", "cast_w", "tl_roar", 16, 6, 24, 0.9, 2.2, "mid", 40, 10.0, {"hs": 70, "bs": 30, "push": 3.0, "unblockable": true, "lvl": 10, "fx": "roar", "seal": "dan", "seal_amt": 70}),
 			sk("Phục Hổ Thăng Thiên", "rising_w", "rising", 8, 6, 26, 1.8, 1.3, "high", 35, 7.0, {"launch": 9.0, "lvl": 15, "fx": "blunt"}),
-			sk("Đạt Ma Kim Thân", "cast_w", "staff_over", 20, 40, 30, 1.3, 1.6, "mid", 100, 30.0, {"kind": "rush", "hits": 6, "lunge": 6.0, "armor": true, "ult": true, "launch": 7.0, "lvl": 20, "fx": "blunt"}),
+			sk("Đạt Ma Kim Thân", "cast_w", "tl_smash", 20, 40, 30, 1.3, 1.6, "mid", 100, 30.0, {"kind": "rush", "hits": 6, "lunge": 6.0, "armor": true, "ult": true, "launch": 7.0, "lvl": 20, "fx": "blunt"}),
 		],
 	}
 	tl.moves.merge(_kicks("Kim Cang Thối"))
@@ -111,10 +111,10 @@ static func _build() -> void:
 			"jp": mv("Phi Kiếm", "jump", "jpunch", 6, 6, 10, 1.2, 1.15, "over", {"air": true, "fx": "slash"}),
 		},
 		"skills": [
-			sk("Thái Cực Kiếm", "slash_h_w", "spin", 10, 21, 18, 0.7, 1.35, "mid", 25, 4.0, {"hits": 3, "lunge": 1.5, "fx": "slash"}),
+			sk("Thái Cực Kiếm", "slash_h_w", "vd_combo", 10, 21, 18, 0.7, 1.35, "mid", 25, 4.0, {"hits": 3, "lunge": 1.5, "fx": "slash"}),
 			sk("Lưỡng Nghi Hóa Kình", "block", "block", 3, 40, 12, 2.2, 1.4, "mid", 30, 8.0, {"kind": "counter", "lvl": 3, "fx": "slash", "seal": "tay", "seal_amt": 100}),
 			sk("Kiếm Khí Trường Hồng", "slash_hi_w", "slash_h", 12, 3, 22, 1.6, 0.0, "mid", 30, 5.0, {"kind": "proj", "proj": {"speed": 11.0, "y": 1.1, "n": 1, "vis": "crescent"}, "lvl": 6, "fx": "slash"}),
-			sk("Thê Vân Tung", "jump", "staff_over", 10, 10, 18, 1.9, 1.2, "over", 35, 7.0, {"kind": "leap", "kd": true, "lvl": 10, "fx": "slash"}),
+			sk("Thê Vân Tung", "jump", "vd_jump", 10, 10, 18, 1.9, 1.2, "over", 35, 7.0, {"kind": "leap", "kd": true, "lvl": 10, "fx": "slash"}),
 			sk("Tọa Vong Tâm Pháp", "cast_w", "cast_w", 12, 2, 16, 0.0, 0.0, "mid", 20, 16.0, {"kind": "buff", "buff": {"atk": 1.35, "regen_en": 8.0, "t": 420}, "lvl": 15}),
 			sk("Thái Cực Vô Cực", "rising_w", "slash_hi", 18, 30, 30, 1.0, 0.0, "mid", 100, 30.0, {"kind": "proj", "proj": {"speed": 9.0, "y": 1.0, "n": 6, "gap": 5, "vis": "sword"}, "ult": true, "kd": true, "unblockable": true, "lvl": 20, "fx": "slash"}),
 		],
@@ -129,16 +129,16 @@ static func _build() -> void:
 		"speed": 1.12,
 		"look": {"model": "NgaMi", "robe": Color(0.96, 0.94, 0.96), "trim": Color(0.88, 0.42, 0.58), "pants": Color(0.86, 0.76, 0.84), "head_style": "long", "weapon": "dual", "female": true, "bulk": 0.86, "height": 0.95, "sash": Color(0.88, 0.38, 0.55), "robe_len": 0.58},
 		"moves": {
-			"p1": mv("Phất Vân Thủ", "jab_w", "jab", 5, 3, 10, 0.9, 1.1, "mid", {"next": "p2", "tip": "hand_l", "fx": "slash"}),
-			"p2": mv("Song Yến Phi", "cross_w", "cross", 6, 3, 11, 1.0, 1.1, "high", {"next": "p3", "fx": "slash"}),
+			"p1": mv("Phất Vân Thủ", "jab_w", "nm_a", 5, 3, 10, 0.9, 1.1, "mid", {"next": "p2", "tip": "hand_l", "fx": "slash"}),
+			"p2": mv("Song Yến Phi", "cross_w", "nm_b", 6, 3, 11, 1.0, 1.1, "high", {"next": "p3", "fx": "slash"}),
 			"p3": mv("Hồi Phong Vũ Liễu", "slash_h_w", "spin", 9, 10, 16, 0.85, 1.1, "mid", {"hits": 2, "push": 3.0, "fx": "slash"}),
 			"fp": mv("Yến Tử Xuyên Lâm", "thrust_w", "thrust", 9, 4, 15, 1.2, 1.2, "mid", {"lunge": 5.5, "fx": "slash"}),
 			"dp": mv("Thủy Để Lao Nguyệt", "rising_w", "lowpunch", 7, 3, 13, 0.8, 1.05, "low", {"fx": "slash"}),
 			"jp": mv("Lạc Hoa Kiếm", "jump", "jpunch", 5, 6, 9, 1.1, 1.0, "over", {"air": true, "fx": "slash"}),
 		},
 		"skills": [
-			sk("Lưu Thủy Kiếm", "jab_w", "cross", 7, 25, 16, 0.5, 1.1, "mid", 25, 4.0, {"hits": 5, "lunge": 1.8, "fx": "slash"}),
-			sk("Phật Quang Phổ Chiếu", "cast_w", "victory", 18, 2, 16, 0.0, 0.0, "mid", 40, 15.0, {"kind": "heal", "heal": 0.16, "lvl": 3}),
+			sk("Lưu Thủy Kiếm", "jab_w", "nm_flurry", 7, 25, 16, 0.5, 1.1, "mid", 25, 4.0, {"hits": 5, "lunge": 1.8, "fx": "slash"}),
+			sk("Phật Quang Phổ Chiếu", "cast_w", "pray", 18, 2, 16, 0.0, 0.0, "mid", 40, 15.0, {"kind": "heal", "heal": 0.16, "lvl": 3}),
 			sk("Phiêu Tuyết Xuyên Vân", "thrust_w", "thrust", 8, 10, 18, 0.7, 0.9, "mid", 30, 6.0, {"kind": "blink", "hits": 2, "lvl": 6, "fx": "slash"}),
 			sk("Kim Đỉnh Miên Chưởng", "palm_w", "palm", 11, 4, 20, 1.4, 1.0, "mid", 30, 7.0, {"hs": 55, "push": 2.0, "tip": "hand_r", "lvl": 10, "fx": "palm", "seal": "dan", "seal_amt": 100}),
 			sk("Thiên Nữ Tán Hoa", "toss_w", "toss", 10, 3, 18, 0.6, 0.0, "mid", 30, 6.0, {"kind": "proj", "proj": {"speed": 12.0, "y": 1.2, "n": 3, "gap": 6, "vis": "petal"}, "lvl": 15, "fx": "slash"}),
@@ -164,11 +164,11 @@ static func _build() -> void:
 		},
 		"skills": [
 			sk("Hàng Ma Chưởng", "dpalm_w", "dpalm", 12, 5, 22, 2.4, 1.3, "mid", 25, 4.5, {"kd": true, "launch": 5.0, "push": 6.5, "armor": true, "tip": "hand_r", "fx": "palm"}),
-			sk("Túy Quyền", "upper_w", "cross", 8, 28, 18, 0.6, 1.1, "mid", 30, 6.0, {"hits": 4, "lunge": 1.5, "tip": "hand_r", "lvl": 3, "fx": "punch"}),
+			sk("Túy Quyền", "upper_w", "drunk_fist", 8, 28, 18, 0.6, 1.1, "mid", 30, 6.0, {"hits": 4, "lunge": 1.5, "tip": "hand_r", "lvl": 3, "fx": "punch"}),
 			sk("Long Hống Chưởng", "dpalm_w", "dpalm", 14, 3, 22, 1.7, 0.0, "mid", 30, 5.0, {"kind": "proj", "proj": {"speed": 9.0, "y": 1.0, "n": 1, "vis": "dragon"}, "lvl": 6, "fx": "palm"}),
 			sk("Đả Cẩu Phản Kích", "block", "block", 3, 40, 12, 2.4, 1.0, "mid", 30, 8.0, {"kind": "counter", "tip": "hand_r", "lvl": 10, "fx": "palm", "seal": "chan", "seal_amt": 100}),
 			sk("Tửu Thần Cuồng Khí", "cast_w", "victory", 12, 2, 14, 0.0, 0.0, "mid", 25, 16.0, {"kind": "buff", "buff": {"atk": 1.35, "spd": 1.12, "t": 420}, "lvl": 15}),
-			sk("Phi Long Tại Thiên", "upper_w", "upper", 16, 36, 30, 1.25, 1.2, "mid", 100, 30.0, {"kind": "rush", "hits": 6, "lunge": 6.5, "armor": true, "ult": true, "launch": 9.0, "tip": "hand_r", "lvl": 20, "fx": "palm"}),
+			sk("Phi Long Tại Thiên", "upper_w", "cb_combo", 16, 36, 30, 1.25, 1.2, "mid", 100, 30.0, {"kind": "rush", "hits": 6, "lunge": 6.5, "armor": true, "ult": true, "launch": 9.0, "tip": "hand_r", "lvl": 20, "fx": "palm"}),
 		],
 	}
 	cb.moves.merge(_kicks("Thần Long Bãi Vĩ"))
@@ -189,12 +189,12 @@ static func _build() -> void:
 			"jp": mv("Không Trung Phi Đao", "jump", "toss", 6, 2, 12, 0.65, 0.0, "mid", {"air": true, "kind": "proj", "proj": {"speed": 14.0, "y": 0.0, "vy": -6.0, "n": 1, "vis": "knife"}, "fx": "slash"}),
 		},
 		"skills": [
-			sk("Phi Đao Tam Liên", "toss_w", "toss", 9, 3, 18, 0.75, 0.0, "mid", 25, 4.0, {"kind": "proj", "proj": {"speed": 15.0, "y": 1.2, "n": 3, "gap": 5, "vis": "knife"}}),
-			sk("Đoạt Mệnh Độc Châm", "toss_w", "toss", 9, 2, 16, 0.5, 0.0, "high", 25, 8.0, {"kind": "proj", "proj": {"speed": 18.0, "y": 1.35, "n": 1, "vis": "needle"}, "poison": 0.1, "lvl": 3, "seal": "tay", "seal_amt": 100}),
+			sk("Phi Đao Tam Liên", "toss_w", "dm_toss", 9, 3, 18, 0.75, 0.0, "mid", 25, 4.0, {"kind": "proj", "proj": {"speed": 15.0, "y": 1.2, "n": 3, "gap": 5, "vis": "knife"}}),
+			sk("Đoạt Mệnh Độc Châm", "toss_w", "dm_toss", 9, 2, 16, 0.5, 0.0, "high", 25, 8.0, {"kind": "proj", "proj": {"speed": 18.0, "y": 1.35, "n": 1, "vis": "needle"}, "poison": 0.1, "lvl": 3, "seal": "tay", "seal_amt": 100}),
 			sk("Ảnh Tung Bộ", "dodge", "cross", 10, 4, 22, 0.95, 1.0, "mid", 30, 8.0, {"kind": "blink", "lvl": 6, "fx": "slash"}),
-			sk("Lôi Hỏa Đạn", "toss_w", "toss", 12, 2, 20, 1.8, 0.0, "mid", 35, 8.0, {"kind": "proj", "proj": {"speed": 6.5, "y": 1.4, "vy": 6.0, "grav": 16.0, "n": 1, "vis": "bomb"}, "kd": true, "launch": 6.0, "unblockable": true, "lvl": 10, "fx": "fire"}),
-			sk("Bạo Vũ Lê Hoa", "cast_w", "toss", 12, 3, 22, 0.35, 0.0, "mid", 35, 7.0, {"kind": "proj", "proj": {"speed": 16.0, "y": 1.1, "n": 7, "gap": 2, "spread": 0.35, "vis": "needle"}, "lvl": 15, "seal": "chan", "seal_amt": 20}),
-			sk("Vạn Độc Thiên La", "cast_w", "toss", 18, 40, 30, 0.75, 0.0, "mid", 100, 30.0, {"kind": "rain", "proj": {"n": 10, "gap": 4, "vis": "knife"}, "poison": 0.12, "unblockable": true, "ult": true, "lvl": 20, "fx": "slash"}),
+			sk("Lôi Hỏa Đạn", "toss_w", "dm_grenade", 12, 2, 20, 1.8, 0.0, "mid", 35, 8.0, {"kind": "proj", "proj": {"speed": 6.5, "y": 1.4, "vy": 6.0, "grav": 16.0, "n": 1, "vis": "bomb"}, "kd": true, "launch": 6.0, "unblockable": true, "lvl": 10, "fx": "fire"}),
+			sk("Bạo Vũ Lê Hoa", "cast_w", "dm_throw2", 12, 3, 22, 0.35, 0.0, "mid", 35, 7.0, {"kind": "proj", "proj": {"speed": 16.0, "y": 1.1, "n": 7, "gap": 2, "spread": 0.35, "vis": "needle"}, "lvl": 15, "seal": "chan", "seal_amt": 20}),
+			sk("Vạn Độc Thiên La", "cast_w", "cast", 18, 40, 30, 0.75, 0.0, "mid", 100, 30.0, {"kind": "rain", "proj": {"n": 10, "gap": 4, "vis": "knife"}, "poison": 0.12, "unblockable": true, "ult": true, "lvl": 20, "fx": "slash"}),
 		],
 	}
 	dm.moves.merge(_kicks("Quỷ Ảnh Cước"))
@@ -209,18 +209,18 @@ static func _build() -> void:
 		"moves": {
 			"p1": mv("Đấm Thẳng", "jab_w", "jab", 5, 3, 10, 0.95, 1.0, "mid", {"next": "p2", "tip": "hand_l", "fx": "punch"}),
 			"p2": mv("Chém Cạnh Tay", "cross_w", "cross", 7, 3, 12, 1.15, 1.05, "high", {"next": "p3", "tip": "hand_r", "fx": "palm"}),
-			"p3": mv("Đá Tạt Vòng Cầu", "round_w", "round", 11, 4, 19, 1.9, 1.1, "high", {"push": 5.0, "tip": "foot_r", "fx": "kick"}),
-			"fp": mv("Đá Đạp Tống", "skick_w", "skick", 12, 4, 18, 1.55, 1.15, "mid", {"lunge": 4.5, "push": 5.0, "tip": "foot_l", "fx": "kick"}),
+			"p3": mv("Đá Tạt Vòng Cầu", "round_w", "martelo", 11, 4, 19, 1.9, 1.1, "high", {"push": 5.0, "tip": "foot_r", "fx": "kick"}),
+			"fp": mv("Đá Đạp Tống", "skick_w", "chapa", 12, 4, 18, 1.55, 1.15, "mid", {"lunge": 4.5, "push": 5.0, "tip": "foot_r", "fx": "kick"}),
 			"dp": mv("Đá Quét Thấp", "sweep_w", "sweep", 10, 4, 17, 0.9, 1.1, "low", {"tip": "foot_r", "fx": "kick"}),
 			"jp": mv("Phi Cước Song Đầu", "jump", "jkick", 6, 7, 9, 1.3, 0.95, "over", {"air": true, "tip": "foot_l", "fx": "kick"}),
 		},
 		"skills": [
-			sk("Liên Hoàn Đấm Chỏ", "jab_w", "cross", 8, 20, 16, 0.72, 1.05, "mid", 25, 4.5, {"hits": 4, "lunge": 2.2, "kd": true, "tip": "hand_r", "fx": "punch"}),
+			sk("Liên Hoàn Đấm Chỏ", "jab_w", "vn_elbow", 8, 20, 16, 0.72, 1.05, "mid", 25, 4.5, {"hits": 4, "lunge": 2.2, "kd": true, "tip": "hand_r", "fx": "punch"}),
 			sk("Phản Đòn Gạt Đá", "block", "block", 3, 40, 12, 2.3, 1.1, "mid", 30, 8.0, {"kind": "counter", "lvl": 3, "tip": "foot_r", "fx": "kick", "seal": "tay", "seal_amt": 100}),
-			sk("Lên Gối Hạ Chỏ", "upper_w", "upper", 8, 6, 24, 1.7, 0.95, "high", 30, 6.0, {"launch": 8.5, "lunge": 2.5, "lvl": 6, "tip": "hand_r", "fx": "punch"}),
+			sk("Lên Gối Hạ Chỏ", "upper_w", "vn_knee", 8, 6, 24, 1.7, 0.95, "high", 30, 6.0, {"launch": 8.5, "lunge": 2.5, "lvl": 6, "tip": "hand_r", "fx": "punch"}),
 			sk("Đòn Chân Kẹp Cổ", "jump", "jkick", 10, 10, 22, 2.1, 1.2, "over", 35, 8.0, {"kind": "leap", "kd": true, "unblockable": true, "lvl": 10, "tip": "foot_l", "fx": "kick", "seal": "chan", "seal_amt": 100}),
 			sk("Tâm Pháp Việt Võ", "cast_w", "victory", 10, 2, 14, 0.0, 0.0, "mid", 25, 16.0, {"kind": "buff", "buff": {"atk": 1.2, "def": 1.15, "spd": 1.1, "t": 360}, "lvl": 15}),
-			sk("Liên Hoàn Đòn Chân", "round_w", "round", 16, 34, 30, 1.3, 1.2, "mid", 100, 30.0, {"kind": "rush", "hits": 6, "lunge": 6.5, "armor": true, "ult": true, "launch": 9.0, "lvl": 20, "tip": "foot_r", "fx": "kick"}),
+			sk("Liên Hoàn Đòn Chân", "round_w", "vn_kicks", 16, 34, 30, 1.3, 1.2, "mid", 100, 30.0, {"kind": "rush", "hits": 6, "lunge": 6.5, "armor": true, "ult": true, "launch": 9.0, "lvl": 20, "tip": "foot_r", "fx": "kick"}),
 		],
 	}
 	vn.moves.merge(_kicks("Đá Tạt"))

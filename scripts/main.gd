@@ -1,6 +1,6 @@
 extends Node
 ## Entry point. Test flags (after "--"):
-##   --posetest, --fighttest [--p=sect --e=sect --theme=x]
+##   --posetest, --fighttest [--p=sect --e=sect --theme=x --skills=1,3,5 --fullen]
 ##   --screen=title|create|hub|map|char|skill|gear|shop|result  --shot=path --delay=frames
 
 var _shot := ""
@@ -64,6 +64,10 @@ func _ready() -> void:
 				if b.begins_with("--outfit="):
 					p.look["model"] = Outfits.model_for(ps, b.substr(9))
 			p.skills = [Sects.get_sect(ps).skills[0], Sects.get_sect(ps).skills[2], Sects.get_sect(ps).skills[5]]
+			for b in args:
+				if b.begins_with("--skills="):   # e.g. --skills=1,3,5 (sect skill slots 0-5)
+					p.skills = []
+					for si in b.substr(9).split(","): p.skills.append(Sects.get_sect(ps).skills[int(si)])
 			var e := Npc.side(es, 20, "Đối Thủ", 0.7, "bandit", true, 9)
 			var rounds := 2
 			for b in args:

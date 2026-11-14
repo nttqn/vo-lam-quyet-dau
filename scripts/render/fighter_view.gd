@@ -84,7 +84,7 @@ func _sync(delta: float) -> void:
 			elif f.hold_back:
 				body.pose("m/Block", body.clip_len("m/Block") * 0.4, blend)
 			else:
-				var ic := AnimMap.idle_clip(style)
+				var ic: Array = ["m/CaiBang_Drunk_Idle", 0.0, 1.0] if _drunk() else AnimMap.idle_clip(style)
 				var L := body.clip_len(ic[0])
 				var a: float = ic[1]
 				var b: float = ic[2]
@@ -97,7 +97,8 @@ func _sync(delta: float) -> void:
 		Fighter.WALK:
 			var back := f.hold_back
 			_walk_t += delta * absf(f.vx) / 1.6
-			body.pose("m/Walk_Back" if back else "m/Walk_Fwd", _walk_t, blend)
+			var wc: String = "m/Walk_Back" if back else ("m/CaiBang_Drunk_Walk" if _drunk() else "m/Walk_Fwd")
+			body.pose(wc, _walk_t, blend)
 		Fighter.DASH:
 			_walk_t += delta * 1.4
 			body.pose("a/Jog_Fwd", _walk_t, 0.06)
@@ -157,6 +158,15 @@ func _sync(delta: float) -> void:
 	_aura.light_color = col
 	_aura.light_energy = lerpf(_aura.light_energy, 2.2 if aura_on else 0.0, minf(1.0, delta * 8.0))
 
+## Cái Bang under a speed buff (Tửu Thần Cuồng Khí): drunken stance and stagger.
+func _drunk() -> bool:
+	if str(f.sect.get("id", "")) != "cai_bang" or not Avatar.has_clip("m/CaiBang_Drunk_Idle"):
+		return false
+	for b in f.buffs:
+		if b.k == "spd":
+			return true
+	return false
+
 ## Crouching legs with the standing block's arms (Mixamo has no low block).
 func _low_guard(frac: float) -> void:
 	body.layer = {"clip": "m/Block", "t": body.clip_len("m/Block") * frac, "bones": Avatar.ARM_BONES}
@@ -180,7 +190,7 @@ func _attack(style: String) -> void:
 		# optional "hit_to": keep the strike moving through the active frames (sweeps)
 		fr = lerpf(spec.hit, spec.get("hit_to", spec.hit), (sfv - st) / maxf(1.0, act))
 		var hits: int = m.get("hits", 1)
-		if hits > 1:
+		if hits > 1 and not spec.has("hit_to"):
 			# replay the strike portion for every hit
 			var per := act / hits
 			var ph := fmod(sfv - st, per) / per
@@ -190,7 +200,36 @@ func _attack(style: String) -> void:
 		var r := (sfv - st - act) / maxf(1.0, rec)
 		fr = lerpf(spec.get("hit_to", spec.hit), spec.to, r)
 		w = 1.0 - ease(r, 0.5)
+	if spec.has("seq"):
+		# a different clip for each part of the active frames (kick chains)
+		var seq: Array = spec.seq
+		var n := seq.size()
+		var part: Array
+		if sfv < st:
+			part = [spec.clip, spec.from, spec.hit]
+			fr = lerpf(spec.from, spec.hit, sfv / maxf(1.0, st))
+		elif sfv < st + act:
+			var per := act / n
+			var i := mini(int((sfv - st) / per), n - 1)
+			part = seq[i]
+			fr = lerpf(part[1], part[2], (sfv - st - per * i) / per)
+		else:
+			part = seq[n - 1]
+			fr = lerpf(part[2], minf(1.0, part[2] + 0.25), (sfv - st - act) / maxf(1.0, rec))
+		clip = part[0]
+		L = body.clip_len(clip)
 	body.pose(clip, L * fr, 0.07)
+	if spec.has("arms"):
+		# second clip on the arm bones only, timed like a plain [clip, from, hit, to, hit_to] spec
+		var a: Array = spec.arms
+		var af: float
+		if sfv < st:
+			af = lerpf(a[1], a[2], sfv / maxf(1.0, st))
+		elif sfv < st + act:
+			af = lerpf(a[2], a[4], (sfv - st) / maxf(1.0, act))
+		else:
+			af = lerpf(a[4], a[3], (sfv - st - act) / maxf(1.0, rec))
+		body.layer = {"clip": a[0], "t": body.clip_len(a[0]) * af, "bones": Avatar.ARM_BONES}
 	if spec.has("ov"):
 		for bn in spec.ov:
 			var e: Vector3 = spec.ov[bn] * (PI / 180.0) * w
