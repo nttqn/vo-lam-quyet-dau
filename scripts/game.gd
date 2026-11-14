@@ -3,7 +3,7 @@ extends Node
 
 const SAVE_PATH := "user://save_%d.json"
 const SETTINGS_PATH := "user://settings.json"
-const SLOTS := 3
+const SLOTS := 6
 
 var hero: Dictionary = {}
 var slot := -1

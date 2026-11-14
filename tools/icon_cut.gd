@@ -2,6 +2,7 @@ extends SceneTree
 ## Cuts ChatGPT icon sheets (transparent background, icons in rows, reading
 ## order) from assets_src/skills/ and assets_src/items/ into 256-square PNGs.
 ##   skills: <sect>.png        -> assets/ui/skills/<sect>_<0..5>.png   (3 + 3)
+##   menu: menu_1.png / menu_2.png -> assets/ui/menu/<name>.png (3+3, 4+4)
 ##   weapons: weapon_<style>.png -> assets/ui/items/weapon_<style>_<1..7>.png (4 + 3)
 ##   godot --headless --path . --script res://tools/icon_cut.gd [-- thieu_lam]
 
@@ -18,6 +19,8 @@ const SHEETS := {
 	"weapon_dual": ["res://assets_src/items/weapon_dual.png", "res://assets/ui/items/weapon_dual_%d.png", 7, [4, 3], 1],
 	"weapon_palm": ["res://assets_src/items/weapon_palm.png", "res://assets/ui/items/weapon_palm_%d.png", 7, [4, 3], 1],
 	"weapon_dagger": ["res://assets_src/items/weapon_dagger.png", "res://assets/ui/items/weapon_dagger_%d.png", 7, [4, 3], 1],
+	"menu_1": ["res://assets_src/menu/menu_1.png", ["journey", "duel", "tower", "arena", "train", "rank"], 6, [3, 3], 0],
+	"menu_2": ["res://assets_src/menu/menu_2.png", ["hero", "skill", "gear", "shop", "outfit", "quest", "settings", "exit"], 8, [4, 4], 0],
 	"armor": ["res://assets_src/items/armor.png", "res://assets/ui/items/armor_%d.png", 7, [4, 3], 1],
 	"hat": ["res://assets_src/items/hat.png", "res://assets/ui/items/hat_%d.png", 7, [4, 3], 1],
 	"boots": ["res://assets_src/items/boots.png", "res://assets/ui/items/boots_%d.png", 7, [4, 3], 1],
@@ -35,13 +38,18 @@ func _init() -> void:
 		if not FileAccess.file_exists(p):
 			print("missing ", s)
 			continue
-		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(String(job[1]).get_base_dir()))
+		var pat = job[1]
+		if pat is Array:
+			var names: Array = pat
+			pat = names.map(func(n): return "res://assets/ui/menu/%s.png" % n)
+		var first_out: String = pat[0] if pat is Array else String(pat)
+		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(first_out.get_base_dir()))
 		var img := Image.load_from_file(p)
 		img.convert(Image.FORMAT_RGBA8)
-		print(s, ": ", _cut(img, job[1], int(job[2]), job[3], int(job[4])))
+		print(s, ": ", _cut(img, pat, int(job[2]), job[3], int(job[4])))
 	quit()
 
-func _cut(img: Image, out_pat: String, N: int, rows: Array, first: int) -> String:
+func _cut(img: Image, out_pat: Variant, N: int, rows: Array, first: int) -> String:
 	var w := img.get_width()
 	var h := img.get_height()
 	# A painted checkerboard / white instead of real transparency: clear the
@@ -145,6 +153,7 @@ func _cut(img: Image, out_pat: String, N: int, rows: Array, first: int) -> Strin
 		sq.fill(Color(0, 0, 0, 0))
 		sq.blit_rect(part, Rect2i(Vector2i.ZERO, r.size), Vector2i((side - r.size.x) / 2, (side - r.size.y) / 2))
 		sq.resize(SIZE, SIZE, Image.INTERPOLATE_LANCZOS)
-		sq.save_png(ProjectSettings.globalize_path(out_pat % (i + first)))
+		var out: String = out_pat[i] if out_pat is Array else String(out_pat) % (i + first)
+		sq.save_png(ProjectSettings.globalize_path(out))
 		sizes.append(side)
 	return "ok, icon sizes %s" % [sizes]

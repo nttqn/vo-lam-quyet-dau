@@ -53,13 +53,15 @@ func _ready() -> void:
 	var sub := UI.label("Ngũ phái tranh hùng  ·  Một kiếm định giang hồ", 24, UI.PAPER, UI.med)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(sub)
-	_slots_box = UI.hbox(18)
+	_slots_box = GridContainer.new()
+	(_slots_box as GridContainer).columns = 3
+	_slots_box.add_theme_constant_override("h_separation", 14)
+	_slots_box.add_theme_constant_override("v_separation", 12)
 	_slots_box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	_slots_box.offset_bottom = -110
-	_slots_box.offset_top = -290
-	_slots_box.offset_left = -560
-	_slots_box.offset_right = 560
-	_slots_box.alignment = BoxContainer.ALIGNMENT_CENTER
+	_slots_box.offset_bottom = -96
+	_slots_box.offset_top = -430
+	_slots_box.offset_left = -590
+	_slots_box.offset_right = 590
 	ui.add_child(_slots_box)
 	_build_slots()
 	var bottom := UI.hbox(16)
@@ -94,7 +96,7 @@ func _build_slots() -> void:
 	for i in Game.SLOTS:
 		var info := Game.slot_info(i)
 		var p := UI.panel(Color(0.08, 0.05, 0.05, 0.85))
-		p.custom_minimum_size = Vector2(340, 170)
+		p.custom_minimum_size = Vector2(380, 160)
 		var v := UI.vbox(6)
 		p.add_child(v)
 		if info.is_empty():
@@ -106,7 +108,7 @@ func _build_slots() -> void:
 			v.add_child(UI.gold_button("Tạo nhân vật", func(): _new(i), 24))
 		else:
 			var s := Sects.get_sect(info.get("sect", "vo_dang"))
-			var name := UI.label(str(info.get("name", "?")), 28, UI.GOLD, UI.title)
+			var name := UI.label(str(info.get("name", "?")), 25, UI.GOLD, UI.title)
 			v.add_child(name)
 			v.add_child(UI.label("%s  ·  Cấp %d" % [s.name, int(info.get("level", 1))], 22))
 			var prog: int = (info.get("stars", {}) as Dictionary).size()
