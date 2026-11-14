@@ -118,3 +118,19 @@ func refresh_wallet() -> void:
 	var w := ui.find_child("Wallet", true, false) as Label
 	if w:
 		w.text = "Vàng %s   ·   Ngọc %d" % [UI.fmt(Game.hero.gold), int(Game.hero.jade)]
+
+## Cheap static backdrop: the painted bg_<theme>.png instead of the live 3D
+## arena, for screens whose panels cover most of the view (long lists).
+func painted_bg(theme: String) -> void:
+	var p := "res://assets/art/bg_%s.png" % theme
+	if not ResourceLoader.exists(p):
+		return
+	var tr := TextureRect.new()
+	tr.texture = load(p)
+	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	tr.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(tr)
+	ui.move_child(tr, 0)
+

@@ -186,6 +186,14 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 		"map": Game.goto(MapScreen.new())
 		"char": Game.goto(CharacterScreen.new())
 		"skill": Game.goto(SkillScreen.new())
+		"rank":
+			# 50 fake rows; with --dragtest a real touch swipe is injected and the scroll offset printed
+			var rs := RankScreen.new()
+			for n in 50:
+				rs.fake_rows.append({"_id": "f%d" % n, "name": "Hiệp Khách %d" % (n + 1), "sect": Sects.IDS[n % 6], "level": 60 - n, "power": 9000 - n * 97, "tower": 80 - n, "stars": 120 - n})
+			Game.goto(rs)
+			if "--dragtest" in args:
+				_drag_test.call_deferred(rs)
 		"foreign", "foreign2":
 			Game.hero.insight = {"cai_bang:0": 18, "nga_mi:1": 7, "duong_mon:2": 3, "vo_dang:3": 1}
 			Insight.equip(Game.hero, "cai_bang:0", 2)
@@ -220,3 +228,35 @@ func _process(_d: float) -> void:
 		get_viewport().get_texture().get_image().save_png(_shot)
 		print("shot ", _shot)
 		get_tree().quit()
+
+## Swipe up on the rank list with real touch events; the list must scroll.
+func _drag_test(rs: RankScreen) -> void:
+	for i in 20:
+		await get_tree().process_frame
+	var sc: ScrollContainer = rs._sc
+	var start := sc.get_global_rect().get_center() + Vector2(0, 150)
+	var t := InputEventScreenTouch.new()
+	t.index = 0
+	t.position = start
+	t.pressed = true
+	Input.parse_input_event(t)
+	var p := start
+	for k in 20:
+		await get_tree().process_frame
+		var d := InputEventScreenDrag.new()
+		d.index = 0
+		d.relative = Vector2(0, -18)
+		p += d.relative
+		d.position = p
+		d.velocity = Vector2(0, -900)
+		Input.parse_input_event(d)
+	await get_tree().process_frame
+	t = InputEventScreenTouch.new()
+	t.index = 0
+	t.position = p
+	t.pressed = false
+	Input.parse_input_event(t)
+	for i in 10:
+		await get_tree().process_frame
+	print("DRAGTEST scroll_vertical=%d max=%d draw_calls=%d prims=%d" % [sc.scroll_vertical, int(sc.get_v_scroll_bar().max_value), Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)])
+	get_tree().quit()

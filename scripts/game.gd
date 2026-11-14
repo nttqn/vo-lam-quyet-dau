@@ -18,6 +18,7 @@ var _rr := 0
 
 func _ready() -> void:
 	get_tree().set_quit_on_go_back(false)
+	get_tree().node_added.connect(_touch_scroll)
 	_load_settings()
 	_load_audio()
 	if Diag.on("memlog"):
@@ -227,3 +228,20 @@ func _write_json(path: String, data) -> void:
 	f.store_string(JSON.stringify(data))
 	f.close()
 	DirAccess.rename_absolute(ProjectSettings.globalize_path(tmp), ProjectSettings.globalize_path(path))
+
+## Touch scrolling everywhere: panels/containers inside a ScrollContainer default
+## to MOUSE_FILTER_STOP and swallow the swipe, so lists made of panels could not
+## be scrolled by dragging on them. Make them PASS (buttons, sliders and the
+## scroll bars keep their own handling).
+func _touch_scroll(n: Node) -> void:
+	if not (n is Control) or n is BaseButton or n is Range or n is ScrollContainer or n is LineEdit:
+		return
+	var c := n as Control
+	if c.mouse_filter != Control.MOUSE_FILTER_STOP:
+		return
+	var p := c.get_parent()
+	while p != null and not (p is CanvasLayer) and p != get_tree().root:
+		if p is ScrollContainer:
+			c.mouse_filter = Control.MOUSE_FILTER_PASS
+			return
+		p = p.get_parent()
