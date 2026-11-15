@@ -4,12 +4,28 @@ extends Node
 ## preload one rewarded ad. Elsewhere (desktop tests) show_rewarded grants the
 ## reward straight away in debug builds so the reward flows can be exercised.
 ##
-## Unit ids are Google's test ids until the real AdMob app exists
-## (project.godot [admob] general/android/app_id holds the app id).
+## Also an interstitial (on leaving a result screen for a menu, see
+## maybe_interstitial) and an App Open ad (coming back after APP_OPEN_AWAY_S),
+## both skipped for new heroes and kept apart by INTER_GAP_S.
+## (project.godot [admob] general/android/app_id holds the app id.)
 
 signal ready_changed
 
-const REWARDED_UNIT := "ca-app-pub-3940256099942544/5224354917"   # TODO real unit id
+const REWARDED_UNIT := "ca-app-pub-9078637596840810/7086713053"
+const INTER_UNIT := "ca-app-pub-9078637596840810/2854844066"
+const APP_OPEN_UNIT := "ca-app-pub-9078637596840810/5773631387"
+const INTER_GAP_S := 240.0        # no interstitial within 4 min of any full-screen ad or the start
+const APP_OPEN_AWAY_S := 1800.0   # App Open only after 30 min away
+const NO_ADS_BELOW_LEVEL := 10    # new heroes see only the rewarded ads they ask for
+
+var _inter: InterstitialAd
+var _inter_loading := false
+var _open: AppOpenAd
+var _open_loading := false
+var _last_full := 0.0             # ticks (s) of the last full-screen ad; app start counts
+var _paused_at := -1.0
+var _full_showing := false
+var _plain_cb := FullScreenContentCallback.new()
 
 var _android := OS.get_name() == "Android"
 var _started := false
@@ -43,7 +59,96 @@ func _ready() -> void:
 	_content_cb.on_ad_failed_to_show_full_screen_content = func(err: AdError) -> void:
 		print("Ads: show failed ", err.message)
 		_finish()
+	_plain_cb.on_ad_dismissed_full_screen_content = func() -> void:
+		_plain_done()
+	_plain_cb.on_ad_failed_to_show_full_screen_content = func(err: AdError) -> void:
+		print("Ads: show failed ", err.message)
+		_plain_done()
+	_last_full = _now()
 	_consent()
+
+func _now() -> float:
+	return Time.get_ticks_msec() / 1000.0
+
+# ------------------------------------------------------- interstitial / app open
+func _ads_allowed() -> bool:
+	return _android and _sdk_ready and not _full_showing \
+		and int(Game.hero.get("level", 1)) >= NO_ADS_BELOW_LEVEL
+
+## Called when a result screen is left for a menu. Shows an interstitial
+## only if one is loaded and INTER_GAP_S has passed since the last full-screen ad.
+func maybe_interstitial() -> void:
+	if not _ads_allowed():
+		return
+	if _inter == null:
+		_load_inter()
+		return
+	if _now() - _last_full < INTER_GAP_S:
+		return
+	var ad := _inter
+	_inter = null
+	ad.full_screen_content_callback = _plain_cb
+	_full_showing = true
+	Game.music_pause(true)
+	ad.show()
+
+func _notification(what: int) -> void:
+	if not _android:
+		return
+	if what == NOTIFICATION_APPLICATION_PAUSED:
+		if not _full_showing:
+			_paused_at = _now()
+	elif what == NOTIFICATION_APPLICATION_RESUMED:
+		var away := _now() - _paused_at if _paused_at >= 0.0 else 0.0
+		_paused_at = -1.0
+		if away >= APP_OPEN_AWAY_S:
+			_maybe_app_open.call_deferred()
+
+func _maybe_app_open() -> void:
+	if not _ads_allowed() or Game._current is FightScene:
+		return
+	if _open == null:
+		_load_open()
+		return
+	var ad := _open
+	_open = null
+	ad.full_screen_content_callback = _plain_cb
+	_full_showing = true
+	Game.music_pause(true)
+	ad.show()
+
+func _plain_done() -> void:
+	_full_showing = false
+	_last_full = _now()
+	Game.music_pause(false)
+	_load_inter()
+	_load_open()
+
+func _load_inter() -> void:
+	if not _sdk_ready or _inter_loading or _inter != null:
+		return
+	_inter_loading = true
+	var cb := InterstitialAdLoadCallback.new()
+	cb.on_ad_loaded = func(ad: InterstitialAd) -> void:
+		_inter_loading = false
+		_inter = ad
+	cb.on_ad_failed_to_load = func(err: LoadAdError) -> void:
+		_inter_loading = false
+		print("Ads: interstitial load failed ", err.message)
+	InterstitialAdLoader.new().load(INTER_UNIT, AdRequest.new(), cb)
+
+func _load_open() -> void:
+	if not _sdk_ready or _open_loading or _open != null:
+		return
+	_open_loading = true
+	var cb := AppOpenAdLoadCallback.new()
+	cb.on_ad_loaded = func(ad: AppOpenAd) -> void:
+		_open_loading = false
+		_open = ad
+	cb.on_ad_failed_to_load = func(err: LoadAdError) -> void:
+		_open_loading = false
+		print("Ads: app open load failed ", err.message)
+	AppOpenAdLoader.new().load(APP_OPEN_UNIT, AdRequest.new(), cb)
 
 func _process(delta: float) -> void:
 	if _retry > 0.0:
@@ -74,6 +179,7 @@ func show_rewarded(on_reward: Callable, on_close := Callable()) -> bool:
 	_on_reward = on_reward
 	_on_close = on_close
 	_rewarded = false
+	_full_showing = true
 	Game.music_pause(true)
 	_ad.show(_reward_cb)
 	return true
@@ -118,6 +224,8 @@ func _start() -> void:
 	l.on_initialization_complete = func(_s) -> void:
 		_sdk_ready = true
 		_load()
+		_load_inter()
+		_load_open()
 	MobileAds.initialize(l)
 	_load()
 
@@ -128,6 +236,8 @@ func _load() -> void:
 	RewardedAdLoader.new().load(REWARDED_UNIT, AdRequest.new(), _load_cb)
 
 func _finish() -> void:
+	_full_showing = false
+	_last_full = _now()
 	Game.music_pause(false)
 	if _ad:
 		_ad.destroy()

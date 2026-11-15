@@ -147,7 +147,7 @@ func _draw() -> void:
 				draw_arc(c, r, 0, TAU, 40, Color(1, 1, 1, 0.15), 2.0, true)
 				continue
 			var m: Dictionary = fighter.skills[i]
-			txt = _short(m.name)
+			txt = m.name
 			ready = fighter.skill_ready(i)
 			var cd := int(fighter.cds.get(i, 0))
 			if cd > 0:
@@ -159,6 +159,12 @@ func _draw() -> void:
 				col = (fighter.sect.elem as Color).darkened(0.45)
 		var a := 0.62 if ready else 0.3
 		draw_circle(c, r, Color(col.r, col.g, col.b, a + (0.25 if lit else 0.0)))
+		var tex: Texture2D = _icon(txt) if b.has("skill") else null
+		if tex:
+			var ir := r * (1.08 if lit else 1.0)
+			var sh := 1.0 if ready else 0.4
+			draw_texture_rect(tex, Rect2(c - Vector2(ir, ir), Vector2(ir, ir) * 2.0), false, Color(sh, sh, sh, 1.0))
+			txt = ""
 		draw_arc(c, r, 0, TAU, 48, Color(1, 0.9, 0.6, 0.8 if ready else 0.3), 3.0, true)
 		if frac > 0.0:
 			var pts := PackedVector2Array([c])
@@ -169,7 +175,9 @@ func _draw() -> void:
 		var fs := 24 if r > 60 else 18
 		if b.has("skill"):
 			fs = 15
-		var lines := txt.split("\n")
+		if b.has("skill") and txt != "":
+			txt = _short(txt)
+		var lines := txt.split("\n") if txt != "" else PackedStringArray()
 		var y0 := c.y - (lines.size() - 1) * fs * 0.55 + fs * 0.35
 		for li in lines.size():
 			var ln: String = lines[li]
@@ -187,3 +195,13 @@ static func _short(n: String) -> String:
 		return n
 	var half := int(ceil(w.size() / 2.0))
 	return " ".join(w.slice(0, half)) + "\n" + " ".join(w.slice(half))
+
+## Painted skill icon by move name (any sect, so learned foreign skills too).
+static var _icons := {}
+static func _icon(skill_name: String) -> Texture2D:
+	if _icons.is_empty():
+		for id in Sects.IDS:
+			var sk: Array = Sects.get_sect(id).skills
+			for i in sk.size():
+				_icons[sk[i].name] = SkillScreen.pic(id, i)
+	return _icons.get(skill_name)

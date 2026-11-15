@@ -116,6 +116,10 @@ func _ready() -> void:
 	pb.pressed.connect(toggle_pause)
 	root.add_child(pb)
 	_pause_btn = pb
+	if "--clean" in OS.get_cmdline_user_args():   # store art: scene only
+		hud.visible = false
+		pad.visible = false
+		pb.visible = false
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--shot="):
 			_shot = a.substr(7)

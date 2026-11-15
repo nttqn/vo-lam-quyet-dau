@@ -216,3 +216,13 @@ func _doubled(dbl: Button, rw: Dictionary) -> void:
 func _revive() -> void:
 	if not Ads.show_rewarded(func(): Flow.start_arena(int(out.n), true)):
 		toast("Chưa có quảng cáo, thử lại sau", Color(1, 0.7, 0.5))
+
+## Leaving for a menu (not straight into the next fight or its story
+## dialogue, and not quitting) may show an interstitial.
+func _exit_tree() -> void:
+	var nxt = Game._current
+	if nxt == self or nxt == null or not is_instance_valid(nxt):
+		return
+	if nxt is FightScene or nxt is DialogScreen:
+		return
+	Ads.maybe_interstitial()

@@ -8,6 +8,10 @@
 
 config_version=5
 
+[admob]
+
+general/android/app_id="ca-app-pub-9078637596840810~3339039730"
+
 [application]
 
 config/name="Võ Lâm Quyết Đấu"

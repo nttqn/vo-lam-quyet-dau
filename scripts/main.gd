@@ -60,9 +60,14 @@ func _ready() -> void:
 			var th := "temple"
 			for b in args:
 				if b.begins_with("--p="): ps = b.substr(4)
+			var pn := "Thử Nghiệm"
+			var en := "Đối Thủ"
+			for b in args:
+				if b.begins_with("--pname="): pn = b.substr(8)
+				if b.begins_with("--ename="): en = b.substr(8)
 				if b.begins_with("--e="): es = b.substr(4)
 				if b.begins_with("--theme="): th = b.substr(8)
-			var p := Npc.side(ps, 20, "Thử Nghiệm", 0.7, "", false, 5)
+			var p := Npc.side(ps, 20, pn, 0.7, "", false, 5)
 			for b in args:
 				if b.begins_with("--wglow="): p.look["wglow"] = int(b.substr(8))
 				if b.begins_with("--outfit="):
@@ -72,7 +77,7 @@ func _ready() -> void:
 				if b.begins_with("--skills="):   # e.g. --skills=1,3,5 (sect skill slots 0-5)
 					p.skills = []
 					for si in b.substr(9).split(","): p.skills.append(Sects.get_sect(ps).skills[int(si)])
-			var e := Npc.side(es, 20, "Đối Thủ", 0.7, "bandit", true, 9)
+			var e := Npc.side(es, 20, en, 0.7, "bandit", true, 9)
 			var rounds := 2
 			for b in args:
 				if b.begins_with("--ehp="): e.stats.hp_max *= float(b.substr(6))   # quick KO for finisher shots

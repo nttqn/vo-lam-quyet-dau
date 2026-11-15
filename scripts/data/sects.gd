@@ -8,7 +8,7 @@ const IDS := ["thieu_lam", "vo_dang", "nga_mi", "cai_bang", "duong_mon", "vovina
 ## Phái ẩn: locked at character creation until unlocked (see Sects.unlocked).
 const HIDDEN := ["vovinam"]
 ## TẠM THỜI: mở mọi phái ẩn để test. Đặt lại false trước khi phát hành.
-const TEST_UNLOCK_ALL := true
+const TEST_UNLOCK_ALL := false
 ## Passive per sect (shown on the create / skill screens).
 const PASSIVE := {
 	"duong_mon": ["Ám Khí Xuyên Giáp", "Ám khí phá được hộ thể (giáp) của đối thủ; chiêu ám khí bị đỡ vẫn gây 30% sát thương."],

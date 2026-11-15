@@ -99,7 +99,13 @@ func _build_slots() -> void:
 		p.custom_minimum_size = Vector2(380, 160)
 		var v := UI.vbox(6)
 		p.add_child(v)
-		if info.is_empty():
+		if info.is_empty() and not Game.slot_open(i):
+			p.modulate = Color(0.7, 0.7, 0.7)
+			v.add_child(UI.label("Ô lưu %d — Đang khóa" % (i + 1), 22, Color(0.75, 0.7, 0.65)))
+			var lk := UI.label("Mở khi có nhân vật đạt cấp %d" % Game.SLOT_LEVEL[i], 18, Color(0.85, 0.75, 0.5))
+			lk.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			v.add_child(lk)
+		elif info.is_empty():
 			var l := UI.label("Ô lưu %d — Trống" % (i + 1), 22, Color(0.8, 0.75, 0.7))
 			v.add_child(l)
 			var sp := Control.new()
