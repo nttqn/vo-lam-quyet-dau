@@ -45,6 +45,13 @@ static func _stage_done(r: int, s: int, res: Dictionary) -> void:
 		var prev := int(h.stars.get(sid, 0))
 		var first := prev == 0
 		var rw := Journey.rewards(r, s, first, stars)
+		# forge materials: Huyền Thiết on first clears, Thiên Tinh from region bosses
+		if first:
+			rw["mats"] = {"iron": 2 + 2 * r}
+			if s == 5:
+				rw.mats["star"] = 1 + r / 2
+		elif randf() < 0.3:
+			rw["mats"] = {"iron": 1 + r}
 		h.stars[sid] = maxi(prev, stars)
 		out.stars = stars
 		if r == 2 and s == 5:
@@ -84,6 +91,7 @@ static func _grant(rw: Dictionary) -> int:
 	var h := Game.hero
 	h.gold = int(h.gold) + int(rw.get("gold", 0))
 	h.jade = int(h.jade) + int(rw.get("jade", 0))
+	Mats.give(h, rw.get("mats", {}))
 	return Hero.add_exp(h, int(rw.get("exp", 0)))
 
 # ------------------------------------------------------------- arena
@@ -105,6 +113,7 @@ static func _arena_done(n: int, res: Dictionary, revived := false) -> void:
 		var streak := n + 1
 		h.arena_best = maxi(int(h.arena_best), streak)
 		var rw := {"exp": int((20 + 7 * lvl) * (1.0 + n * 0.1)), "gold": int((15 + 6 * lvl) * (1.0 + n * 0.15)), "jade": 1 if streak % 5 == 0 else 0}
+		rw["mats"] = arena_mats(streak, int(h.level))
 		out.rewards = rw
 		out.levels = _grant(rw)
 		out.streak = streak
@@ -114,6 +123,17 @@ static func _arena_done(n: int, res: Dictionary, revived := false) -> void:
 		out.streak = n
 	Game.save()
 	Game.goto(ResultScreen.new(out))
+
+## Lôi Đài loot per win: Huyền Thiết grows with the streak; every 5th win a
+## Hộ Phù, every 10th a Thiên Tinh + Tẩy Luyện Thạch.
+static func arena_mats(streak: int, hlvl: int) -> Dictionary:
+	var m := {"iron": 1 + streak / 3 + hlvl / 15}
+	if streak % 5 == 0:
+		m["charm"] = 1
+	if streak % 10 == 0:
+		m["star"] = 1
+		m["wash"] = 1
+	return m
 
 # ------------------------------------------------------------- training
 static func start_training() -> void:
@@ -152,6 +172,8 @@ static func _tower_done(f: int, res: Dictionary) -> void:
 		var first := f > Tower.best(h)
 		var rw := Tower.reward(f) if first else {"gold": 0, "exp": int(Tower.reward(f).exp * 0.2), "jade": 0, "item": -1}
 		if first:
+			rw["mats"] = Tower.mats(f)
+		if first:
 			h.tower = {"best": f}
 			if f % 5 == 0:
 				var brng := RandomNumberGenerator.new()
@@ -164,7 +186,7 @@ static func _tower_done(f: int, res: Dictionary) -> void:
 			var rng := RandomNumberGenerator.new()
 			rng.randomize()
 			var slot: String = Items.SLOTS[rng.randi_range(0, Items.SLOTS.size() - 1)]
-			var it := Items.make(slot, clampi(1 + int((Tower.level(f) - 1) / 5.5), 1, 7), int(rw.item), 0)
+			var it := Items.drop(slot, clampi(1 + int((Tower.level(f) - 1) / 5.5), 1, 7), int(rw.item))
 			h.bag.append(it)
 			out.drop = it
 	else:
@@ -173,6 +195,57 @@ static func _tower_done(f: int, res: Dictionary) -> void:
 		out.levels = 0
 	Game.save()
 	Game.goto(ResultScreen.new(out))
+
+# ------------------------------------------------------------- dungeon (Phó Bản)
+## Fight k (0..2) of a run; hp = HP fraction carried in.
+static func start_dungeon(i: int, diff: int, k := 0, hp := 1.0) -> void:
+	var h := Game.hero
+	if k == 0 and Dungeon.left(h) <= 0:
+		return
+	var cfg := {"p": Hero.side(h), "e": Dungeon.side(i, diff, k), "theme": Dungeon.LIST[i].theme,
+		"rounds": 1, "seed": randi(), "p_hp": clampf(hp, 0.05, 1.0)}
+	_launch(cfg, func(res: Dictionary): _dungeon_done(i, diff, k, res))
+
+static func _dungeon_done(i: int, diff: int, k: int, res: Dictionary) -> void:
+	var h := Game.hero
+	h.fights = int(h.fights) + 1
+	Daily.on_fight(h, "dungeon", res)
+	var out := {"mode": "dungeon", "i": i, "d": diff, "k": k, "won": res.won, "res": res,
+		"rewards": {"exp": 0, "gold": 0, "jade": 0}, "levels": 0}
+	if res.won:
+		h.wins = int(h.wins) + 1
+		if k < Dungeon.FIGHTS - 1:
+			out.next_hp = minf(1.0, float(res.hp_left) + Dungeon.HEAL_BETWEEN)
+		else:
+			var first := diff > Dungeon.best(h, i)
+			if Dungeon.record_clear(h, i, diff):
+				var rng := RandomNumberGenerator.new()
+				rng.randomize()
+				var rw := Dungeon.rewards(h, i, diff, first, rng)
+				out.rewards = rw
+				out.levels = _grant(rw)
+				out.cleared = true
+				Daily.track(h, "dungeon")
+			else:
+				out.no_entry = true
+	else:
+		h.losses = int(h.losses) + 1
+	Game.save()
+	Game.goto(ResultScreen.new(out))
+
+## Quét: instant loot of a cleared difficulty. Returns the rewards ({} if not allowed).
+static func sweep_dungeon(i: int, diff: int) -> Dictionary:
+	var h := Game.hero
+	if Dungeon.best(h, i) < diff or not Dungeon.record_clear(h, i, diff):
+		return {}
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var rw := Dungeon.rewards(h, i, diff, false, rng)
+	rw.exp = int(rw.exp * 0.5)
+	rw["levels"] = _grant(rw)
+	Daily.track(h, "dungeon")
+	Game.save()
+	return rw
 
 # ------------------------------------------------------------- duel (Tỉ Võ)
 static func start_duel(doc: Dictionary) -> void:
@@ -195,7 +268,9 @@ static func _duel_done(doc: Dictionary, res: Dictionary) -> void:
 	var lvl := int(h.level)
 	if res.won:
 		h.wins = int(h.wins) + 1
-		out.rewards = {"exp": 15 + 6 * lvl, "gold": 20 + 8 * lvl, "jade": 0}
+		out.rewards = {"exp": 15 + 6 * lvl, "gold": 20 + 8 * lvl, "jade": 0, "mats": {"iron": 2 + lvl / 10}}
+		if randf() < 0.4:
+			out.rewards.mats["wash"] = 1
 	else:
 		h.losses = int(h.losses) + 1
 		out.rewards = {"exp": 5 + 2 * lvl, "gold": 0, "jade": 0}

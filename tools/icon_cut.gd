@@ -21,6 +21,7 @@ const SHEETS := {
 	"weapon_dagger": ["res://assets_src/items/weapon_dagger.png", "res://assets/ui/items/weapon_dagger_%d.png", 7, [4, 3], 1],
 	"menu_1": ["res://assets_src/menu/menu_1.png", ["journey", "duel", "tower", "arena", "train", "rank"], 6, [3, 3], 0],
 	"menu_2": ["res://assets_src/menu/menu_2.png", ["hero", "skill", "gear", "shop", "outfit", "quest", "settings", "exit"], 8, [4, 4], 0],
+	"nguyen_lieu": ["res://assets_src/items/nguyen_lieu.png", ["mats/iron", "mats/star", "mats/wash", "mats/charm", "dungeon"], 5, [3, 2], 0],
 	"armor": ["res://assets_src/items/armor.png", "res://assets/ui/items/armor_%d.png", 7, [4, 3], 1],
 	"hat": ["res://assets_src/items/hat.png", "res://assets/ui/items/hat_%d.png", 7, [4, 3], 1],
 	"boots": ["res://assets_src/items/boots.png", "res://assets/ui/items/boots_%d.png", 7, [4, 3], 1],
@@ -41,7 +42,8 @@ func _init() -> void:
 		var pat = job[1]
 		if pat is Array:
 			var names: Array = pat
-			pat = names.map(func(n): return "res://assets/ui/menu/%s.png" % n)
+			# bare names are menu icons; "dir/name" goes to assets/ui/dir/
+			pat = names.map(func(n): return ("res://assets/ui/%s.png" if "/" in n else "res://assets/ui/menu/%s.png") % n)
 		var first_out: String = pat[0] if pat is Array else String(pat)
 		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(first_out.get_base_dir()))
 		var img := Image.load_from_file(p)

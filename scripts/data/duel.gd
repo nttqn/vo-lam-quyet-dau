@@ -84,7 +84,7 @@ static func snapshot(h: Dictionary) -> Dictionary:
 	# the ultimate rides in its own Tuyệt Kỹ slot: [tầng, bí kíp]
 	var ult := [int(h.skill_lv[Hero.ULT]), Books.mod_of(h, Hero.ULT)] if int(h.skill_lv[Hero.ULT]) > 0 else []
 	return {"sect": h.sect, "name": h.name, "level": int(h.level), "stats": Hero.stats(h), "skills": sk, "fx": fx, "ult": ult,
-		"color": int(h.get("color", 0)), "wrar": int(w.get("rar", 0)), "wtier": int(w.get("tier", 1)), "outfit": str(h.get("outfit", ""))}
+		"color": int(h.get("color", 0)), "wrar": int(w.get("rar", 0)), "wtier": int(w.get("tier", 1)), "wplus": int(w.get("plus", 0)), "outfit": str(h.get("outfit", ""))}
 
 static func fields(h: Dictionary) -> Dictionary:
 	var d := ensure(h)
@@ -124,6 +124,7 @@ static func side(doc: Dictionary) -> Dictionary:
 	if str(snap.get("outfit", "")) != "" and lk.has("model"):
 		lk["model"] = Outfits.model_for(str(snap.sect), str(snap.outfit))
 	lk["wtier"] = int(snap.get("wtier", 1))
+	lk["wglow"] = Items.glow_level(int(snap.get("wplus", 0)))
 	if int(snap.get("wrar", 0)) >= 3:
 		lk["trim"] = Color(0.9, 0.72, 0.3)
 	var st: Dictionary = snap.stats

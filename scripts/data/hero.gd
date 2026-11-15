@@ -12,7 +12,7 @@ static func create(name: String, sect_id: String) -> Dictionary:
 		"pts": {"luc": 0, "than": 0, "noi": 0, "the": 0}, "free_pts": 0,
 		"gold": 150, "jade": 5, "skill_pts": 0,
 		"skill_lv": [1, 0, 0, 0, 0, 0], "equip": [0, -1, -1],
-		"gear": {}, "bag": [], "insight": {}, "foreign": {},
+		"gear": {}, "bag": [], "mats": {}, "insight": {}, "foreign": {},
 		"stars": {}, "region": 0,
 		"arena_best": 0, "wins": 0, "losses": 0, "fights": 0,
 		"color": 0, "created": Time.get_unix_time_from_system(),
@@ -40,6 +40,13 @@ static func migrate(d: Dictionary) -> Dictionary:
 		if d.equip[i] == ULT:
 			d.equip[i] = -1   # the ultimate has its own slot now
 	_fill_slots(d)
+	# bonus lines for gear made before the forge update
+	for slot in d.gear:
+		if d.gear[slot] is Dictionary:
+			Items.ensure_aff(d.gear[slot])
+	for it in d.bag:
+		if it is Dictionary:
+			Items.ensure_aff(it)
 	return d
 
 ## Slot index of the ultimate (always the sect's 6th skill). It is never put in
@@ -127,6 +134,8 @@ static func look(h: Dictionary) -> Dictionary:
 		lk["wtier"] = int(w.get("tier", 1))
 	if not w.is_empty() and int(w.get("rar", 0)) >= 3:
 		lk["trim"] = Color(0.9, 0.72, 0.3)
+	if not w.is_empty():
+		lk["wglow"] = Items.glow_level(int(w.get("plus", 0)))
 	var wear := str(h.get("outfit", ""))
 	if wear != "" and lk.has("model"):
 		lk["model"] = Outfits.model_for(h.sect, wear)

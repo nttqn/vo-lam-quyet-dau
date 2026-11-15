@@ -83,21 +83,29 @@ func _build() -> void:
 		c.queue_free()
 	for c in _right.get_children():
 		c.queue_free()
-	_left.add_child(UI.label("Đang mặc", 24, UI.GOLD, UI.bold))
+	var lh := UI.hbox(12)
+	_left.add_child(lh)
+	var lt := UI.label("Đang mặc", 24, UI.GOLD, UI.bold)
+	lt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lh.add_child(lt)
+	for id in Mats.IDS:
+		lh.add_child(Mats.chip(h, id, -1, 30))
 	for slot in Items.SLOTS:
 		var it = h.gear.get(slot)
 		if it is Dictionary and not it.is_empty():
-			var cost := Items.upgrade_cost(it)
-			var up := UI.gold_button("+ (%s)" % UI.fmt(cost), func(): _upgrade(slot), 18, 130)
-			up.disabled = int(it.get("plus", 0)) >= Items.MAX_PLUS or int(h.gold) < cost
-			if int(it.get("plus", 0)) >= Items.MAX_PLUS:
-				up.text = "+%d tối đa" % Items.MAX_PLUS
+			Items.ensure_aff(it)
+			var up := UI.gold_button("Rèn", func(): _forge(slot), 22, 100)
+			if _forge_ready(it):
+				up.text = "Rèn ●"
 			_left.add_child(_card(it, [up]))
 		else:
 			var p := UI.panel(Color(0.07, 0.05, 0.06, 0.7))
 			p.add_child(UI.label("[%s] — trống" % Items.SLOT_NAMES[slot], 20, Color(0.6, 0.58, 0.55)))
 			_left.add_child(p)
 	if shop:
+		_right.add_child(UI.label("Nguyên liệu rèn", 24, UI.GOLD, UI.bold))
+		for m in _mat_stock():
+			_right.add_child(_mat_card(m))
 		_right.add_child(UI.label("Hàng bày bán", 24, UI.GOLD, UI.bold))
 		for it in _stock():
 			var price := Items.price(it)
@@ -110,11 +118,15 @@ func _build() -> void:
 		_right.add_child(UI.label("Hành trang (%d)" % h.bag.size(), 24, UI.GOLD, UI.bold))
 		if h.bag.is_empty():
 			_right.add_child(UI.label("Trống. Mua đồ ở Tiệm Binh Khí hoặc đánh bại trùm vùng.", 18, Color(0.75, 0.72, 0.66)))
+		else:
+			_right.add_child(UI.label("Đồ thừa có thể Phân giải lấy vàng + Huyền Thiết.", 16, Color(0.75, 0.72, 0.66)))
 		for i in h.bag.size():
 			var it: Dictionary = h.bag[i]
+			Items.ensure_aff(it)
 			var idx: int = i
 			var eb := UI.gold_button("Mặc", func(): _equip(idx), 18, 90)
-			var sb := UI.button("Bán\n%s" % UI.fmt(Items.sell_price(it)), func(): _sell(idx), 15, 90)
+			var sv := Items.salvage(it)
+			var sb := UI.button("Phân giải\n+%d HT" % int(sv.mats.iron), func(): _salvage(idx), 15, 96)
 			_right.add_child(_card(it, [eb, sb], _compare(it)))
 
 func _compare(it: Dictionary) -> String:
@@ -148,6 +160,7 @@ func _buy(it: Dictionary) -> void:
 	var h := Game.hero
 	var n := it.duplicate()
 	n["uid"] = randi()
+	Items.ensure_aff(n)
 	if int(it.rar) >= 3:
 		var jp := _jade_price(it)
 		if int(h.jade) < jp:
@@ -182,26 +195,84 @@ func _equip(i: int) -> void:
 	Game.save()
 	_build()
 
-func _sell(i: int) -> void:
+func _salvage(i: int) -> void:
 	var h := Game.hero
 	var it: Dictionary = h.bag[i]
-	h.gold = int(h.gold) + Items.sell_price(it)
-	h.bag.remove_at(i)
+	var sv := Items.salvage(it)
+	var go := func():
+		h.gold = int(h.gold) + int(sv.gold)
+		Mats.give(h, sv.mats)
+		h.bag.erase(it)
+		Game.sfx("coin")
+		Game.save()
+		toast("+%s vàng  ·  %s" % [UI.fmt(sv.gold), Mats.text(sv.mats)])
+		_build()
+	# ask before breaking anything valuable
+	if int(it.rar) >= 3 or int(it.get("plus", 0)) >= 5:
+		confirm("Phân giải %s?\nNhận %s vàng, %s." % [Items.item_name(it, _style()), UI.fmt(sv.gold), Mats.text(sv.mats, ", ")], go, "Phân giải")
+	else:
+		go.call()
+
+func _forge(slot: String) -> void:
+	var fp := ForgePanel.new(slot)
+	fp.changed.connect(func():
+		if is_inside_tree() and not is_queued_for_deletion():
+			_build.call_deferred())
+	ui.add_child(fp)
+
+## Something can be done right now (a red dot on the button).
+func _forge_ready(it: Dictionary) -> bool:
+	var h := Game.hero
+	if int(it.get("plus", 0)) < Items.MAX_PLUS and int(h.gold) >= Items.upgrade_cost(it) and Mats.count(h, "iron") >= Items.iron_cost(it):
+		return true
+	if int(it.rar) < Items.MAX_RAR:
+		var c := Items.ascend_cost(it)
+		if int(h.gold) >= int(c.gold) and Mats.count(h, "star") >= int(c.star):
+			return true
+	return false
+
+## Materials on sale: Huyền Thiết for gold, the rarer ones for Ngọc.
+func _mat_stock() -> Array:
+	var tier := 1
+	for r in Journey.REGIONS.size():
+		if Journey.region_unlocked(Game.hero, r):
+			tier = r + 1
+	return [
+		{"id": "iron", "n": 10, "gold": 30 * 10 * tier, "jade": 0},
+		{"id": "charm", "n": 1, "gold": 0, "jade": 12},
+		{"id": "wash", "n": 1, "gold": 0, "jade": 6},
+	]
+
+func _mat_card(m: Dictionary) -> Control:
+	var h := Game.hero
+	var id: String = m.id
+	var p := UI.panel(Color(0.07, 0.05, 0.06, 0.9), Mats.color(id).darkened(0.3))
+	var row := UI.hbox(10)
+	p.add_child(row)
+	row.add_child(Mats.gem(id, 56))
+	var info := UI.vbox(2)
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(info)
+	info.add_child(UI.label("%s ×%d   (đang có %d)" % [Mats.name_of(id), int(m.n), Mats.count(h, id)], 21, Mats.color(id), UI.bold))
+	var d := UI.label(Mats.INFO[id][1], 16, Color(0.85, 0.82, 0.75))
+	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.add_child(d)
+	var by_jade := int(m.jade) > 0
+	var b := UI.gold_button("Mua\n%s" % (("%d Ngọc" % int(m.jade)) if by_jade else UI.fmt(int(m.gold))), func(): _buy_mat(m), 17, 120)
+	b.disabled = (int(h.jade) < int(m.jade)) if by_jade else (int(h.gold) < int(m.gold))
+	row.add_child(b)
+	return p
+
+func _buy_mat(m: Dictionary) -> void:
+	var h := Game.hero
+	if int(h.jade) < int(m.jade) or int(h.gold) < int(m.gold):
+		return
+	h.jade = int(h.jade) - int(m.jade)
+	h.gold = int(h.gold) - int(m.gold)
+	Mats.add(h, str(m.id), int(m.n))
 	Game.sfx("coin")
 	Game.save()
-	_build()
-
-func _upgrade(slot: String) -> void:
-	var h := Game.hero
-	var it: Dictionary = h.gear[slot]
-	var cost := Items.upgrade_cost(it)
-	if int(h.gold) < cost or int(it.get("plus", 0)) >= Items.MAX_PLUS:
-		return
-	h.gold = int(h.gold) - cost
-	it.plus = int(it.get("plus", 0)) + 1
-	Daily.track(h, "upgrade")
-	Game.sfx("levelup")
-	Game.save()
+	toast("Đã mua %s ×%d" % [Mats.name_of(str(m.id)), int(m.n)])
 	_build()
 
 func back() -> void:

@@ -252,6 +252,8 @@ func _events() -> void:
 				hud.banner("Hiệp %d" % e.n, Tower.RULES[cfg.rule][0] if Tower.RULES.has(cfg.get("rule", "")) else "", 1.3)
 				if cfg.get("rule", "") == "low_hp":
 					sim.f[0].hp = sim.f[0].st.hp_max * 0.6
+				if cfg.has("p_hp"):   # Phó Bản: HP carried from the last fight
+					sim.f[0].hp = sim.f[0].st.hp_max * float(cfg.p_hp)
 				fx.clear_projs()
 				Game.sfx("gong")
 			"fight":

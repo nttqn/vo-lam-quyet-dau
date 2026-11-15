@@ -115,6 +115,22 @@ static func _model(kind: String, tier: int, g: Node3D) -> Node3D:
 	g.add_child(tip)
 	return tip
 
+## Enchant aura (Items.glow_level 1..4) on every mesh under the grip.
+const AURA_COL := [Color(0.35, 0.65, 1.0), Color(0.7, 0.35, 1.0), Color(1.0, 0.7, 0.15), Color(1.0, 0.35, 0.1)]
+const AURA_STR := [0.6, 0.85, 1.1, 1.5]
+const AURA_THICK := [0.006, 0.009, 0.012, 0.016]
+
+static func enchant(g: Node3D, level: int) -> void:
+	if level <= 0:
+		return
+	var m := ShaderMaterial.new()
+	m.shader = load("res://assets/shaders/aura.gdshader")
+	m.set_shader_parameter("col", AURA_COL[clampi(level, 1, 4) - 1])
+	m.set_shader_parameter("strength", AURA_STR[clampi(level, 1, 4) - 1])
+	m.set_shader_parameter("thick", AURA_THICK[clampi(level, 1, 4) - 1])
+	for mi in g.find_children("*", "MeshInstance3D", true, false):
+		(mi as MeshInstance3D).material_overlay = m
+
 ## kind: sword | saber | staff | spear | dual_blade | dagger | fan
 static func build(kind: String, g: Node3D, tier := 1) -> Node3D:
 	var from_file := _model(kind, tier, g)

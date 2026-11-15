@@ -20,6 +20,7 @@ const POOL := {
 	"ult": ["Thi triển tuyệt kỹ %d lần", 2, 20],
 	"tower": ["Vượt %d tầng Tháp Thí Luyện", 2, 5],
 	"duel": ["Tỉ võ với cao thủ khác %d lần", 2, 5],
+	"dungeon": ["Vượt Phó Bản %d lần (đánh hoặc quét)", 2, 3],
 }
 
 ## 7-day check-in: {gold, jade, item rarity (-1 none)}
@@ -138,7 +139,7 @@ static func claim_checkin(h: Dictionary) -> Dictionary:
 		var rng := RandomNumberGenerator.new()
 		rng.randomize()
 		var slot: String = Items.SLOTS[rng.randi_range(0, Items.SLOTS.size() - 1)]
-		var it := Items.make(slot, clampi(1 + int((int(h.level) - 1) / 5.5), 1, 7), int(rw.item), 0)
+		var it := Items.drop(slot, clampi(1 + int((int(h.level) - 1) / 5.5), 1, 7), int(rw.item))
 		h.bag.append(it)
 		rw.drop = it
 	h.checkin = {"n": int(Dictionary(h.get("checkin", {})).get("n", 0)) + 1, "last": today()}

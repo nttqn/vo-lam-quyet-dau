@@ -48,6 +48,15 @@ static func side(f: int) -> Dictionary:
 			s.stats.hp_max *= 0.5
 	return s
 
+## Forge materials for the first clear of floor f.
+static func mats(f: int) -> Dictionary:
+	var m := {"iron": 2 + f / 5}
+	if f % 5 == 0:
+		m["charm"] = 1
+	if is_boss(f):
+		m["star"] = 2 + f / 30
+	return m
+
 ## First-clear reward of floor f.
 static func reward(f: int) -> Dictionary:
 	var rw := {"gold": 30 + 10 * f, "exp": 20 + 8 * f, "jade": 3 if f % 5 == 0 else 0, "item": -1}

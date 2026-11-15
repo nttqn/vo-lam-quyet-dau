@@ -12,6 +12,8 @@ func _ready() -> void:
 	var theme := "temple"
 	if out.mode == "stage":
 		theme = Journey.REGIONS[out.r].theme
+	elif out.mode == "dungeon":
+		theme = Dungeon.LIST[int(out.i)].theme
 	_init_ui(theme)
 	var s := Hero.sect(h)
 	show.set_focus(1.3)
@@ -63,6 +65,17 @@ func _ready() -> void:
 		body.add_child(UI.label("Tháp Thí Luyện — Tầng %d" % int(out.f) + (" · vượt tầng mới!" if out.won and int(out.f) == Tower.best(h) else ""), 26, UI.GOLD, UI.bold))
 	elif out.mode == "arena":
 		body.add_child(UI.label("Lôi Đài — liên thắng %d trận" % int(out.streak), 26, UI.GOLD, UI.bold))
+	elif out.mode == "dungeon":
+		var dg: Dictionary = Dungeon.LIST[int(out.i)]
+		body.add_child(UI.label("%s · %s — Ải %d/%d" % [dg.name, Dungeon.DIFFS[int(out.d)][0], int(out.k) + 1, Dungeon.FIGHTS], 24, UI.GOLD, UI.bold))
+		if out.has("next_hp"):
+			body.add_child(UI.label("Sinh lực mang sang ải kế: %d%% (đã hồi %d%%)" % [int(round(float(out.next_hp) * 100)), int(Dungeon.HEAL_BETWEEN * 100)], 21, Color(0.6, 1, 0.6)))
+		elif out.get("cleared", false):
+			body.add_child(UI.label("Đã vượt Phó Bản!  Lượt còn lại hôm nay: %d" % Dungeon.left(h), 22, Color(0.6, 1, 0.6), UI.bold))
+		elif out.get("no_entry", false):
+			body.add_child(UI.label("Hết lượt Phó Bản hôm nay — không nhận được thưởng.", 21, Color(1, 0.6, 0.5)))
+		elif not out.won:
+			body.add_child(UI.label("Thất bại không tốn lượt. Cường hóa trang bị rồi thử lại!", 20, Color(0.85, 0.8, 0.7)))
 	var res: Dictionary = out.res
 	body.add_child(UI.label("Liên kích cao nhất: %d   ·   Thời gian: %ds" % [int(res.max_combo), int(res.seconds)], 18, Color(0.85, 0.82, 0.76)))
 	var rw: Dictionary = out.get("rewards", {})
@@ -77,6 +90,18 @@ func _ready() -> void:
 		wrow.add_child(UI.label("Vàng +%d" % int(rw.gold), 22, UI.GOLD))
 	if int(rw.get("jade", 0)) > 0:
 		wrow.add_child(UI.label("Ngọc +%d" % int(rw.jade), 22, Color(0.5, 1.0, 0.8)))
+	var mats: Dictionary = rw.get("mats", {})
+	if not mats.is_empty():
+		var mrow := HFlowContainer.new()
+		mrow.add_theme_constant_override("h_separation", 18)
+		mrow.add_child(UI.label("Nguyên liệu:", 21, Color(0.85, 0.82, 0.75)))
+		for id in Mats.IDS:
+			if int(mats.get(id, 0)) > 0:
+				var c := UI.hbox(6)
+				c.add_child(Mats.gem(id, 30))
+				c.add_child(UI.label("%s +%d" % [Mats.name_of(id), int(mats[id])], 21, Mats.color(id), UI.bold))
+				mrow.add_child(c)
+		rv.add_child(mrow)
 	if out.has("drop"):
 		var it: Dictionary = out.drop
 		var l := UI.label("Chiến lợi phẩm: %s (%s)" % [Items.item_name(it, s.style), Items.RARITY[int(it.rar)]], 22, Items.RARITY_COL[int(it.rar)], UI.bold)
@@ -140,6 +165,12 @@ func _ready() -> void:
 	elif out.mode == "duel":
 		row.add_child(UI.gold_button("Tỉ võ tiếp", func(): Game.goto(DuelScreen.new()), 24, 190))
 		row.add_child(UI.button("Về sảnh", func(): Game.goto(HubScreen.new()), 24, 170))
+	elif out.mode == "dungeon":
+		if out.has("next_hp"):
+			row.add_child(UI.gold_button("Ải kế", func(): Flow.start_dungeon(int(out.i), int(out.d), int(out.k) + 1, float(out.next_hp)), 24, 170))
+		elif not out.won and Dungeon.left(h) > 0:
+			row.add_child(UI.button("Thử lại", func(): Flow.start_dungeon(int(out.i), int(out.d)), 24, 160))
+		row.add_child(UI.button("Về Phó Bản", func(): Game.goto(DungeonScreen.new(int(out.i))), 24, 190))
 	elif out.mode == "tower":
 		if out.won:
 			row.add_child(UI.gold_button("Tầng kế", func(): Flow.start_tower(int(out.f) + 1), 24, 170))

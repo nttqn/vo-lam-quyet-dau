@@ -38,6 +38,9 @@ func _ready() -> void:
 		if a == "--feetprobe":
 			add_child(load("res://tools/feet_probe.gd").new())
 			return
+		if a == "--forgetest":
+			add_child(load("res://tools/forge_test.gd").new())
+			return
 		if a == "--memmodels":
 			add_child(load("res://tools/mem_models.gd").new())
 			return
@@ -61,6 +64,7 @@ func _ready() -> void:
 				if b.begins_with("--theme="): th = b.substr(8)
 			var p := Npc.side(ps, 20, "Thử Nghiệm", 0.7, "", false, 5)
 			for b in args:
+				if b.begins_with("--wglow="): p.look["wglow"] = int(b.substr(8))
 				if b.begins_with("--outfit="):
 					p.look["model"] = Outfits.model_for(ps, b.substr(9))
 			p.skills = [Sects.get_sect(ps).skills[0], Sects.get_sect(ps).skills[2], Sects.get_sect(ps).skills[3], Sects.get_sect(ps).skills[5]]
@@ -87,7 +91,14 @@ func _ready() -> void:
 		var tw := -1
 		for a in args:
 			if a.begins_with("--tower="): tw = int(a.substr(8))
-		if "--duel" in args:
+		var dgn := ""
+		for a in args:
+			if a.begins_with("--dungeon="): dgn = a.substr(10)   # --dungeon=i,diff,k
+		if dgn != "":
+			var p := dgn.split(",")
+			Hero.add_exp(Game.hero, 4000)
+			Flow.start_dungeon(int(p[0]), int(p[1]), int(p[2]) if p.size() > 2 else 0, 0.7)
+		elif "--duel" in args:
 			Flow.start_duel(Duel.bots(Game.hero, 1)[0])
 		elif tw > 0:
 			Flow.start_tower(tw)
@@ -210,6 +221,21 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			Daily.track(Game.hero, "fight", 3)
 			Game.goto(DailyScreen.new())
 		"gear": Game.goto(GearScreen.new(false))
+		"dungeon", "forge", "forge2", "forge3":
+			# demo forge state: materials, a +8 weapon with luck, a Bảo hat
+			Game.hero.mats = {"iron": 46, "star": 5, "wash": 3, "charm": 2}
+			Game.hero.gear["weapon"] = Items.drop("weapon", 3, 2)
+			Game.hero.gear.weapon.plus = 8
+			Game.hero.gear.weapon.luck = 0.16
+			Game.hero.gear["hat"] = Items.drop("hat", 3, 3)
+			Game.hero.dungeon = {"date": Daily.today(), "used": 1, "ads": 0, "best": {"mine": 1}}
+			if screen == "dungeon":
+				Game.goto(DungeonScreen.new())
+			else:
+				var gs := GearScreen.new(false)
+				Game.goto(gs)
+				var tb: int = {"forge": 0, "forge2": 1, "forge3": 2}[screen]
+				(func(): gs.ui.add_child(ForgePanel.new("weapon", tb))).call_deferred()
 		"shop": Game.goto(GearScreen.new(true))
 		"help":
 			var t := TitleScreen.new()

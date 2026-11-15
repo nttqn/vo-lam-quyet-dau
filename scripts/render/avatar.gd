@@ -379,6 +379,11 @@ func _weapons_and_anim() -> void:
 			hr.add_child(weapon_tip)
 		_:
 			weapon_tip = Weapons.build(w, grip_r, int(look.get("wtier", 1)))
+	# cường hóa +7 and up: glowing weapon
+	var wg := int(look.get("wglow", 0))
+	if wg > 0 and w != "none":
+		Weapons.enchant(grip_r, wg)
+		Weapons.enchant(grip_l, wg)
 	hand_r_tip = _marker(hr, Vector3(0, 0.08, 0))
 	hand_l_tip = _marker(hl, Vector3(0, 0.08, 0))
 	foot_r_tip = _marker(_bone_att("ball_r"), Vector3.ZERO)

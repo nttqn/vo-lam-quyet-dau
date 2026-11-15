@@ -131,7 +131,7 @@ static func rewards(r: int, s: int, first: bool, stars: int) -> Dictionary:
 ## Boss first-clear gear drop
 static func boss_drop(r: int, slot_rng: RandomNumberGenerator) -> Dictionary:
 	var slot: String = Items.SLOTS[slot_rng.randi_range(0, Items.SLOTS.size() - 1)]
-	return Items.make(slot, clampi(r + 2, 1, 7), clampi(1 + r / 2, 1, 4), 0)
+	return Items.drop(slot, clampi(r + 2, 1, 7), clampi(1 + r / 2, 1, 4))
 
 ## Endless "Lôi Đài" opponent n (0-based) for a hero level.
 static func arena_side(hlvl: int, n: int) -> Dictionary:

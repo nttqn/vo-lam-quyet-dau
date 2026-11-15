@@ -79,6 +79,13 @@ func _right(h: Dictionary) -> void:
 		var t := _tile(m[0], m[1], m[2], m[3], m[4], 112, 20)
 		t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		grid.add_child(t)
+	# Phó Bản: forge materials; full-width tile with today's entries
+	var dl_left := Dungeon.left(h)
+	var pb := _tile("Phó Bản", "Còn %d lượt hôm nay · nguyên liệu rèn đồ" % dl_left if dl_left > 0 else "Hết lượt hôm nay · quay lại ngày mai",
+		"dungeon", Color(0.2, 0.42, 0.6), func(): Game.goto(DungeonScreen.new()), 104, 22)
+	right.add_child(pb)
+	if dl_left > 0:
+		_glow(pb)
 
 func _next_stage(h: Dictionary) -> Array:
 	for r in Journey.REGIONS.size():
