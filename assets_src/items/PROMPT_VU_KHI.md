@@ -29,4 +29,4 @@ Sau đó: `godot --headless --path . --script res://tools/icon_cut.gd -- weapon_
 → `assets/ui/items/weapon_<loại>_<1..7>.png`, hiện ngay trong Trang Bị và Tiệm Binh Khí.
 
 ## Sau này (cùng cách làm, mỗi tấm 7 bậc)
-Y phục (`armor.png`), đầu quan (`hat.png`), hài (`boots.png`), ngọc bội (`jade.png`): dùng chung cho mọi phái.
+Y phục, đầu quan, hài, ngọc bội: xem `PROMPT_TRANG_BI.md`.

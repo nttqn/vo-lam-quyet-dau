@@ -49,11 +49,18 @@ func _card(it: Dictionary, buttons: Array, note := "") -> Control:
 	var row := UI.hbox(10)
 	p.add_child(row)
 	var tex := Items.icon(it, _style())
-	if tex:
-		# painted icon on a tile tinted by rarity
-		var tile := Panel.new()
-		tile.custom_minimum_size = Vector2(64, 64)
-		tile.add_theme_stylebox_override("panel", UI.box(Items.RARITY_COL[rar].darkened(0.7), Items.RARITY_COL[rar], 2, 10, 0))
+	# painted icon on a tile tinted by rarity (no icon yet: slot name instead)
+	var tile := Panel.new()
+	tile.custom_minimum_size = Vector2(64, 64)
+	tile.add_theme_stylebox_override("panel", UI.box(Items.RARITY_COL[rar].darkened(0.7), Items.RARITY_COL[rar], 2, 10, 0))
+	row.add_child(tile)
+	if not tex:
+		var sl := UI.label(Items.SLOT_NAMES[it.slot].replace(" ", "\n"), 15, Items.RARITY_COL[rar].lightened(0.3), UI.bold)
+		sl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		sl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		sl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		tile.add_child(sl)
+	else:
 		var tr := TextureRect.new()
 		tr.texture = tex
 		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -64,12 +71,16 @@ func _card(it: Dictionary, buttons: Array, note := "") -> Control:
 		tr.offset_right = -4
 		tr.offset_bottom = -4
 		tile.add_child(tr)
-		row.add_child(tile)
 	var info := UI.vbox(2)
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(info)
 	info.add_child(UI.label("%s  ·  %s" % [Items.item_name(it, _style()), Items.RARITY[rar]], 21, Items.RARITY_COL[rar], UI.bold))
-	info.add_child(UI.label("[%s] %s" % [Items.SLOT_NAMES[it.slot], Items.stat_text(Items.stats(it))], 17, Color(0.88, 0.85, 0.78)))
+	# wrapped so long stat lines (bonus lines) never push the column off screen
+	var stl := UI.label("[%s] %s" % [Items.SLOT_NAMES[it.slot], Items.stat_text(Items.stats(it))], 17, Color(0.88, 0.85, 0.78))
+	stl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.add_child(stl)
+	(info.get_child(0) as Label).text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	info.custom_minimum_size.x = 120
 	if note != "":
 		info.add_child(UI.label(note, 16, Color(0.6, 1, 0.6)))
 	for b in buttons:
