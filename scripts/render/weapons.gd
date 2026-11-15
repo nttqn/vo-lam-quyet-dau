@@ -55,6 +55,14 @@ static func sph(r: float) -> SphereMesh:
 const MODEL_DIR := "res://assets/models/weapons/"
 ## kind -> [length m, grip fraction from the bottom, girth (cross-section scale)]
 const SPEC := {"sword": [1.0, 0.09, 1.0], "dual_blade": [0.64, 0.12, 1.0], "staff": [1.8, 0.29, 0.5], "dagger": [0.36, 0.18, 1.0], "saber": [0.95, 0.1, 1.0], "spear": [2.0, 0.3, 0.6]}
+## Grip point per model file (centre of the wrapped handle, fraction of the
+## height from the bottom; tassels hang below it). Read off tools/weapon_grid.gd.
+const GRIP_AT := {
+	"sword_1": 0.28, "sword_2": 0.31, "sword_3": 0.4,
+	"dual_blade_1": 0.28, "dual_blade_2": 0.32, "dual_blade_3": 0.385,
+	"staff_1": 0.22, "staff_2": 0.2, "staff_3": 0.245,
+	"dagger_1": 0.22, "dagger_2": 0.22, "dagger_3": 0.22,
+}
 const BAKED_LIT := 0.6
 
 static func stage(tier: int) -> int:
@@ -99,7 +107,7 @@ static func _model(kind: String, tier: int, g: Node3D) -> Node3D:
 		inst.free()
 		return null
 	var len_m: float = SPEC[kind][0]
-	var frac: float = SPEC[kind][1]
+	var frac: float = GRIP_AT.get(path.get_file().get_basename(), SPEC[kind][1])
 	var k := len_m / box.size.y
 	var grip_y := box.position.y + box.size.y * frac
 	var holder := Node3D.new()

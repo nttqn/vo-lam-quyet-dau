@@ -366,8 +366,11 @@ func _weapons_and_anim() -> void:
 	var w: String = look.get("weapon", "none")
 	var hr := _bone_att("hand_r")
 	var hl := _bone_att("hand_l")
-	var grip_r := _grip(hr)
-	var grip_l := _grip(hl)
+	var armed := w != "none"
+	var grip_r: Node3D = _fist_grip("r", hr) if armed else null
+	var grip_l: Node3D = _fist_grip("l", hl) if w == "dual" else null
+	if grip_r == null: grip_r = _grip(hr)
+	if grip_l == null: grip_l = _grip(hl)
 	match w:
 		"dual":
 			weapon_tip = Weapons.build("dual_blade", grip_r, int(look.get("wtier", 1)))
@@ -452,6 +455,82 @@ func _bone_att(bone: String) -> Node3D:
 	fr.basis = vskel.get_bone_global_rest(vskel.find_bone(vb)).basis.orthonormalized().inverse() * skel.get_bone_global_rest(skel.find_bone(bone)).basis.orthonormalized()
 	b.add_child(fr)
 	return fr
+
+## Weapon hands on models with finger bones (Meshy / Mixamo rigs): the fingers
+## are modelled straight, so the handle went through the open palm. Curl them
+## into a fist round the handle (bone poses only, set once: the retarget never
+## touches finger bones) and put the grip in the hole of the fist.
+## degrees per joint [knuckle, middle, tip]
+const FIST := {"Index": [62.0, 85.0, 55.0], "Middle": [70.0, 88.0, 55.0], "Ring": [76.0, 88.0, 55.0], "Pinky": [82.0, 88.0, 55.0]}
+## thumb [twist about the hand axis, middle, tip]
+const THUMB := [-35.0, 30.0, 35.0]
+
+func _fist_grip(side: String, att: Node3D) -> Node3D:
+	if vskel == skel or vskel == null:
+		return null
+	var hand: String = _vmap.get("hand_" + side, "")
+	var hb := vskel.find_bone(hand)
+	var i1 := vskel.find_bone(hand + "Index1")
+	var m1 := vskel.find_bone(hand + "Middle1")
+	var p1 := vskel.find_bone(hand + "Pinky1")
+	var t3 := vskel.find_bone(hand + "Thumb3")
+	if hb < 0 or i1 < 0 or m1 < 0 or p1 < 0:
+		return null
+	var hr := vskel.get_bone_global_rest(hb)
+	var across := (vskel.get_bone_global_rest(i1).origin - vskel.get_bone_global_rest(p1).origin).normalized()
+	var along := (vskel.get_bone_global_rest(m1).origin - hr.origin).normalized()
+	across = (across - along * across.dot(along)).normalized()
+	# palm side: the thumb hangs below the finger plane in the T-pose
+	var n := along.cross(across).normalized()
+	var probe := vskel.get_bone_global_rest(t3).origin if t3 >= 0 else hr.origin + Vector3.DOWN
+	if (probe - vskel.get_bone_global_rest(i1).origin).dot(n) < 0.0:
+		n = -n
+	var axis := along.cross(n).normalized()       # rotating about it swings fingers toward the palm
+	var ring: Array[Vector3] = []
+	for f in FIST:
+		var ang: Array = FIST[f]
+		for j in 3:
+			var b := vskel.find_bone(hand + f + str(j + 1))
+			if b < 0:
+				continue
+			var gb := vskel.get_bone_global_rest(b).basis.orthonormalized()
+			var la := (gb.inverse() * axis).normalized()
+			var rest_q := vskel.get_bone_rest(b).basis.orthonormalized().get_rotation_quaternion()
+			vskel.set_bone_pose_rotation(b, rest_q * Quaternion(la, deg_to_rad(float(ang[j]))))
+	# thumb: fold across the front of the fist
+	for j in 3:
+		var b := vskel.find_bone(hand + "Thumb" + str(j + 1))
+		if b < 0:
+			continue
+		var gb := vskel.get_bone_global_rest(b).basis.orthonormalized()
+		var ax := (gb.inverse() * (axis if j > 0 else along)).normalized()
+		var rest_q := vskel.get_bone_rest(b).basis.orthonormalized().get_rotation_quaternion()
+		var deg: float = THUMB[j] * (-1.0 if j == 0 and side == "l" else 1.0)
+		vskel.set_bone_pose_rotation(b, rest_q * Quaternion(ax, deg_to_rad(deg)))
+	vskel.force_update_all_bone_transforms()
+	for f in ["Index", "Middle", "Ring"]:
+		for j in 4:
+			var b := vskel.find_bone(hand + f + str(j + 1))
+			if b >= 0:
+				ring.append(vskel.get_bone_global_pose(b).origin)
+	if ring.is_empty():
+		return null
+	var hole := Vector3.ZERO
+	for p in ring:
+		hole += p
+	hole /= ring.size()
+	# into the attachment frame (BoneAttachment on the hand + rest correction)
+	var hp := vskel.get_bone_global_pose(hb)
+	var fb: Basis = att.basis
+	var g := Node3D.new()
+	g.position = fb.inverse() * (hp.affine_inverse() * hole)
+	var hb_inv := hp.basis.orthonormalized().inverse()
+	var y := -(fb.inverse() * (hb_inv * across)).normalized()   # blade out of the thumb side
+	var x := Vector3.RIGHT - y * y.x
+	x = x.normalized()
+	g.basis = Basis(x, y, x.cross(y))
+	att.add_child(g)
+	return g
 
 func _grip(att: Node3D) -> Node3D:
 	# hand bone: +Y runs along the fingers; the fist's thumb side is +Z.
