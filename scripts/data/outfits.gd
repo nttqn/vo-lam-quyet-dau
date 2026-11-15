@@ -11,6 +11,7 @@ const LIST := {
 	"nga_mi": [{"id": "PhuongHoang", "name": "Phượng Hoàng", "price": 300, "desc": "Trắng và đỏ thẫm, phượng vàng thêu sau lưng, trâm phượng."}],
 	"cai_bang": [{"id": "LongBang", "name": "Long Bang", "price": 300, "desc": "Áo xanh rêu vá chỉ vàng, hồ lô đồng, băng đầu đỏ."}],
 	"duong_mon": [{"id": "AmAnh", "name": "Ám Ảnh", "price": 300, "desc": "Đen và tím thẫm viền bạc, đai phi đao, bao tay thép."}],
+	"vovinam": [{"id": "HongDai", "name": "Hồng Đai", "price": 300, "desc": "Võ phục lam đậm viền vàng, đai đỏ sọc vàng, chim Lạc vàng thêu sau lưng, băng quấn tay đỏ."}],
 }
 
 static func of(sect_id: String) -> Array:

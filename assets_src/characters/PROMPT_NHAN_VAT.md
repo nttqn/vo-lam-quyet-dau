@@ -83,4 +83,9 @@ dark olive green tunic with neat patches stitched in gold thread, worn brown lea
 black and deep purple fitted tunic with silver trim, slim leather chest harness with small flat throwing knives in sheaths, steel forearm bracers, black mask with a silver pattern covering the lower face, black trousers with purple leg wraps, black boots.
 ```
 
+**Vovinam — Hồng Đai** (nhớ đổi "Ancient Chinese wuxia martial artist." thành "Vietnamese martial artist." trong PHẦN CHUNG)
+```
+deep royal blue martial arts uniform with thin gold trim on the collar, cuffs and jacket edge, a stylized golden Lac bird embroidered on the back, red cloth belt with two thin gold stripes tied in a flat knot at the front, red cloth wraps on both hands and wrists, matching deep blue trousers. Barefoot. No logo, no text on the clothes.
+```
+
 Lưu tên: `<Phai>_<TenBo>.fbx`, ví dụ `ThieuLam_KimCang.fbx`, `VoDang_ThaiCuc.fbx`.
