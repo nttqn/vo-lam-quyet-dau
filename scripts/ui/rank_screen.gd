@@ -33,8 +33,23 @@ func _ready() -> void:
 	card.add_child(v)
 	_tabs = UI.hbox(8)
 	v.add_child(_tabs)
+	var mh := UI.hbox(12)
+	v.add_child(mh)
 	_mine = UI.label("", 19, Color(0.6, 1, 0.6), UI.bold)
-	v.add_child(_mine)
+	_mine.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mh.add_child(_mine)
+	var hide_btn := CheckButton.new()
+	hide_btn.text = "Ẩn tôi khỏi bảng"
+	hide_btn.button_pressed = Ranks.hidden()
+	hide_btn.add_theme_font_size_override("font_size", 18)
+	hide_btn.toggled.connect(func(on: bool):
+		hide_btn.disabled = true
+		_mine.text = "Đang cập nhật…"
+		await Ranks.set_hidden(on)
+		if is_inside_tree():
+			hide_btn.disabled = false
+			_show(_board))
+	mh.add_child(hide_btn)
 	_sc = ScrollContainer.new()
 	_sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -84,6 +99,11 @@ func _show(board: String) -> void:
 		if not is_inside_tree() or board != _board:
 			return
 		_mine.text = "%s: %s%d%s" % [str(h.name), UNIT[board], my_v, ("  ·  hạng %d" % (above + 1)) if above >= 0 else ""]
+		if Ranks.hidden():
+			_mine.text += "  ·  đang ẩn"
+			_mine.add_theme_color_override("font_color", Color(0.8, 0.78, 0.72))
+		else:
+			_mine.add_theme_color_override("font_color", Color(0.6, 1, 0.6))
 	else:
 		_mine.text = ""
 	if rows.is_empty():

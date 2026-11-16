@@ -27,9 +27,30 @@ static func fields(h: Dictionary) -> Dictionary:
 static func value(h: Dictionary, board: String) -> int:
 	return int(fields(h)[board])
 
+## "Ẩn khỏi bảng xếp hạng": no rank rows are published for any hero on this
+## device while it is on (Tỉ Võ shadows are unaffected: that is the mode itself).
+static func hidden() -> bool:
+	return bool(Game.settings.get("rank_hidden", false))
+
+## Turning it on deletes every slot's row; turning it off republishes the
+## current hero (other heroes reappear when next saved).
+static func set_hidden(on: bool) -> void:
+	Game.settings["rank_hidden"] = on
+	Game.save_settings()
+	_last.clear()
+	if not Cloud.enabled():
+		return
+	if on:
+		for i in Game.SLOTS:
+			await Cloud.delete_doc(COLLECTION, "_%d" % i)
+	elif Game.slot >= 0 and not Game.hero.is_empty():
+		var f := fields(Game.hero)
+		_last[Game.slot] = f
+		await Cloud.put_doc(COLLECTION, "_%d" % Game.slot, f)
+
 ## Fire-and-forget upload of this hero's row if it changed.
 static func publish(h: Dictionary, slot: int) -> void:
-	if not Cloud.enabled() or slot < 0 or h.is_empty():
+	if not Cloud.enabled() or slot < 0 or h.is_empty() or hidden():
 		return
 	var f := fields(h)
 	if _last.get(slot, {}) == f:
