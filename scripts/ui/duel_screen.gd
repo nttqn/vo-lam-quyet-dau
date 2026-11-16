@@ -37,7 +37,8 @@ func _ready() -> void:
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(sp)
 	head.add_child(UI.label("Lượt hôm nay: %d/%d" % [int(d.tickets), Duel.TICKETS], 20, UI.PAPER, UI.bold))
-	var info := UI.label("Mùa %s · còn %d ngày · thắng %d, thua %d. Đối thủ là bóng của người chơi khác, do máy điều khiển." % [d.season, Duel.days_left(), int(d.wins), int(d.losses)], 16, Color(0.8, 0.78, 0.72))
+	var info := UI.label("Mùa %s · còn %d ngày · thắng %d, thua %d. Đối thủ là bóng của người chơi khác, do máy điều khiển.%s" % [d.season, Duel.days_left(), int(d.wins), int(d.losses),
+		"\nBạn đang ẩn khỏi bảng xếp hạng: không có tên trên bảng và không làm đối thủ của ai." if Ranks.hidden() else ""], 16, Color(0.8, 0.78, 0.72))
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lv.add_child(info)
 	_status = UI.label("Đang tìm đối thủ…", 18, Color(0.85, 0.82, 0.75))
@@ -77,7 +78,7 @@ func _load() -> void:
 	var docs: Array = []
 	if Cloud.enabled():
 		_status.text = "Đang tìm đối thủ…"
-		await Cloud.put_my_doc(Duel.collection(), Duel.fields(h))
+		await Duel.publish(h)
 		var sc := int(d.score)
 		docs = await Cloud.query(Duel.collection(), "score", 30, sc - 200, sc + 200)
 		if docs.size() < 6:

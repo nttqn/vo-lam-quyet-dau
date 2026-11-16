@@ -19,6 +19,7 @@ func _ready() -> void:
 				Game.settings["unlock_" + hid] = true
 		if a.begins_with("--delay="): _delay = int(a.substr(8))
 		if a == "--nomusic": Game.settings["music"] = 0.0   # promo capture: music added later
+		if a == "--rankhidden": Game.settings["rank_hidden"] = true   # not saved
 		if a.begins_with("--gfx="):
 			Gfx.set_level(int(a.substr(6)))
 			Gfx.apply(get_tree())

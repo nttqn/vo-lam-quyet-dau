@@ -27,13 +27,15 @@ static func fields(h: Dictionary) -> Dictionary:
 static func value(h: Dictionary, board: String) -> int:
 	return int(fields(h)[board])
 
-## "Ẩn khỏi bảng xếp hạng": no rank rows are published for any hero on this
-## device while it is on (Tỉ Võ shadows are unaffected: that is the mode itself).
+## "Ẩn khỏi bảng xếp hạng": nothing is published for any hero on this device
+## while it is on: no rank rows, and no Tỉ Võ shadow (Duel.publish), so the
+## player is off the weekly Tỉ Võ board and nobody gets them as a rival.
 static func hidden() -> bool:
 	return bool(Game.settings.get("rank_hidden", false))
 
-## Turning it on deletes every slot's row; turning it off republishes the
-## current hero (other heroes reappear when next saved).
+## Turning it on deletes every slot's row and this season's Tỉ Võ shadow;
+## turning it off republishes the current hero's row (other heroes reappear
+## when next saved, the shadow on the next Tỉ Võ visit or duel).
 static func set_hidden(on: bool) -> void:
 	Game.settings["rank_hidden"] = on
 	Game.save_settings()
@@ -43,6 +45,7 @@ static func set_hidden(on: bool) -> void:
 	if on:
 		for i in Game.SLOTS:
 			await Cloud.delete_doc(COLLECTION, "_%d" % i)
+		await Cloud.delete_doc(Duel.collection(), "")
 	elif Game.slot >= 0 and not Game.hero.is_empty():
 		var f := fields(Game.hero)
 		_last[Game.slot] = f

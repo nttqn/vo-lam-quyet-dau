@@ -278,5 +278,5 @@ static func _duel_done(doc: Dictionary, res: Dictionary) -> void:
 	Game.save()
 	# publish the new score (fire and forget)
 	if Cloud.enabled():
-		Cloud.put_my_doc(Duel.collection(), Duel.fields(h))
+		Duel.publish(h)
 	Game.goto(ResultScreen.new(out))
