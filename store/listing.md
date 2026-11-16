@@ -55,10 +55,10 @@ RÈN BINH KHÍ, KHOÁC Y PHỤC
 
 TIỆN LỢI
 • Cốt truyện, tháp, lôi đài và phó bản chơi được không cần mạng.
-• 3 ô nhân vật lúc đầu; lên cấp để mở thêm ô.
+• 3 ô nhân vật lúc đầu; có nhân vật đạt cấp 30 sẽ mở thêm ô thứ 4.
 • Đồng bộ bản lưu lên mây khi liên kết tài khoản.
 
-Game miễn phí, có quảng cáo. Xem quảng cáo chỉ để nhận thêm thưởng, không bắt buộc.
+Game miễn phí, có quảng cáo. Quảng cáo có thưởng là tùy chọn; từ cấp 10 có thêm quảng cáo giữa các màn (cách nhau ít nhất 4 phút, không bao giờ chen vào trận đấu).
 
 ## English
 
@@ -104,7 +104,7 @@ FORGE AND OUTFITS
 
 CONVENIENT
 • Story, tower, arena and dungeons play offline.
-• 3 character slots at the start; level up to open more.
+• 3 character slots at the start; a 4th opens once a hero reaches level 30.
 • Cloud save when you link an account.
 
-Free to play, with ads. Ads are optional and only give extra rewards. The game is in Vietnamese.
+Free to play, with ads. Rewarded ads are optional; from level 10 there are also occasional ads between screens (at least 4 minutes apart, never during a fight). The game is in Vietnamese.
