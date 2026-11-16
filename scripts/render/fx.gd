@@ -15,7 +15,7 @@ func _ready() -> void:
 static var _pins := {}
 
 static func _pin(m: StandardMaterial3D) -> StandardMaterial3D:
-	var k := "%d/%d/%d/%d/%d/%s/%s" % [m.shading_mode, m.transparency, m.blend_mode, m.cull_mode, m.billboard_mode, m.emission_enabled, m.metallic > 0.0]
+	var k := "%d/%d/%d/%d/%d/%s/%s/%s/%s" % [m.shading_mode, m.transparency, m.blend_mode, m.cull_mode, m.billboard_mode, m.emission_enabled, m.metallic > 0.0, m.albedo_texture != null, m.no_depth_test]
 	if not _pins.has(k):
 		_pins[k] = m.duplicate()
 	return m
@@ -34,7 +34,7 @@ func spark(pos: Vector3, col: Color, heavy: bool, fx: String) -> void:
 	var p := CPUParticles3D.new()
 	p.one_shot = true
 	p.emitting = true
-	p.amount = 26 if heavy else 14
+	p.amount = maxi(4, int((26 if heavy else 14) * Gfx.particles()))
 	p.lifetime = 0.35
 	p.explosiveness = 1.0
 	p.direction = Vector3(0, 0.3, 1)
@@ -81,6 +81,88 @@ func spark(pos: Vector3, col: Color, heavy: bool, fx: String) -> void:
 		ring(pos, col, 1.4 if heavy else 0.8)
 	if fx == "slash":
 		_slash_line(pos, col)
+	if Gfx.high():
+		halo(pos, col, 2.2 if heavy else 1.2, 0.28 if heavy else 0.18)
+		if heavy:
+			embers(pos, col)
+			if fx == "slash":
+				_slash_line(pos, col)   # crossed double cut
+
+# ------------------------------------------------------------ Cao-only extras
+static var _halo_tex: Texture2D
+
+## Soft additive glow sprite: stands in for real bloom, which leaks driver
+## memory on Mali phones.
+func halo(pos: Vector3, col: Color, size := 1.0, dur := 0.2) -> void:
+	var mi := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = Vector2.ONE
+	mi.mesh = q
+	var hc := col.lerp(Color.WHITE, 0.25)
+	var m := _unshaded(Color(hc.r, hc.g, hc.b, 1.0))
+	m.albedo_texture = _soft_dot()
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	m.no_depth_test = true
+	_pin(m)
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = pos
+	mi.scale = Vector3.ONE * size * 0.6
+	add_child(mi)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(mi, "scale", Vector3.ONE * size, dur).set_ease(Tween.EASE_OUT)
+	tw.tween_property(m, "albedo_color:a", 0.0, dur * 1.2).set_delay(dur * 0.4)
+	tw.chain().tween_callback(mi.queue_free)
+
+static func _soft_dot() -> Texture2D:
+	if _halo_tex == null:
+		var g := Gradient.new()
+		g.set_color(0, Color(1, 1, 1, 1))
+		g.set_color(1, Color(1, 1, 1, 0))
+		g.add_point(0.35, Color(1, 1, 1, 0.45))
+		var gt := GradientTexture2D.new()
+		gt.gradient = g
+		gt.fill = GradientTexture2D.FILL_RADIAL
+		gt.fill_from = Vector2(0.5, 0.5)
+		gt.fill_to = Vector2(1.0, 0.5)
+		gt.width = 128
+		gt.height = 128
+		_halo_tex = gt
+	return _halo_tex
+
+## Slow glowing embers that drift up after a heavy blow.
+func embers(pos: Vector3, col: Color) -> void:
+	var p := CPUParticles3D.new()
+	p.one_shot = true
+	p.emitting = true
+	p.amount = 22
+	p.lifetime = 1.1
+	p.explosiveness = 0.85
+	p.direction = Vector3(0, 1, 0.2)
+	p.spread = 75
+	p.initial_velocity_min = 0.6
+	p.initial_velocity_max = 2.2
+	p.gravity = Vector3(0, 0.6, 0)
+	p.damping_min = 1.5
+	p.damping_max = 3.0
+	p.scale_amount_min = 0.5
+	p.scale_amount_max = 1.2
+	var q := QuadMesh.new()
+	q.size = Vector2(0.11, 0.11)
+	var mm := _unshaded(col.lerp(Color(1, 0.9, 0.6), 0.4))
+	mm.albedo_texture = _soft_dot()
+	mm.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	_pin(mm)
+	q.material = mm
+	p.mesh = q
+	var curve := Curve.new()
+	curve.add_point(Vector2(0, 1))
+	curve.add_point(Vector2(1, 0))
+	p.scale_amount_curve = curve
+	p.position = pos
+	add_child(p)
+	get_tree().create_timer(1.6).timeout.connect(p.queue_free)
 
 func _slash_line(pos: Vector3, col: Color) -> void:
 	var mi := MeshInstance3D.new()
@@ -138,12 +220,14 @@ func ground_ring(x: float, col: Color) -> void:
 	tw.tween_property(mi, "scale", Vector3(3.5, 1, 3.5), 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tw.tween_property(m, "albedo_color:a", 0.0, 0.5)
 	tw.chain().tween_callback(mi.queue_free)
+	if Gfx.high():
+		halo(Vector3(x, 0.6, 0.1), col, 1.8, 0.35)
 
 func dust(x: float) -> void:
 	var p := CPUParticles3D.new()
 	p.one_shot = true
 	p.emitting = true
-	p.amount = 18
+	p.amount = maxi(4, int(18 * Gfx.particles()))
 	p.lifetime = 0.6
 	p.explosiveness = 1.0
 	p.direction = Vector3(0, 1, 0)
@@ -257,7 +341,7 @@ func add_proj(p: Dictionary, col: Color) -> void:
 			mi.scale = Vector3(1.6, 1, 1)
 			n.add_child(mi)
 			var tail := CPUParticles3D.new()
-			tail.amount = 40
+			tail.amount = maxi(8, int(40 * Gfx.particles()))
 			tail.lifetime = 0.4
 			tail.local_coords = false
 			tail.direction = Vector3(-dir, 0, 0)

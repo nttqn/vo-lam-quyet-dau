@@ -20,6 +20,8 @@ func _ready() -> void:
 	get_tree().set_quit_on_go_back(false)
 	get_tree().node_added.connect(_touch_scroll)
 	_load_settings()
+	Gfx.set_level(settings.get("gfx", -1))
+	Gfx.apply(get_tree())
 	_load_audio()
 	if Diag.on("memlog"):
 		var t := Timer.new()

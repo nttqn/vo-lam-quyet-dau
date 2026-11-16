@@ -247,7 +247,7 @@ func _update_trail() -> void:
 		_trail_pts.push_front([tip.global_position, base.lerp(tip.global_position, 0.5)])
 	elif not _trail_pts.is_empty():
 		_trail_pts.pop_back()
-	while _trail_pts.size() > 9:
+	while _trail_pts.size() > Gfx.trail_len():
 		_trail_pts.pop_back()
 	if _trail_pts.size() < 2:
 		return

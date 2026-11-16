@@ -29,11 +29,43 @@ func _ready() -> void:
 		Game.settings.vibrate = on
 		Game.save_settings())
 	v.add_child(vib)
+	v.add_child(_gfx_row())
 	var cr := UI.label("Võ Lâm Quyết Đấu  ·  phiên bản %s\nÂm thanh trận đấu: thư viện CC0 OpenGameArt (artisticdude, StarNinjas,\nrubberduck, Kenney, HaelDB). Giọng nữ: Marti Topmade (topmademarti).\nPhông chữ: Be Vietnam Pro, Playfair Display (SIL OFL)." % ProjectSettings.get_setting("application/config/version", "1.0.0"), 16, Color(0.75, 0.72, 0.66))
 	v.add_child(cr)
 	if Ads.privacy_options_required():
 		v.add_child(UI.button("Quyền riêng tư quảng cáo", Ads.show_privacy_options, 20))
 	v.add_child(UI.gold_button("Đóng", queue_free, 24))
+
+## Đồ họa: Thấp / Thường / Cao picker + one-line hint.
+func _gfx_row() -> Control:
+	var box := UI.vbox(6)
+	var h := UI.hbox(10)
+	var l := UI.label("Đồ họa", 22)
+	l.custom_minimum_size.x = 140
+	h.add_child(l)
+	var hint := UI.label(Gfx.HINTS[Gfx.level()], 16, Color(0.75, 0.72, 0.66))
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.custom_minimum_size.x = 560
+	var group := ButtonGroup.new()
+	for i in Gfx.NAMES.size():
+		var b := UI.button(Gfx.NAMES[i], func():
+			Game.settings["gfx"] = i
+			Game.save_settings()
+			Gfx.set_level(i)
+			Gfx.apply(get_tree())
+			hint.text = Gfx.HINTS[i]
+			Game.sfx("click"), 20, 120)
+		b.toggle_mode = true
+		b.button_group = group
+		b.button_pressed = Gfx.level() == i
+		b.custom_minimum_size.y = 44
+		# the theme's pressed look is darker than normal: dim the others instead
+		b.toggled.connect(func(on: bool): b.modulate = Color.WHITE if on else Color(0.55, 0.55, 0.55))
+		b.modulate = Color.WHITE if b.button_pressed else Color(0.55, 0.55, 0.55)
+		h.add_child(b)
+	box.add_child(h)
+	box.add_child(hint)
+	return box
 
 func _slider(label: String, key: String) -> Control:
 	var h := UI.hbox(12)

@@ -18,6 +18,10 @@ func _ready() -> void:
 			for hid in Sects.HIDDEN:
 				Game.settings["unlock_" + hid] = true
 		if a.begins_with("--delay="): _delay = int(a.substr(8))
+		if a == "--nomusic": Game.settings["music"] = 0.0   # promo capture: music added later
+		if a.begins_with("--gfx="):
+			Gfx.set_level(int(a.substr(6)))
+			Gfx.apply(get_tree())
 		if a.begins_with("--screen="): screen = a.substr(9)
 	for a in args:
 		if a.begins_with("--facetest"):
@@ -199,6 +203,10 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			Game.goto(cs)
 			cs._pick.call_deferred(sect if sect != "thieu_lam" else "nga_mi")
 		"hub": Game.goto(HubScreen.new())
+		"settings":
+			var hs := HubScreen.new()
+			Game.goto(hs)
+			hs.ui.add_child.call_deferred(SettingsPanel.new())
 		"map": Game.goto(MapScreen.new())
 		"char": Game.goto(CharacterScreen.new())
 		"skill": Game.goto(SkillScreen.new())

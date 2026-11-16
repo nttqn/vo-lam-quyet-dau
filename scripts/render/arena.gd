@@ -132,6 +132,7 @@ func _environment(th: Dictionary) -> void:
 	sun.directional_shadow_max_distance = 30.0
 	sun.shadow_blur = 2.2
 	sun.shadow_bias = 0.03
+	Gfx.sun(sun)
 	add_child(sun)
 	var fill := DirectionalLight3D.new()
 	fill.light_color = (th.sky_top as Color).lerp(Color.WHITE, 0.5)
