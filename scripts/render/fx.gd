@@ -37,16 +37,22 @@ func spark(pos: Vector3, col: Color, heavy: bool, fx: String) -> void:
 	p.amount = maxi(4, int((26 if heavy else 14) * Gfx.particles()))
 	p.lifetime = 0.35
 	p.explosiveness = 1.0
-	p.direction = Vector3(0, 0.3, 1)
+	# burst mostly in the fight plane: sparks flying at the camera grew huge
+	# and scattered over the whole screen like snow
+	p.direction = Vector3(0, 0.4, 0.15)
 	p.spread = 180
-	p.initial_velocity_min = 3.0
-	p.initial_velocity_max = 8.0 if heavy else 5.0
-	p.gravity = Vector3(0, -6, 0)
+	p.flatness = 0.8
+	p.initial_velocity_min = 2.0
+	p.initial_velocity_max = 5.0 if heavy else 3.5
+	p.damping_min = 4.0
+	p.damping_max = 7.0
+	p.gravity = Vector3(0, -5, 0)
 	p.scale_amount_min = 0.6
 	p.scale_amount_max = 1.4
 	var q := QuadMesh.new()
-	q.size = Vector2(0.06, 0.06)
-	var mm := _unshaded(col)
+	q.size = Vector2(0.09, 0.09)   # soft round dot: reads about like the old 0.06 square
+	var mm := _unshaded(col.lerp(Color.WHITE, 0.3))
+	mm.albedo_texture = _soft_dot()
 	mm.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	_pin(mm)
 	q.material = mm
