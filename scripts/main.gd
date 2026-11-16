@@ -75,6 +75,7 @@ func _ready() -> void:
 			var p := Npc.side(ps, 20, pn, 0.7, "", false, 5)
 			for b in args:
 				if b.begins_with("--wglow="): p.look["wglow"] = int(b.substr(8))
+				if b.begins_with("--model="): p.look["model"] = b.substr(8)   # any assets/models/chars file
 				if b.begins_with("--outfit="):
 					p.look["model"] = Outfits.model_for(ps, b.substr(9))
 			p.skills = [Sects.get_sect(ps).skills[0], Sects.get_sect(ps).skills[2], Sects.get_sect(ps).skills[3], Sects.get_sect(ps).skills[5]]
