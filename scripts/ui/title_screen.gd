@@ -3,6 +3,8 @@ extends Screen
 ## Title + save slot selection.
 
 var _slots_box: Control
+var _cols: Array[VBoxContainer] = []
+const SLOT_W := 330
 var _cloud_lbl: Label
 
 func _ready() -> void:
@@ -32,8 +34,8 @@ func _ready() -> void:
 	var v := UI.vbox(6)
 	v.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
 	v.offset_top = 26
-	v.offset_left = -500
-	v.offset_right = 500
+	v.offset_left = -290
+	v.offset_right = 290
 	ui.add_child(v)
 	var t: Control
 	var logo_p := "res://assets/art/logo.png"
@@ -53,16 +55,26 @@ func _ready() -> void:
 	var sub := UI.label("Ngũ phái tranh hùng  ·  Một kiếm định giang hồ", 24, UI.PAPER, UI.med)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(sub)
-	_slots_box = GridContainer.new()
-	(_slots_box as GridContainer).columns = 3
-	_slots_box.add_theme_constant_override("h_separation", 14)
-	_slots_box.add_theme_constant_override("v_separation", 12)
-	_slots_box.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	_slots_box.offset_bottom = -96
-	_slots_box.offset_top = -430
-	_slots_box.offset_left = -590
-	_slots_box.offset_right = 590
+	# slots 1-3 down the left edge, 4-6 down the right, leaving the two
+	# showcase fighters in the middle visible
+	_slots_box = Control.new()
+	_slots_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_slots_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(_slots_box)
+	for side in 2:
+		var col := UI.vbox(12)
+		col.alignment = BoxContainer.ALIGNMENT_CENTER
+		col.set_anchors_and_offsets_preset(Control.PRESET_LEFT_WIDE if side == 0 else Control.PRESET_RIGHT_WIDE)
+		col.offset_top = 16
+		col.offset_bottom = -92
+		if side == 0:
+			col.offset_left = 20
+			col.offset_right = 20 + SLOT_W
+		else:
+			col.offset_left = -20 - SLOT_W
+			col.offset_right = -20
+		_slots_box.add_child(col)
+		_cols.append(col)
 	_build_slots()
 	var bottom := UI.hbox(16)
 	bottom.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
@@ -91,20 +103,25 @@ func _ready() -> void:
 		_sync()
 
 func _build_slots() -> void:
-	for c in _slots_box.get_children():
-		c.queue_free()
+	for col in _cols:
+		for c in col.get_children():
+			c.queue_free()
 	for i in Game.SLOTS:
 		var info := Game.slot_info(i)
 		var p := UI.panel(Color(0.08, 0.05, 0.05, 0.85))
-		p.custom_minimum_size = Vector2(380, 160)
+		p.custom_minimum_size = Vector2(SLOT_W, 160)
 		var v := UI.vbox(6)
 		p.add_child(v)
 		if info.is_empty() and not Game.slot_open(i):
 			p.modulate = Color(0.7, 0.7, 0.7)
 			v.add_child(UI.label("Ô lưu %d — Đang khóa" % (i + 1), 22, Color(0.75, 0.7, 0.65)))
-			var lk := UI.label("Mở khi có nhân vật đạt cấp %d" % Game.SLOT_LEVEL[i], 18, Color(0.85, 0.75, 0.5))
-			lk.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			v.add_child(lk)
+			if int(Game.SLOT_LEVEL[i]) > 0:
+				var lk := UI.label("Mở khi có nhân vật đạt cấp %d" % Game.SLOT_LEVEL[i], 18, Color(0.85, 0.75, 0.5))
+				lk.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+				v.add_child(lk)
+			var lock := Padlock.new()
+			lock.size_flags_vertical = Control.SIZE_EXPAND_FILL
+			v.add_child(lock)
 		elif info.is_empty():
 			var l := UI.label("Ô lưu %d — Trống" % (i + 1), 22, Color(0.8, 0.75, 0.7))
 			v.add_child(l)
@@ -122,7 +139,7 @@ func _build_slots() -> void:
 			if Cloud.conflicts.has(i):
 				v.add_child(UI.label("Bản trên mây khác bản trong máy", 17, Color(1, 0.7, 0.45)))
 				v.add_child(UI.gold_button("Chọn bản lưu", func(): _resolve(i), 22))
-				_slots_box.add_child(p)
+				_cols[0 if i < 3 else 1].add_child(p)
 				continue
 			var h := UI.hbox(8)
 			v.add_child(h)
@@ -132,7 +149,7 @@ func _build_slots() -> void:
 			h.add_child(UI.button("Xóa", func(): confirm("Xóa nhân vật %s? Bản lưu trên mây cũng bị xóa." % info.get("name", ""), func():
 				Game.delete_slot(i)
 				_build_slots(), "Xóa"), 20))
-		_slots_box.add_child(p)
+		_cols[0 if i < 3 else 1].add_child(p)
 
 func _new(i: int) -> void:
 	Game.goto(CreateScreen.new(i))
@@ -220,3 +237,34 @@ func _resolve(i: int) -> void:
 			if is_inside_tree():
 				_build_slots(), 20))
 	v.add_child(UI.button("Để sau", dim.queue_free, 20))
+
+## Gold padlock drawn in the free space of a locked save slot.
+class Padlock extends Control:
+	func _init() -> void:
+		custom_minimum_size = Vector2(0, 56)
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var h: float = minf(size.y, 76.0)
+		var c := Vector2(size.x * 0.5, size.y * 0.5)
+		var bw := h * 0.62
+		var bh := h * 0.46
+		var body := Rect2(c.x - bw * 0.5, c.y - bh * 0.5 + h * 0.14, bw, bh)
+		var gold := Color(0.93, 0.76, 0.36)
+		var dark := Color(0.32, 0.2, 0.08)
+		# shackle
+		var r := bw * 0.3
+		var sc := Vector2(c.x, body.position.y)
+		draw_arc(sc, r, PI, TAU, 24, dark, h * 0.13, true)
+		draw_arc(sc, r, PI, TAU, 24, gold, h * 0.08, true)
+		# body
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = gold
+		sb.border_color = dark
+		sb.set_border_width_all(2)
+		sb.set_corner_radius_all(int(h * 0.08))
+		draw_style_box(sb, body)
+		# keyhole
+		var k := body.get_center()
+		draw_circle(k - Vector2(0, bh * 0.1), bh * 0.13, dark)
+		draw_rect(Rect2(k.x - bh * 0.05, k.y - bh * 0.1, bh * 0.1, bh * 0.3), dark)

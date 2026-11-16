@@ -173,14 +173,17 @@ func sect_unlocked(id: String) -> bool:
 			return true
 	return false
 
-## Slots 4-6 open once any character reaches SLOT_LEVEL[i]; a slot that already
-## holds a save is always open (never lock a player out of an old hero).
-const SLOT_LEVEL := [0, 0, 0, 20, 35, 50]
+## Slot 4 opens once any character reaches SLOT_LEVEL[i]; -1 = no level unlock
+## (reserved for a future IAP, which sets settings["slot_open_<i>"]). A slot that
+## already holds a save is always open (never lock a player out of an old hero).
+const SLOT_LEVEL := [0, 0, 0, 30, -1, -1]
 
 func slot_open(i: int) -> bool:
 	var need: int = SLOT_LEVEL[i]
-	if need <= 0 or settings.get("slot_open_%d" % i, false) or not slot_info(i).is_empty():
+	if need == 0 or settings.get("slot_open_%d" % i, false) or not slot_info(i).is_empty():
 		return true
+	if need < 0:
+		return false
 	for j in SLOTS:
 		if int(slot_info(j).get("level", 0)) >= need:
 			settings["slot_open_%d" % i] = true
