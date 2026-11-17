@@ -1,19 +1,21 @@
 extends Node
 ## Ads (autoload "Ads"): AdMob rewarded ads through the Poing Studios plugin.
-## Android only. Flow at start: UMP consent (EEA/UK) -> MobileAds.initialize ->
+## Android and iOS. Flow at start: UMP consent (EEA/UK) -> MobileAds.initialize ->
 ## preload one rewarded ad. Elsewhere (desktop tests) show_rewarded grants the
 ## reward straight away in debug builds so the reward flows can be exercised.
 ##
 ## Also an interstitial (on leaving a result screen for a menu, see
 ## maybe_interstitial) and an App Open ad (coming back after APP_OPEN_AWAY_S),
 ## both skipped for new heroes and kept apart by INTER_GAP_S.
-## (project.godot [admob] general/android/app_id holds the app id.)
+## (project.godot [admob] general/android/app_id and general/ios/app_id hold the app ids.)
 
 signal ready_changed
 
-const REWARDED_UNIT := "ca-app-pub-9078637596840810/7086713053"
-const INTER_UNIT := "ca-app-pub-9078637596840810/2854844066"
-const APP_OPEN_UNIT := "ca-app-pub-9078637596840810/5773631387"
+# Android: real units. iOS: Google TEST units until the iOS AdMob app exists
+# (swap in the real ones together with general/ios/app_id in project.godot).
+var REWARDED_UNIT := "ca-app-pub-3940256099942544/1712485313" if OS.get_name() == "iOS" else "ca-app-pub-9078637596840810/7086713053"
+var INTER_UNIT := "ca-app-pub-3940256099942544/4411468910" if OS.get_name() == "iOS" else "ca-app-pub-9078637596840810/2854844066"
+var APP_OPEN_UNIT := "ca-app-pub-3940256099942544/5575463023" if OS.get_name() == "iOS" else "ca-app-pub-9078637596840810/5773631387"
 const INTER_GAP_S := 240.0        # no interstitial within 4 min of any full-screen ad or the start
 const APP_OPEN_AWAY_S := 1800.0   # App Open only after 30 min away
 const NO_ADS_BELOW_LEVEL := 10    # new heroes see only the rewarded ads they ask for
@@ -27,7 +29,7 @@ var _paused_at := -1.0
 var _full_showing := false
 var _plain_cb := FullScreenContentCallback.new()
 
-var _android := OS.get_name() == "Android"
+var _ads_on := OS.get_name() in ["Android", "iOS"]   # mobile builds with the AdMob plugin
 var _started := false
 var _sdk_ready := false   # next-gen SDK: nothing may load before initialize completes
 var _ad: RewardedAd
@@ -41,7 +43,7 @@ var _rewarded := false
 var _on_close: Callable
 
 func _ready() -> void:
-	if not _android:
+	if not _ads_on:
 		return
 	_load_cb.on_ad_loaded = func(ad: RewardedAd) -> void:
 		_loading = false
@@ -72,7 +74,7 @@ func _now() -> float:
 
 # ------------------------------------------------------- interstitial / app open
 func _ads_allowed() -> bool:
-	return _android and _sdk_ready and not _full_showing \
+	return _ads_on and _sdk_ready and not _full_showing \
 		and int(Game.hero.get("level", 1)) >= NO_ADS_BELOW_LEVEL
 
 ## Called when a result screen is left for a menu. Shows an interstitial
@@ -93,7 +95,7 @@ func maybe_interstitial() -> void:
 	ad.show()
 
 func _notification(what: int) -> void:
-	if not _android:
+	if not _ads_on:
 		return
 	if what == NOTIFICATION_APPLICATION_PAUSED:
 		if not _full_showing:
@@ -159,14 +161,14 @@ func _process(delta: float) -> void:
 # ------------------------------------------------------------- public
 ## True when show_rewarded can play an ad right now.
 func is_ready() -> bool:
-	if not _android:
+	if not _ads_on:
 		return OS.is_debug_build()
 	return _ad != null
 
 ## Plays a rewarded ad. on_reward runs (once) only if the player watched it to
 ## the end; on_close always runs afterwards (ad closed, failed, or none).
 func show_rewarded(on_reward: Callable, on_close := Callable()) -> bool:
-	if not _android:
+	if not _ads_on:
 		if OS.is_debug_build():
 			on_reward.call()
 			if on_close.is_valid():
@@ -185,13 +187,13 @@ func show_rewarded(on_reward: Callable, on_close := Callable()) -> bool:
 	return true
 
 func privacy_options_required() -> bool:
-	if not _android:
+	if not _ads_on:
 		return false
 	return UserMessagingPlatform.consent_information.get_privacy_options_requirement_status() \
 		== ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED
 
 func show_privacy_options() -> void:
-	if _android:
+	if _ads_on:
 		UserMessagingPlatform.show_privacy_options_form(_ignore)
 
 # ------------------------------------------------------------- internals
