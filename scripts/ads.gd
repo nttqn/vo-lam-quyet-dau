@@ -11,11 +11,10 @@ extends Node
 
 signal ready_changed
 
-# Android: real units. iOS: Google TEST units until the iOS units are made
-# (the real iOS app id is already in project.godot general/ios/app_id).
-var REWARDED_UNIT := "ca-app-pub-3940256099942544/1712485313" if OS.get_name() == "iOS" else "ca-app-pub-9078637596840810/7086713053"
-var INTER_UNIT := "ca-app-pub-3940256099942544/4411468910" if OS.get_name() == "iOS" else "ca-app-pub-9078637596840810/2854844066"
-var APP_OPEN_UNIT := "ca-app-pub-3940256099942544/5575463023" if OS.get_name() == "iOS" else "ca-app-pub-9078637596840810/5773631387"
+# Ad units per platform (iOS app id: project.godot general/ios/app_id).
+var REWARDED_UNIT := "ca-app-pub-9078637596840810/6134617670" if OS.get_name() == "iOS" else "ca-app-pub-9078637596840810/7086713053"
+var INTER_UNIT := "ca-app-pub-9078637596840810/3700026026" if OS.get_name() == "iOS" else "ca-app-pub-9078637596840810/2854844066"
+var APP_OPEN_UNIT := "ca-app-pub-9078637596840810/4385200540" if OS.get_name() == "iOS" else "ca-app-pub-9078637596840810/5773631387"
 const INTER_GAP_S := 240.0        # no interstitial within 4 min of any full-screen ad or the start
 const APP_OPEN_AWAY_S := 1800.0   # App Open only after 30 min away
 const NO_ADS_BELOW_LEVEL := 10    # new heroes see only the rewarded ads they ask for
