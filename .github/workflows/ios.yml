@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 60
     env:
       GODOT_VERSION: "4.7.2"
-      APPSTORE_TEAM_ID: ${{ secrets.APPSTORE_TEAM_ID }}
+      APPSTORE_TEAM_ID: ${{ secrets.APPSTORE_TEAM_ID || 'WGZYDZH4KR' }}
     steps:
       - uses: actions/checkout@v4
 
