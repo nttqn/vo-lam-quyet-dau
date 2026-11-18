@@ -27,6 +27,9 @@ const SHEETS := {
 	"hat": ["res://assets_src/items/hat.png", "res://assets/ui/items/hat_%d.png", 7, [4, 3], 1],
 	"boots": ["res://assets_src/items/boots.png", "res://assets/ui/items/boots_%d.png", 7, [4, 3], 1],
 	"jade": ["res://assets_src/items/jade.png", "res://assets/ui/items/jade_%d.png", 7, [4, 3], 1],
+	# Bảo Khố (IAP): in-game 256 icons, and 512 Play Console product images on a dark lacquer square
+	"bao_kho": ["res://assets_src/shop/bao_kho.png", ["shop/ngoc_60", "shop/ngoc_330", "shop/ngoc_700", "shop/ngoc_1500", "shop/goi_tan_thu", "shop/bo_quang_cao", "shop/mo_o_nhan_vat"], 7, [4, 3], 0],
+	"bao_kho_store": ["res://assets_src/shop/bao_kho.png", ["res://store/iap/ngoc_60.png", "res://store/iap/ngoc_330.png", "res://store/iap/ngoc_700.png", "res://store/iap/ngoc_1500.png", "res://store/iap/goi_tan_thu.png", "res://store/iap/bo_quang_cao.png", "res://store/iap/mo_o_nhan_vat.png"], 7, [4, 3], 0, 512, true],
 }
 const SIZE := 256
 
@@ -44,15 +47,15 @@ func _init() -> void:
 		if pat is Array:
 			var names: Array = pat
 			# bare names are menu icons; "dir/name" goes to assets/ui/dir/
-			pat = names.map(func(n): return ("res://assets/ui/%s.png" if "/" in n else "res://assets/ui/menu/%s.png") % n)
+			pat = names.map(func(n): return n if n.begins_with("res://") else (("res://assets/ui/%s.png" if "/" in n else "res://assets/ui/menu/%s.png") % n))
 		var first_out: String = pat[0] if pat is Array else String(pat)
 		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(first_out.get_base_dir()))
 		var img := Image.load_from_file(p)
 		img.convert(Image.FORMAT_RGBA8)
-		print(s, ": ", _cut(img, pat, int(job[2]), job[3], int(job[4])))
+		print(s, ": ", _cut(img, pat, int(job[2]), job[3], int(job[4]), int(job[5]) if job.size() > 5 else SIZE, job.size() > 6 and job[6]))
 	quit()
 
-func _cut(img: Image, out_pat: Variant, N: int, rows: Array, first: int) -> String:
+func _cut(img: Image, out_pat: Variant, N: int, rows: Array, first: int, out_size := SIZE, backed := false) -> String:
 	var w := img.get_width()
 	var h := img.get_height()
 	# A painted checkerboard / white instead of real transparency: clear the
@@ -155,8 +158,27 @@ func _cut(img: Image, out_pat: Variant, N: int, rows: Array, first: int) -> Stri
 		var sq := Image.create(side, side, false, Image.FORMAT_RGBA8)
 		sq.fill(Color(0, 0, 0, 0))
 		sq.blit_rect(part, Rect2i(Vector2i.ZERO, r.size), Vector2i((side - r.size.x) / 2, (side - r.size.y) / 2))
-		sq.resize(SIZE, SIZE, Image.INTERPOLATE_LANCZOS)
+		if backed:
+			sq = _backed(sq, out_size)
+		else:
+			sq.resize(out_size, out_size, Image.INTERPOLATE_LANCZOS)
 		var out: String = out_pat[i] if out_pat is Array else String(out_pat) % (i + first)
 		sq.save_png(ProjectSettings.globalize_path(out))
 		sizes.append(side)
 	return "ok, icon sizes %s" % [sizes]
+
+## Store image: the icon at 84% on an opaque dark-red lacquer square with a soft
+## gold glow behind it (Play shows product images on any background).
+func _backed(icon: Image, n: int) -> Image:
+	var out := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	var c := Vector2(n, n) * 0.5
+	for y in n:
+		for x in n:
+			var d := (Vector2(x, y) - c).length() / (n * 0.5)
+			var base := Color(0.32, 0.07, 0.06).lerp(Color(0.1, 0.03, 0.03), clampf(d, 0.0, 1.0))
+			var glow := clampf(1.0 - d / 0.75, 0.0, 1.0)
+			out.set_pixel(x, y, base.lerp(Color(0.95, 0.72, 0.3), glow * glow * 0.35))
+	var m := int(n * 0.84)
+	icon.resize(m, m, Image.INTERPOLATE_LANCZOS)
+	out.blend_rect(icon, Rect2i(0, 0, m, m), Vector2i((n - m) / 2, (n - m) / 2))
+	return out

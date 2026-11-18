@@ -93,6 +93,10 @@ func _offer(id: String, title: String, sub: String, body: String, col: Color, ow
 	var p := UI.panel(Color(col.darkened(0.7), 0.95), col.lightened(0.15))
 	var row := UI.hbox(12)
 	p.add_child(row)
+	var art := _art(id, 80)
+	if art:
+		art.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(art)
 	var v := UI.vbox(2)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(v)
@@ -114,10 +118,14 @@ func _pack(id: String, size_k: int) -> Control:
 	p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var row := UI.hbox(10)
 	p.add_child(row)
-	var gem := JadePile.new()
-	gem.n = size_k
-	gem.custom_minimum_size = Vector2(84, 84)
-	row.add_child(gem)
+	var art := _art(id, 92)
+	if art:
+		row.add_child(art)
+	else:
+		var gem := JadePile.new()
+		gem.n = size_k
+		gem.custom_minimum_size = Vector2(84, 84)
+		row.add_child(gem)
 	var v := UI.vbox(2)
 	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(v)
@@ -137,6 +145,19 @@ func _pack(id: String, size_k: int) -> Control:
 	b.custom_minimum_size.x = 130
 	v.add_child(b)
 	return p
+
+## Painted product icon (assets/ui/shop/<id>.png, from assets_src/shop/PROMPT_BAO_KHO.md), or null.
+func _art(id: String, side: float) -> Control:
+	var path := "res://assets/ui/shop/%s.png" % id
+	if not ResourceLoader.exists(path):
+		return null
+	var r := TextureRect.new()
+	r.texture = load(path)
+	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	r.custom_minimum_size = Vector2(side, side)
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return r
 
 func back() -> void:
 	Game.goto(HubScreen.new())
