@@ -22,6 +22,7 @@ func _ready() -> void:
 	_body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(_body)
 	Iap.changed.connect(_build)
+	Iap.refresh_prices()
 	_build()
 
 func _build() -> void:
@@ -78,6 +79,15 @@ func _build() -> void:
 		var cl := UI.label(closed, 18, Color(1, 0.75, 0.55), UI.bold)
 		cl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		right.add_child(cl)
+	if not Iap.missing.is_empty() and closed == "":
+		var parts := []
+		for id in Iap.missing:
+			if not Iap.prices.has(id):
+				parts.append("%s (%s)" % [id, Iap.missing[id]])
+		if not parts.is_empty():
+			var ml := UI.label("Chưa tải được giá: " + ", ".join(parts), 14, Color(1, 0.7, 0.55))
+			ml.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			right.add_child(ml)
 	var fine := UI.label("Thanh toán qua Google Play. Ngọc dùng mua Y Phục, Bí Kíp, Hộ Phù, Tẩy Luyện Thạch và trang bị quý.", 15, Color(0.72, 0.7, 0.64))
 	fine.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	right.add_child(fine)

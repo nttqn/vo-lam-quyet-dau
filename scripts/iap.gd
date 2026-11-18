@@ -158,14 +158,42 @@ func _on_connected() -> void:
 	_bc.query_purchases(BillingClient.ProductType.INAPP)
 	changed.emit()
 
+## Why Play gave no price for an id (shown small in the shop): "mã N" from
+## Billing's unfetched list (3 not found, 4 no eligible offer…), "no-offer"
+## when the details came without a purchase option, "query N" on a failed query.
+var missing := {}
+
+## Ask Play again for whatever has no price yet (opening the shop).
+func refresh_prices() -> void:
+	if _mode != "play" or not _ready_store:
+		return
+	for id in all_ids():
+		if not prices.has(id):
+			_bc.query_product_details(all_ids(), BillingClient.ProductType.INAPP)
+			return
+
 func _on_details(r: Dictionary) -> void:
-	if int(r.get("response_code", -1)) != 0:
+	var code := int(r.get("response_code", -1))
+	if code != 0:
 		print("Iap: details ", r)
+		for id in all_ids():
+			if not prices.has(id):
+				missing[id] = "query %d" % code
+		changed.emit()
 		return
 	for d in r.get("product_details", []):
+		var id := str(d.product_id)
 		var offers = (d as Dictionary).get("one_time_purchase_offer_details_list")
 		if offers is Array and not (offers as Array).is_empty():
-			prices[str(d.product_id)] = str((offers[0] as Dictionary).get("formatted_price", ""))
+			prices[id] = str((offers[0] as Dictionary).get("formatted_price", ""))
+			missing.erase(id)
+		else:
+			missing[id] = "no-offer"
+	for u in r.get("unfetched_products", []):
+		if u is Dictionary:
+			missing[str(u.get("product_id", "?"))] = "mã %d" % int(u.get("status_code", -1))
+	if not missing.is_empty():
+		print("Iap: no price for ", missing)
 	changed.emit()
 
 func _on_owned(r: Dictionary) -> void:
