@@ -19,7 +19,8 @@ do {
   const r = await (await fetch(url, { headers: { Authorization: `Bearer ${auth.idToken}` } })).json();
   if (r.error) { console.error(r.error); process.exit(1); }
   for (const d of r.documents ?? []) {
-    rows.push([d.name.split("/").pop(), Number(d.fields?.n?.integerValue ?? 0)]);
+    const id = d.name.split("/").pop();
+    if (!id.startsWith("zz_")) rows.push([id, Number(d.fields?.n?.integerValue ?? 0)]);   // zz_ = rule tests
   }
   page = r.nextPageToken ?? "";
 } while (page);

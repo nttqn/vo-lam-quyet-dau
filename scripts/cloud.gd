@@ -166,14 +166,17 @@ func google_available() -> bool:
 	return enabled() and OS.get_name() == "Android" and Engine.has_singleton(_GOOGLE)
 
 ## The web client id of the Firebase Google provider: from cloud_config.json,
-## else read from the project's public auth config ("" while Google is off).
+## else taken from the client_id of the Google sign-in URL Firebase builds
+## (accounts:createAuthUri; fails while Google is off → "").
 func _google_client() -> String:
 	if google_client_id != "":
 		return google_client_id
-	var r := await _req(HTTPClient.METHOD_GET, "https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?key=" + api_key)
-	for idp in (r.body as Dictionary).get("idpConfig", []):
-		if str(idp.get("provider", "")) == "GOOGLE" and idp.get("enabled", false):
-			google_client_id = str(idp.get("clientId", ""))
+	var r := await _req(HTTPClient.METHOD_POST, _auth_url("accounts:createAuthUri"),
+		JSON.stringify({"continueUri": "http://localhost", "providerId": "google.com"}))
+	var uri := str((r.body as Dictionary).get("authUri", ""))
+	var at := uri.find("client_id=")
+	if at >= 0:
+		google_client_id = uri.substr(at + 10).get_slice("&", 0).uri_decode()
 	return google_client_id
 
 ## Shows Google's account picker and signs in. False + last_error on failure
