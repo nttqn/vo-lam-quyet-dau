@@ -26,7 +26,7 @@ signal message(text: String, ok: bool)
 
 ## Play Console → this app → Kiếm tiền → Thiết lập kiếm tiền → Cấp phép:
 ## the base64 RSA public key. Public by design. Empty = no signature check.
-const LICENSE_KEY := ""
+const LICENSE_KEY := "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAm1Vajqb0uHONoykDQRhSlLIXU5/+SA5XMiOaG5CjgGyno/IslsN+TIFLOqGHfafMT2RvyUk+tlD09OycrEKS/pfaQCi6JKPpnq063qx4o//cdZ2/BwaUBS/ch7l5Xv1TM22vuWjQaOa/5HhGw0zto7MM/SNtL/oStXWuUBjEUJsJMu9NFeGoBIhfRnvTDQP6xJTHt03NNMm+TROW0oBKiDybZNlJh/xOSSghVG/1Ga37lOKAsjWxRt3xYdPqGdyfglo/ZakFFLj9YeS7eBQI3LE3FnHjJYQWXa1Mws+YiZEDv/sl2ccDrVwg6cj63zEURTgfuPNeiqLgs7PHqN3h3wIDAQAB"
 
 const PACKS := {
 	"ngoc_60": {"name": "Túi Ngọc", "jade": 60, "bonus": 0},

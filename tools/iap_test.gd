@@ -51,6 +51,16 @@ func _sig() -> void:
 			ob += line.strip_edges()
 	_ok(Iap.reject_reason(data, sig, ["ngoc_60"], ob) == "sig", "signature by another key refused")
 	_ok(Iap.reject_reason(data, "", ["ngoc_60"], "") == "", "no licence key: nothing refused")
+	var pk := Iap.LICENSE_KEY
+	var pem := "-----BEGIN PUBLIC KEY-----
+"
+	for i in range(0, pk.length(), 64):
+		pem += pk.substr(i, 64) + "
+"
+	var ck := CryptoKey.new()
+	_ok(pk != "" and ck.load_from_string(pem + "-----END PUBLIC KEY-----
+", true) == OK, "Play licence key loads as an RSA public key")
+	_ok(Iap.reject_reason(data, sig, ["ngoc_60"]) == "sig", "locally signed purchase refused by the real key")
 
 func _buy() -> void:
 	_ok(Iap.available(), "desktop debug: fake store open")
