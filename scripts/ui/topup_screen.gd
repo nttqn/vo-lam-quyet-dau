@@ -48,7 +48,7 @@ func _build() -> void:
 		Color(0.55, 0.2, 0.2), Iap.no_ads()))
 	left.add_child(_offer(Iap.SLOTS, "Mở Ô Nhân Vật 5–6", "Mua một lần, mở cho mọi nhân vật",
 		"Thêm hai ô lưu để luyện thêm môn phái khác.",
-		Color(0.25, 0.4, 0.62), Iap.slots_owned()))
+		Color(0.25, 0.4, 0.62), Iap.slots_owned() or _slots_all_open()))
 	var sp := Control.new()
 	sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	left.add_child(sp)
@@ -84,7 +84,8 @@ func _build() -> void:
 
 func _buy_button(id: String, owned: bool) -> Button:
 	var pr := Iap.price(id)
-	var b := UI.gold_button("Đã sở hữu" if owned else (pr if pr != "" else "—"), func(): Iap.buy(id), 20, 150)
+	var done_txt := "Đã mở" if id == Iap.SLOTS and not Iap.slots_owned() else "Đã sở hữu"
+	var b := UI.gold_button(done_txt if owned else (pr if pr != "" else "—"), func(): Iap.buy(id), 20, 150)
 	b.custom_minimum_size.y = 50
 	b.disabled = owned or not Iap.available() or pr == ""
 	return b
@@ -158,6 +159,13 @@ func _art(id: String, side: float) -> Control:
 	r.custom_minimum_size = Vector2(side, side)
 	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return r
+
+## Ô 5–6 already open on this phone (heroes saved there): nothing to sell.
+static func _slots_all_open() -> bool:
+	for i in Iap.SLOT_IDS:
+		if not Game.slot_open(i):
+			return false
+	return true
 
 func back() -> void:
 	Game.goto(HubScreen.new())
