@@ -11,7 +11,6 @@ config_version=5
 [admob]
 
 general/android/app_id="ca-app-pub-9078637596840810~3339039730"
-general/ios/enabled=true
 general/ios/app_id="ca-app-pub-9078637596840810~7011363884"
 
 [application]
@@ -27,6 +26,7 @@ config/icon="res://assets/icon/icon.png"
 Game="*res://scripts/game.gd"
 Cloud="*res://scripts/cloud.gd"
 Ads="*res://scripts/ads.gd"
+Iap="*res://scripts/iap.gd"
 
 [display]
 
@@ -38,7 +38,7 @@ window/handheld/orientation=4
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/admob/plugin.cfg")
+enabled=PackedStringArray("res://addons/admob/plugin.cfg", "res://addons/GodotGooglePlayBilling/plugin.cfg", "res://addons/VLGoogleAuth/plugin.cfg")
 
 [input_devices]
 

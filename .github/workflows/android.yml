@@ -61,6 +61,19 @@ jobs:
           unzip -q -o admob-android.zip "ads/*" -d addons/admob/android/bin
           ls -R addons/admob/android/bin | head
 
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.14.3"
+
+      - name: Google sign-in plugin (VLGoogleAuth AAR)
+        run: |
+          set -e
+          cd android_plugins/google_auth
+          gradle --no-daemon assembleRelease
+          mkdir -p ../../addons/VLGoogleAuth/bin
+          cp build/outputs/aar/*-release.aar ../../addons/VLGoogleAuth/bin/VLGoogleAuth-release.aar
+          ls -la ../../addons/VLGoogleAuth/bin
+
       - name: Import project
         run: |
           ./godot --headless --path . --import || true

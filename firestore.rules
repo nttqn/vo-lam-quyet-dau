@@ -64,6 +64,15 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['at']) && request.resource.data.at == request.time
         && request.time > resource.data.at + duration.value(20, 's');
     }
+    // new-player funnel counters: funnel/{step} {n}; anyone signed in may only
+    // add exactly 1 (Funnel.gd, read with tools/funnel_report.mjs)
+    match /funnel/{id} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && id.matches('[a-z0-9_]{2,40}')
+        && request.resource.data.keys().hasOnly(['n']) && request.resource.data.n == 1;
+      allow update: if request.auth != null
+        && request.resource.data.keys().hasOnly(['n']) && request.resource.data.n == resource.data.n + 1;
+    }
     // reports: chatreport/{msgId}_{uid}, write-only, reviewed in the console
     match /chatreport/{id} {
       allow create: if request.auth != null

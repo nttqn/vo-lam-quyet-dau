@@ -73,7 +73,7 @@ func _now() -> float:
 
 # ------------------------------------------------------- interstitial / app open
 func _ads_allowed() -> bool:
-	return _ads_on and _sdk_ready and not _full_showing \
+	return _ads_on and not Iap.no_ads() and _sdk_ready and not _full_showing \
 		and int(Game.hero.get("level", 1)) >= NO_ADS_BELOW_LEVEL
 
 ## Called when a result screen is left for a menu. Shows an interstitial
@@ -160,6 +160,8 @@ func _process(delta: float) -> void:
 # ------------------------------------------------------------- public
 ## True when show_rewarded can play an ad right now.
 func is_ready() -> bool:
+	if Iap.no_ads():
+		return true
 	if not _ads_on:
 		return OS.is_debug_build()
 	return _ad != null
@@ -167,6 +169,12 @@ func is_ready() -> bool:
 ## Plays a rewarded ad. on_reward runs (once) only if the player watched it to
 ## the end; on_close always runs afterwards (ad closed, failed, or none).
 func show_rewarded(on_reward: Callable, on_close := Callable()) -> bool:
+	# Bỏ Quảng Cáo: the reward without the ad
+	if Iap.no_ads():
+		on_reward.call()
+		if on_close.is_valid():
+			on_close.call()
+		return true
 	if not _ads_on:
 		if OS.is_debug_build():
 			on_reward.call()

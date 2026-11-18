@@ -85,6 +85,7 @@ static func track_max(h: Dictionary, id: String, v: int) -> void:
 
 ## Everything a finished fight counts toward. mode: stage / arena / tower / duel.
 static func on_fight(h: Dictionary, mode: String, res: Dictionary) -> void:
+	Achieve.on_fight(h, mode, res)
 	if mode != "train":
 		track(h, "fight")
 	track(h, "skill", int(res.get("skills", 0)))

@@ -212,6 +212,7 @@ func save() -> void:
 	_write_json(SAVE_PATH % slot, hero)
 	Cloud.queue_upload(slot)
 	Ranks.publish(hero, slot)
+	Funnel.track(hero)
 
 func delete_slot(i: int) -> void:
 	park_slot(i)

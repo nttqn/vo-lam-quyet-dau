@@ -32,6 +32,8 @@ func _ready() -> void:
 	v.add_child(_gfx_row())
 	var cr := UI.label("Võ Lâm Quyết Đấu  ·  phiên bản %s\nÂm thanh trận đấu: thư viện CC0 OpenGameArt (artisticdude, StarNinjas,\nrubberduck, Kenney, HaelDB). Giọng nữ: Marti Topmade (topmademarti).\nPhông chữ: Be Vietnam Pro, Playfair Display (SIL OFL)." % ProjectSettings.get_setting("application/config/version", "1.0.0"), 16, Color(0.75, 0.72, 0.66))
 	v.add_child(cr)
+	if OS.get_name() == "Android":
+		v.add_child(UI.button("Khôi phục giao dịch", Iap.restore, 20))
 	if Ads.privacy_options_required():
 		v.add_child(UI.button("Quyền riêng tư quảng cáo", Ads.show_privacy_options, 20))
 	v.add_child(UI.gold_button("Đóng", queue_free, 24))

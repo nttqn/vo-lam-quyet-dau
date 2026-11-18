@@ -31,8 +31,9 @@ func _build() -> void:
 		ch.queue_free()
 	_v.add_child(UI.heading("Tài Khoản", 46))
 	if Cloud.email != "":
-		_v.add_child(UI.label("Đã liên kết: " + Cloud.email, 22, UI.GOLD, UI.bold))
-		var t := UI.label("Nhân vật được tự động lưu lên mây. Trên máy khác, chọn \"Đăng nhập\" bằng email này để chơi tiếp.", 19)
+		var google := Cloud.provider == "google"
+		_v.add_child(UI.label(("Đã liên kết Google: " if google else "Đã liên kết: ") + Cloud.email, 22, UI.GOLD, UI.bold))
+		var t := UI.label("Nhân vật được tự động lưu lên mây. Trên máy khác, %s để chơi tiếp." % ("chọn \"Đăng nhập bằng Google\" với tài khoản này" if google else "chọn \"Đăng nhập\" bằng email này"), 19)
 		t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_v.add_child(t)
 		_msg = UI.label("", 19, Color(1, 0.75, 0.6))
@@ -50,6 +51,11 @@ func _build() -> void:
 	var t := UI.label("Bạn đang chơi với tư cách Khách: nhân vật vẫn được lưu lên mây nhưng chỉ gắn với máy này. Liên kết email để giữ nhân vật khi đổi máy hoặc cài lại game.", 19)
 	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_v.add_child(t)
+	if Cloud.google_available():
+		var g := UI.gold_button("Đăng nhập bằng Google", _google, 22)
+		g.custom_minimum_size.y = 56
+		_v.add_child(g)
+		_v.add_child(UI.label("hoặc dùng email:", 17, Color(0.75, 0.72, 0.66)))
 	_email = _field("Email", false)
 	_pass = _field("Mật khẩu (ít nhất 6 ký tự)", true)
 	_msg = UI.label("", 19, Color(1, 0.75, 0.6))
@@ -103,6 +109,19 @@ func _link() -> void:
 		Game.sfx("coin")
 		_build()
 		_say("Đã liên kết. Nhân vật giờ gắn với email này.", Color(0.6, 1, 0.6))
+	else:
+		_say(Cloud.last_error)
+
+func _google() -> void:
+	_say("Đang mở tài khoản Google…", UI.PAPER)
+	var was := Cloud.uid
+	if await Cloud.sign_in_google():
+		Game.sfx("coin")
+		_build()
+		if Cloud.uid == was:
+			_say("Đã liên kết Google. Nhân vật giờ gắn với tài khoản này.", Color(0.6, 1, 0.6))
+		else:
+			_say("Đã đăng nhập tài khoản Google. Nhân vật sẽ được đồng bộ ở màn hình chính.", Color(0.6, 1, 0.6))
 	else:
 		_say(Cloud.last_error)
 

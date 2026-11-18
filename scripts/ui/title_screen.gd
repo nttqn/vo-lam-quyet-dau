@@ -76,6 +76,8 @@ func _ready() -> void:
 		_slots_box.add_child(col)
 		_cols.append(col)
 	_build_slots()
+	Iap.changed.connect(_build_slots)
+	Funnel.device("f_install")
 	var bottom := UI.hbox(16)
 	bottom.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
 	bottom.offset_top = -86
@@ -122,6 +124,11 @@ func _build_slots() -> void:
 			var lock := Padlock.new()
 			lock.size_flags_vertical = Control.SIZE_EXPAND_FILL
 			v.add_child(lock)
+			if i in Iap.SLOT_IDS and int(Game.SLOT_LEVEL[i]) < 0 and Iap.available():
+				var pr := Iap.price(Iap.SLOTS)
+				var ub := UI.gold_button("Mở ô 5–6" + ("  ·  " + pr if pr != "" else ""), func(): Iap.buy(Iap.SLOTS), 18)
+				ub.disabled = pr == ""
+				v.add_child(ub)
 		elif info.is_empty():
 			var l := UI.label("Ô lưu %d — Trống" % (i + 1), 22, Color(0.8, 0.75, 0.7))
 			v.add_child(l)

@@ -52,6 +52,9 @@ func _ready() -> void:
 		if a == "--soak":
 			add_child(load("res://tools/soak.gd").new())
 			return
+		if a == "--iaptest":
+			add_child(load("res://tools/iap_test.gd").new())
+			return
 		if a == "--chattest":
 			add_child(load("res://tools/chat_test.gd").new())
 			return
@@ -247,6 +250,13 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			Daily.track(Game.hero, "fight", 3)
 			Game.goto(DailyScreen.new())
 		"gear": Game.goto(GearScreen.new(false))
+		"topup": Game.goto(TopupScreen.new())
+		"achieve":
+			Game.hero.wins = 64
+			Game.hero.arena_best = 7
+			Game.hero.ach = {"wins": 1, "level": 1}
+			Game.hero.ach_c = {"perfect": 9, "ults": 12, "combo": 11, "duel_wins": 2}
+			Game.goto(AchieveScreen.new())
 		"dungeon", "forge", "forge2", "forge3":
 			# demo forge state: materials, a +8 weapon with luck, a Bảo hat
 			Game.hero.mats = {"iron": 46, "star": 5, "wash": 3, "charm": 2}

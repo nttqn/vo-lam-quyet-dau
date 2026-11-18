@@ -1,0 +1,26 @@
+// VLGoogleAuth: Godot v2 Android plugin, Google sign-in via Credential Manager.
+// Built in CI (android.yml): gradle assembleRelease -> addons/VLGoogleAuth/bin.
+// The runtime libraries are added to the game by addons/VLGoogleAuth/export_plugin.gd,
+// so everything here is compileOnly.
+plugins {
+    id 'com.android.library' version '8.7.3'
+}
+
+android {
+    namespace 'com.trungsmail.vlauth'
+    compileSdk 35
+    defaultConfig {
+        minSdk 24
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    compileOnly 'org.godotengine:godot:4.7.2.stable'
+    compileOnly 'androidx.credentials:credentials:1.5.0'
+    compileOnly 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
+    compileOnly 'androidx.core:core:1.13.1'
+}

@@ -12,7 +12,12 @@ func _ready() -> void:
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(dim)
-	top_bar("Nhiệm Vụ", back)
+	var bar := top_bar("Nhiệm Vụ", back)
+	var na := Achieve.pending(Game.hero)
+	var ab := UI.gold_button("Thành Tựu" + (" (%d)" % na if na > 0 else ""), func(): Game.goto(AchieveScreen.new()), 20, 170)
+	ab.custom_minimum_size.y = 52
+	bar.add_child(ab)
+	bar.move_child(ab, 2)
 	var body := UI.hbox(16)
 	body.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	body.offset_left = 24

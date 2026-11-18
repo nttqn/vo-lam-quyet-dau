@@ -17,6 +17,7 @@ func _ready() -> void:
 	_header(h, s)
 	_right(h)
 	_dock(h, s)
+	Iap.deliver_queue.call_deferred()
 
 # ------------------------------------------------------------------ header
 func _header(h: Dictionary, s: Dictionary) -> void:
@@ -42,7 +43,17 @@ func _header(h: Dictionary, s: Dictionary) -> void:
 	head.add_child(bar)
 	head.add_child(UI.label("Kinh nghiệm %d / %d" % [int(h.exp), need], 16, Color(0.8, 0.8, 0.75)))
 	head.add_child(UI.label("Lực chiến %s" % UI.fmt(Hero.power(h)), 26, UI.GOLD, UI.title))
-	head.add_child(UI.label("Vàng %s   ·   Ngọc %d" % [UI.fmt(h.gold), int(h.jade)], 20, UI.GOLD, UI.bold))
+	var wallet := UI.hbox(12)
+	head.add_child(wallet)
+	var wl := UI.label("Vàng %s   ·   Ngọc %d" % [UI.fmt(h.gold), int(h.jade)], 20, UI.GOLD, UI.bold)
+	wl.name = "Wallet"
+	wallet.add_child(wl)
+	# iOS has no store code yet: no shop there (and no store names in iOS UI)
+	if OS.get_name() != "iOS":
+		var shop := UI.gold_button("+ Bảo Khố", func(): Game.goto(TopupScreen.new()), 17, 0)
+		shop.custom_minimum_size = Vector2(0, 38)
+		wallet.add_child(shop)
+	Iap.changed.connect(_wallet_refresh)
 
 # ------------------------------------------------------------- right column
 func _right(h: Dictionary) -> void:
@@ -229,7 +240,7 @@ func _dock(h: Dictionary, _s: Dictionary) -> void:
 	row.add_theme_constant_override("separation", 4)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bar.add_child(row)
-	var dq := Daily.pending(h)
+	var dq := Daily.pending(h) + Achieve.pending(h)
 	var items := [
 		["Nhân Vật", "hero", int(h.free_pts), Color(0.75, 0.3, 0.2), func(): Game.goto(CharacterScreen.new())],
 		["Võ Công", "skill", int(h.skill_pts), Color(0.2, 0.45, 0.75), func(): Game.goto(SkillScreen.new())],
@@ -292,6 +303,12 @@ func _dock_btn(title: String, ic: String, badge: int, col: Color, cb: Callable) 
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(l)
 	return b
+
+## Ngọc from a purchase that finished while the hub is open.
+func _wallet_refresh() -> void:
+	var w := ui.find_child("Wallet", true, false) as Label
+	if w:
+		w.text = "Vàng %s   ·   Ngọc %d" % [UI.fmt(Game.hero.gold), int(Game.hero.jade)]
 
 func back() -> void:
 	Game.save()

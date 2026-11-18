@@ -20,6 +20,8 @@ var api_key := ""
 var project_id := ""
 var uid := ""
 var email := ""            # "" = anonymous (guest)
+var provider := ""         # "google" when signed in with Google, else "" (email / guest)
+var google_client_id := "" # Firebase Google provider web client id (config, or read from the server)
 var busy := false
 var last_error := ""
 var last_raw := ""         # raw server error text (debug)
@@ -37,6 +39,7 @@ func _ready() -> void:
 	if cfg is Dictionary:
 		api_key = str(cfg.get("api_key", ""))
 		project_id = str(cfg.get("project_id", ""))
+		google_client_id = str(cfg.get("google_client_id", ""))
 	# test hooks (--flowtest, --fighttest, …) must never touch real cloud saves
 	var args := OS.get_cmdline_user_args()
 	if not args.is_empty() and not "--cloudtest" in args and not "--chattest" in args:
@@ -45,6 +48,7 @@ func _ready() -> void:
 	if st is Dictionary:
 		uid = str(st.get("uid", ""))
 		email = str(st.get("email", ""))
+		provider = str(st.get("provider", ""))
 		_refresh = str(st.get("refresh", ""))
 		var u = st.get("ut", {})
 		_ut = u if u is Dictionary else {}
@@ -141,9 +145,100 @@ func sign_in_email(p_email: String, password: String) -> bool:
 		return false
 	_switch_user(r.body)
 	email = p_email
+	provider = ""
 	_save_state()
 	changed.emit()
 	return true
+
+# ------------------------------------------------------------- Google sign-in
+## Android only: the VLGoogleAuth plugin (android_plugins/google_auth, built in
+## CI) shows the Google account sheet and returns a Google ID token. Firebase's
+## accounts:signInWithIdp then turns it into this game's account. A guest is
+## linked (same uid, saves stay). If that Google account already belongs to
+## another player account, we switch to it, like signing in by email.
+## Needs: Firebase Authentication → Google enabled, and the app's SHA-1 keys
+## (upload + Play app signing) on the Android app in Firebase project settings.
+const _GOOGLE := "VLGoogleAuth"
+signal _google_done(token: String, err: String)
+var _google_hooked := false
+
+func google_available() -> bool:
+	return enabled() and OS.get_name() == "Android" and Engine.has_singleton(_GOOGLE)
+
+## The web client id of the Firebase Google provider: from cloud_config.json,
+## else read from the project's public auth config ("" while Google is off).
+func _google_client() -> String:
+	if google_client_id != "":
+		return google_client_id
+	var r := await _req(HTTPClient.METHOD_GET, "https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?key=" + api_key)
+	for idp in (r.body as Dictionary).get("idpConfig", []):
+		if str(idp.get("provider", "")) == "GOOGLE" and idp.get("enabled", false):
+			google_client_id = str(idp.get("clientId", ""))
+	return google_client_id
+
+## Shows Google's account picker and signs in. False + last_error on failure
+## (last_error is "" when the player just closed the sheet).
+func sign_in_google() -> bool:
+	last_error = ""
+	if not google_available():
+		last_error = "Đăng nhập Google chưa có trên máy này"
+		return false
+	var plug := Engine.get_singleton(_GOOGLE)
+	if not _google_hooked:
+		_google_hooked = true
+		plug.connect("google_token", func(t: String, _id: String): _google_done.emit(t, ""))
+		plug.connect("google_error", func(kind: String, msg: String): _google_done.emit("", kind + "|" + msg))
+	var cid := await _google_client()
+	if cid == "":
+		last_error = "Máy chủ chưa bật đăng nhập Google"
+		return false
+	plug.signIn(cid)
+	var res: Array = await _google_done
+	if str(res[0]) == "":
+		var kind := str(res[1]).get_slice("|", 0)
+		last_raw = str(res[1])
+		if kind == "cancel":
+			return false
+		if kind.contains("NO_CREDENTIAL"):
+			last_error = "Không tìm thấy tài khoản Google trên máy này"
+		else:
+			last_error = "Đăng nhập Google không thành công (%s)" % kind.get_slice(".", kind.get_slice_count(".") - 1)
+		return false
+	return await _google_firebase(str(res[0]))
+
+func _google_firebase(google_token: String) -> bool:
+	var body := {"postBody": "id_token=%s&providerId=google.com" % google_token,
+		"requestUri": "http://localhost", "returnSecureToken": true, "returnIdpCredential": true}
+	var linking: bool = signed_in() and email == "" and await _ensure_token()
+	if linking:
+		body["idToken"] = _id_token
+	var r := await _req(HTTPClient.METHOD_POST, _auth_url("accounts:signInWithIdp"), JSON.stringify(body))
+	var b: Dictionary = r.body
+	var taken: bool = str(b.get("errorMessage", "")) == "FEDERATED_USER_ID_ALREADY_LINKED" \
+		or (r.code == 400 and _auth_code(b) == "FEDERATED_USER_ID_ALREADY_LINKED")
+	if linking and taken:
+		# this Google account already has its own player account: switch to it
+		body.erase("idToken")
+		r = await _req(HTTPClient.METHOD_POST, _auth_url("accounts:signInWithIdp"), JSON.stringify(body))
+		b = r.body
+		linking = false
+	if r.code != 200 or str(b.get("idToken", "")) == "":
+		last_error = _auth_error(b) if r.code != 0 else "Không kết nối được máy chủ"
+		return false
+	if linking:
+		_take_tokens(b)
+	else:
+		_switch_user(b)
+	email = str(b.get("email", "Google"))
+	provider = "google"
+	_save_state()
+	changed.emit()
+	return true
+
+static func _auth_code(body) -> String:
+	if body is Dictionary:
+		return str((body as Dictionary).get("error", {}).get("message", "")).get_slice(" ", 0)
+	return ""
 
 func reset_password(p_email: String) -> bool:
 	var r := await _req(HTTPClient.METHOD_POST, _auth_url("accounts:sendOobCode"),
@@ -178,6 +273,7 @@ func delete_account() -> bool:
 func sign_out() -> void:
 	uid = ""
 	email = ""
+	provider = ""
 	_refresh = ""
 	_id_token = ""
 	_ut = {}
@@ -491,6 +587,24 @@ func commit(writes: Array) -> int:
 		last_error = "HTTP %d" % r.code
 	return r.code
 
+## Adds 1 to field "n" of each collection/<id> in one commit; missing
+## documents are created with n = 1 (Funnel counters). Returns the HTTP code.
+func bump(collection: String, ids: Array) -> int:
+	if ids.is_empty():
+		return 200
+	if not await _ensure_token():
+		return 0
+	var ws := []
+	for id in ids:
+		ws.append({"transform": {
+			"document": "projects/%s/databases/(default)/documents/%s/%s" % [project_id, collection, id],
+			"fieldTransforms": [{"fieldPath": "n", "increment": {"integerValue": "1"}}]}})
+	var url := "https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents:commit" % project_id
+	var r := await _req(HTTPClient.METHOD_POST, url, JSON.stringify({"writes": ws}), true)
+	if r.code != 200:
+		last_error = "HTTP %d" % r.code
+	return r.code
+
 ## Deletes coll/id (any document the rules let this player delete).
 func delete_path(path: String) -> bool:
 	if not await _ensure_token():
@@ -548,7 +662,7 @@ func _save_state() -> void:
 	var f := FileAccess.open(STATE_PATH, FileAccess.WRITE)
 	if f == null:
 		return
-	f.store_string(JSON.stringify({"uid": uid, "email": email, "refresh": _refresh, "ut": _ut, "dirty": _dirty.keys()}))
+	f.store_string(JSON.stringify({"uid": uid, "email": email, "provider": provider,"refresh": _refresh, "ut": _ut, "dirty": _dirty.keys()}))
 
 static func _read_json(path: String):
 	if not FileAccess.file_exists(path):
