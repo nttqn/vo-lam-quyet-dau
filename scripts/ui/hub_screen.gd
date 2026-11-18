@@ -238,6 +238,7 @@ func _dock(h: Dictionary, _s: Dictionary) -> void:
 		["Y Phục", "outfit", 0, Color(0.7, 0.3, 0.55), func(): Game.goto(WardrobeScreen.new())],
 		["Nhiệm Vụ", "quest", dq, Color(0.3, 0.6, 0.3), func(): Game.goto(DailyScreen.new())],
 		["Xếp Hạng", "rank", 0, Color(0.8, 0.65, 0.2), func(): Game.goto(RankScreen.new())],
+		["Thế Giới", "chat", 0, Color(0.25, 0.55, 0.7), func(): Game.goto(ChatScreen.new())],
 		["Cài Đặt", "settings", 0, Color(0.45, 0.45, 0.5), func(): ui.add_child(SettingsPanel.new())],
 		["Rời Đi", "exit", 0, Color(0.5, 0.2, 0.2), back],
 	]

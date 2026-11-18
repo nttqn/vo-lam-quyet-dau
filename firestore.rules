@@ -37,5 +37,41 @@ service cloud.firestore {
       return d.name is string && d.name.size() <= 24 && d.sect is string
         && d.level is int && d.power is int && d.tower is int && d.stars is int;
     }
+    // Kênh Thế Giới: chat/{id} readable by everyone signed in; a message is
+    // written together with chatlast/{uid} in one commit, and chatlast refuses
+    // a new time within 20 s of the last, so nobody can post faster. Mute a
+    // player by creating chatban/{uid} (any field) in the console.
+    match /chat/{id} {
+      allow read: if request.auth != null;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'sect', 'level', 'text', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 120
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24
+        && request.resource.data.sect is string && request.resource.data.sect.size() <= 16
+        && request.resource.data.level is int
+        && request.resource.data.at == request.time
+        && getAfter(/databases/$(database)/documents/chatlast/$(request.auth.uid)).data.at == request.time
+        && !exists(/databases/$(database)/documents/chatban/$(request.auth.uid));
+    }
+    match /chatlast/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['at']) && request.resource.data.at == request.time;
+      allow update: if request.auth != null && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['at']) && request.resource.data.at == request.time
+        && request.time > resource.data.at + duration.value(20, 's');
+    }
+    // reports: chatreport/{msgId}_{uid}, write-only, reviewed in the console
+    match /chatreport/{id} {
+      allow create: if request.auth != null
+        && id.matches('[A-Za-z0-9]{1,40}_' + request.auth.uid)
+        && request.resource.data.keys().hasOnly(['msg', 'who', 'name', 'text', 'by', 'at'])
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.text is string && request.resource.data.text.size() <= 120
+        && request.resource.data.name is string && request.resource.data.name.size() <= 24;
+    }
   }
 }

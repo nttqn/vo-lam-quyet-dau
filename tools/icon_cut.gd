@@ -2,7 +2,7 @@ extends SceneTree
 ## Cuts ChatGPT icon sheets (transparent background, icons in rows, reading
 ## order) from assets_src/skills/ and assets_src/items/ into 256-square PNGs.
 ##   skills: <sect>.png        -> assets/ui/skills/<sect>_<0..5>.png   (3 + 3)
-##   menu: menu_1.png / menu_2.png -> assets/ui/menu/<name>.png (3+3, 4+4)
+##   menu: menu_1.png / menu_2.png / menu_3.png -> assets/ui/menu/<name>.png (3+3, 4+4, 1)
 ##   weapons: weapon_<style>.png -> assets/ui/items/weapon_<style>_<1..7>.png (4 + 3)
 ##   godot --headless --path . --script res://tools/icon_cut.gd [-- thieu_lam]
 
@@ -21,6 +21,7 @@ const SHEETS := {
 	"weapon_dagger": ["res://assets_src/items/weapon_dagger.png", "res://assets/ui/items/weapon_dagger_%d.png", 7, [4, 3], 1],
 	"menu_1": ["res://assets_src/menu/menu_1.png", ["journey", "duel", "tower", "arena", "train", "rank"], 6, [3, 3], 0],
 	"menu_2": ["res://assets_src/menu/menu_2.png", ["hero", "skill", "gear", "shop", "outfit", "quest", "settings", "exit"], 8, [4, 4], 0],
+	"menu_3": ["res://assets_src/menu/menu_3.png", ["chat"], 1, [1], 0],
 	"nguyen_lieu": ["res://assets_src/items/nguyen_lieu.png", ["mats/iron", "mats/star", "mats/wash", "mats/charm", "dungeon"], 5, [3, 2], 0],
 	"armor": ["res://assets_src/items/armor.png", "res://assets/ui/items/armor_%d.png", 7, [4, 3], 1],
 	"hat": ["res://assets_src/items/hat.png", "res://assets/ui/items/hat_%d.png", 7, [4, 3], 1],

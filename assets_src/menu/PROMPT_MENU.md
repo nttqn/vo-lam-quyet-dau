@@ -34,3 +34,10 @@ A sheet of game menu icons for a Vietnamese wuxia mobile fighting game, painted 
 7) Settings: a bronze gear-shaped ancient coin, dark grey.
 8) Leave: an open wooden gate door with mist outside, dark red.
 ```
+
+## Tấm 3 — `menu_3.png` (1 icon, canvas 1024x1024)
+Dán PHẦN CHUNG rồi thay câu đầu bằng "A single game menu icon" và thêm:
+```
+One icon centered: World chat: two ink-brush speech bubbles overlapping in front of a small globe of drifting clouds, with a paper crane flying between them, sky blue and gold.
+```
+Cắt: `godot --headless --path . --script res://tools/icon_cut.gd -- menu_3` → `assets/ui/menu/chat.png`.

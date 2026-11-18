@@ -39,7 +39,7 @@ func _ready() -> void:
 		project_id = str(cfg.get("project_id", ""))
 	# test hooks (--flowtest, --fighttest, …) must never touch real cloud saves
 	var args := OS.get_cmdline_user_args()
-	if not args.is_empty() and not "--cloudtest" in args:
+	if not args.is_empty() and not "--cloudtest" in args and not "--chattest" in args:
 		api_key = ""
 	var st = _read_json(STATE_PATH)
 	if st is Dictionary:
@@ -154,7 +154,7 @@ func reset_password(p_email: String) -> bool:
 	return true
 
 ## Deletes everything this account has on the server (cloud saves, this
-## season's Tỉ Võ shadow) and the account itself. Local saves stay on the phone.
+## season's Tỉ Võ shadow, rank rows, Kênh Thế Giới messages) and the account itself. Local saves stay on the phone.
 ## Play policy: account deletion must be available in the app.
 func delete_account() -> bool:
 	if not await _ensure_token():
@@ -164,6 +164,7 @@ func delete_account() -> bool:
 	await _req(HTTPClient.METHOD_DELETE, _base_url() + "%s/%s" % [Duel.collection(), uid], "", true)
 	for i in Game.SLOTS:
 		await _req(HTTPClient.METHOD_DELETE, _base_url() + "%s/%s_%d" % [Ranks.COLLECTION, uid, i], "", true)
+	await Chat.delete_mine()
 	var r := await _req(HTTPClient.METHOD_POST, _auth_url("accounts:delete"), JSON.stringify({"idToken": _id_token}))
 	if r.code != 200:
 		last_error = _auth_error(r.body)
@@ -440,6 +441,63 @@ func query(collection: String, order_field: String, limit: int, lo = null, hi = 
 			out.append(plain)
 	return out
 
+## Raw structuredQuery (Kênh Thế Giới). Rows are plain dicts with "_id";
+## timestamps come back as RFC 3339 strings. null on error (vs [] = none).
+func run_query(sq: Dictionary):
+	if not await _ensure_token():
+		return null
+	var url := "https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents:runQuery" % project_id
+	var r := await _req(HTTPClient.METHOD_POST, url, JSON.stringify({"structuredQuery": sq}), true)
+	if r.code != 200:
+		last_error = "HTTP %d" % r.code
+		return null
+	var out := []
+	for row in r.get("list", []):
+		var d = (row as Dictionary).get("document")
+		if d is Dictionary:
+			var plain := {}
+			var fl: Dictionary = d.get("fields", {})
+			for k in fl:
+				plain[k] = _fs_plain(fl[k])
+			var nm := str(d.get("name", ""))
+			plain["_id"] = nm.get_slice("/", nm.get_slice_count("/") - 1)
+			out.append(plain)
+	return out
+
+## Atomic multi-document write. Each entry: {path: "coll/id", fields: {..plain..},
+## server_time: [field names set to the server's clock], create: bool (must not exist)}.
+## Returns the HTTP code (200 = written, 403 = refused by the rules, 0 = offline).
+func commit(writes: Array) -> int:
+	if not await _ensure_token():
+		return 0
+	var ws := []
+	for w in writes:
+		var f := {}
+		var src: Dictionary = w.get("fields", {})
+		for k in src:
+			f[k] = _fs_value(src[k])
+		var e := {"update": {"name": "projects/%s/databases/(default)/documents/%s" % [project_id, w.path], "fields": f}}
+		var tr := []
+		for k in w.get("server_time", []):
+			tr.append({"fieldPath": k, "setToServerValue": "REQUEST_TIME"})
+		if not tr.is_empty():
+			e["updateTransforms"] = tr
+		if w.get("create", false):
+			e["currentDocument"] = {"exists": false}
+		ws.append(e)
+	var url := "https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents:commit" % project_id
+	var r := await _req(HTTPClient.METHOD_POST, url, JSON.stringify({"writes": ws}), true)
+	if r.code != 200:
+		last_error = "HTTP %d" % r.code
+	return r.code
+
+## Deletes coll/id (any document the rules let this player delete).
+func delete_path(path: String) -> bool:
+	if not await _ensure_token():
+		return false
+	var r := await _req(HTTPClient.METHOD_DELETE, _base_url() + path, "", true)
+	return r.code == 200
+
 static func _fs_value(v) -> Dictionary:
 	match typeof(v):
 		TYPE_INT: return {"integerValue": str(v)}
@@ -451,6 +509,7 @@ static func _fs_plain(v: Dictionary):
 	if v.has("integerValue"): return int(v.integerValue)
 	if v.has("doubleValue"): return float(v.doubleValue)
 	if v.has("booleanValue"): return bool(v.booleanValue)
+	if v.has("timestampValue"): return str(v.timestampValue)
 	return str(v.get("stringValue", ""))
 
 # ------------------------------------------------------------- http

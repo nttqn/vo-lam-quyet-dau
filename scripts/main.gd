@@ -52,6 +52,9 @@ func _ready() -> void:
 		if a == "--soak":
 			add_child(load("res://tools/soak.gd").new())
 			return
+		if a == "--chattest":
+			add_child(load("res://tools/chat_test.gd").new())
+			return
 		if a == "--cloudtest" and screen == "":
 			add_child(load("res://tools/cloud_test.gd").new())
 			return
@@ -228,6 +231,14 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			if screen == "foreign2":
 				ss._foreign.call_deferred()
 		"tower": Game.goto(TowerScreen.new())
+		"chat":
+			var cs := ChatScreen.new()
+			var names := ["Tiêu Dao Khách", "Nguyệt Ảnh", "Bạch Vân", "Lãng Tử", "Thiết Quyền", "Hàn Băng"]
+			var lines := ["Ai đi Phó Bản cấp 30 không?", "Nga Mi đánh Tháp tầng 40 khó quá", "Mới lên +12 vũ khí, đỏ như lửa luôn!", "đm thua hoài", "Vovinam mở bằng cách nào vậy mọi người?", "Đánh boss vùng 3 xong là mở phái ẩn đó bạn", "Tỉ Võ tuần này ai top 1 vậy, lực chiến cao ghê", "Chúc mọi người buổi tối vui vẻ, luyện công thuận lợi nha"]
+			for n in lines.size():
+				cs.fake_msgs.append({"_id": "f%d" % n, "uid": "me" if n == 2 else "u%d" % n, "name": Game.hero.name if n == 2 else names[n % names.size()], "sect": Game.hero.sect if n == 2 else Sects.IDS[n % 6], "level": 12 + n * 5, "text": Chat.censor(lines[n]), "at": "2026-11-18T%02d:%02d:00Z" % [6 + n / 3, (n * 7) % 60]})
+			Cloud.uid = "me"
+			Game.goto(cs)
 		"rank": Game.goto(RankScreen.new())
 		"wardrobe": Game.goto(WardrobeScreen.new())
 		"dialog": Game.goto(DialogScreen.new(5, "boss", Journey.stage_side(5, 5), func(): pass))
