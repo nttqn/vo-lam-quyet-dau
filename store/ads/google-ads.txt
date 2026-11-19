@@ -1,0 +1,43 @@
+GOOGLE ADS – CHIẾN DỊCH ỨNG DỤNG (Lượt cài đặt) – VÕ LÂM QUYẾT ĐẤU
+(Ngôn ngữ: Tiếng Việt · Vị trí: Việt Nam · Ứng dụng: com.trungsmail.volamquyetdau)
+
+TIÊU ĐỀ (tối đa 30 ký tự, nhập 5 dòng)
+Game đối kháng võ lâm 3D        (24)
+Ngũ đại môn phái tranh hùng     (27)
+Điểm huyệt, tung tuyệt kỹ       (25)
+Một chiêu kết liễu thủy mặc     (27)
+Đấu 1 chọi 1, chơi offline      (26)
+-- dự phòng (thay khi tiêu đề nào bị Google xếp "Thấp") --
+Thiếu Lâm hay Võ Đang?          (22)
+Rèn binh khí lên +15            (20)
+Tỉ võ leo top mỗi tuần          (22)
+Leo Tháp Thí Luyện vô tận       (25)
+Lần đầu nạp nhân đôi Ngọc       (25)
+
+MÔ TẢ (tối đa 90 ký tự, nhập 5 dòng)
+Chọn 1 trong 5 đại môn phái, luyện võ công riêng và quyết đấu 1 chọi 1 trong 3D.         (80)
+Điểm huyệt tay, chân, đan điền khiến đối thủ yếu đòn, chậm chân, mất nội lực.            (77)
+Đòn kết liễu biến cả võ đài thành tranh thủy mặc. Tải miễn phí, chơi ngay hôm nay!       (82)
+7 vùng đất, 42 trận cốt truyện, Tháp Thí Luyện, Lôi Đài, Phó Bản. Chơi không cần mạng.   (86)
+Rèn binh khí +15, khoác y phục riêng từng phái, tỉ võ leo bảng xếp hạng mỗi tuần.        (81)
+-- dự phòng --
+Đỡ và né đúng lúc để học lén võ công phái khác. Game đối kháng võ lâm Việt, miễn phí.    (85)
+Lần đầu nạp mỗi gói Ngọc được nhân đôi. Mua Y Phục, Bí Kíp, nguyên liệu rèn đồ quý.      (83)
+
+HÌNH ẢNH (store/ads/, mỗi mẫu đủ 3 tỉ lệ Google yêu cầu)
+  *-ngang-1200x628.jpg   ngang 1.91:1
+  *-vuong-1200x1200.jpg  vuông 1:1
+  *-doc-1200x1500.jpg    dọc 4:5
+monphai   Ngũ đại môn phái · Quyết đấu giang hồ   – key art Võ Đang vs Thiếu Lâm
+doikhang  Game đối kháng · Võ lâm 3D              – màn hình trận đấu thật
+ketlieu   Một chiêu kết liễu · Võ đài hóa thủy mặc – màn hình kết liễu thủy mặc
+baokho    Lần đầu nạp · Nhân đôi Ngọc             – ảnh gói Bảo Khố Ngọc + Gói Tân Thủ
+          (mẫu này hợp với chiến dịch thứ 2 nhắm "Hành động trong ứng dụng"/mua hàng;
+           chiến dịch cài đặt nên chạy 3 mẫu đầu)
+
+VIDEO (Google Ads chỉ nhận link YouTube)
+Đăng lên YouTube ở chế độ "Không công khai" rồi dán link vào mục Video:
+  store/video/vo-lam-promo_15-9x16.mp4   – dọc 15s, ưu tiên nhất (Shorts)
+  store/video/vo-lam-promo_15-16x9.mp4   – ngang 15s
+  store/video/vo-lam-promo_nu-9x16.mp4   – dọc, bản giọng nữ (thêm để Google thử)
+Nếu không có video, Google tự ghép video từ ảnh – thường kém hơn.
