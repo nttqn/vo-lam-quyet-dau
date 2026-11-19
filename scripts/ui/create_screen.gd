@@ -125,9 +125,12 @@ func _random_name() -> void:
 	_auto_name = true
 
 func _create() -> void:
-	var n := _name_edit.text.strip_edges()
-	if n.length() < 2:
+	var n := Hero.tidy_name(_name_edit.text)
+	if n.length() < Hero.NAME_MIN:
 		toast("Hãy đặt danh xưng (ít nhất 2 ký tự)", Color(1, 0.6, 0.5))
+		return
+	if Chat.censor(n) != n:
+		toast("Danh xưng có từ ngữ không phù hợp", Color(1, 0.6, 0.5))
 		return
 	Game.slot = slot
 	Game.hero = Hero.create(n, sect_id)

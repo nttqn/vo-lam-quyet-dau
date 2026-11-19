@@ -217,6 +217,25 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			hs.ui.add_child.call_deferred(SettingsPanel.new())
 		"map": Game.goto(MapScreen.new())
 		"char": Game.goto(CharacterScreen.new())
+		"rename":
+			var cs := CharacterScreen.new()
+			Game.goto(cs)
+			cs._rename_dialog.call_deferred()
+			if "--renametest" in args:
+				# swear → refused, same → refused, ok → renamed + 7-day lock
+				var h := Game.hero
+				var old := str(h.name)
+				h.rename_at = 0
+				print("RENAME swear: ", Hero.name_problem(h, Hero.tidy_name("  đm   abc ")))
+				print("RENAME same: ", Hero.name_problem(h, old))
+				print("RENAME tidy: [", Hero.tidy_name("  Tiêu   Dao\tKhách  "), "]")
+				cs._renamed(Hero.tidy_name("  Tiêu   Dao\tKhách  "))
+				print("RENAME now: ", h.name, " left_days=", Hero.rename_left(h) / 86400.0)
+				print("RENAME saved: ", Game.slot_info(Game.slot).get("name", "?"))
+				get_tree().quit()
+		"renamewait":
+			Game.hero.rename_at = Time.get_unix_time_from_system() - 86400 * 2.4
+			Game.goto(CharacterScreen.new())
 		"skill": Game.goto(SkillScreen.new())
 		"rank":
 			# 50 fake rows; with --dragtest a real touch swipe is injected and the scroll offset printed

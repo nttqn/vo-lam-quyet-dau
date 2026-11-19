@@ -36,6 +36,7 @@ func _build() -> void:
 	var s := Hero.sect(h)
 	var a := Build.attrs(int(h.level), h.pts, s)
 	var free := int(h.free_pts)
+	_box.add_child(_name_row())
 	_box.add_child(UI.label("Điểm tiềm năng: %d" % free, 26, Color(0.6, 1, 0.6) if free > 0 else UI.PAPER, UI.bold))
 	for at in ATTR:
 		var row := UI.hbox(10)
@@ -105,6 +106,93 @@ func _reset() -> void:
 	Game.save()
 	refresh_wallet()
 	_build()
+
+# ------------------------------------------------------------ đổi tên
+func _name_row() -> HBoxContainer:
+	var h := Game.hero
+	var row := UI.hbox(12)
+	var n := UI.label(str(h.name), 30, UI.GOLD, UI.bold)
+	n.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	n.clip_text = true
+	row.add_child(n)
+	var left := Hero.rename_left(h)
+	var b: Button
+	if left > 0.0:
+		b = UI.button("Đổi tên sau " + _wait_text(left), func(): pass, 18)
+		b.disabled = true
+	else:
+		b = UI.button("Đổi tên  ▶ QC", _rename_dialog, 20)
+	b.custom_minimum_size.y = 50
+	row.add_child(b)
+	return row
+
+static func _wait_text(sec: float) -> String:
+	var s := int(ceil(sec))
+	if s >= 86400:
+		return "%d ngày %d giờ" % [s / 86400, (s % 86400) / 3600]
+	if s >= 3600:
+		return "%d giờ %d phút" % [s / 3600, (s % 3600) / 60]
+	return "%d phút" % maxi(1, s / 60)
+
+## Top-anchored, so the phone keyboard doesn't cover the field.
+func _rename_dialog() -> void:
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.6)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ui.add_child(dim)
+	var p := UI.panel()
+	p.anchor_left = 0.5
+	p.anchor_right = 0.5
+	p.offset_left = -330
+	p.offset_right = 330
+	p.offset_top = 40
+	dim.add_child(p)
+	var v := UI.vbox(14)
+	p.add_child(v)
+	v.add_child(UI.heading("Đổi danh xưng", 34))
+	var info := UI.label("Xem một quảng cáo để đổi tên. Mỗi nhân vật được đổi 1 lần mỗi 7 ngày.", 20, Color(0.85, 0.82, 0.75))
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.custom_minimum_size.x = 620
+	v.add_child(info)
+	var ed := LineEdit.new()
+	ed.text = str(Game.hero.name)
+	ed.placeholder_text = "Danh xưng mới"
+	ed.max_length = Hero.NAME_MAX
+	ed.custom_minimum_size = Vector2(620, 56)
+	ed.add_theme_font_size_override("font_size", 26)
+	v.add_child(ed)
+	var hb := UI.hbox(16)
+	hb.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_child(hb)
+	hb.add_child(UI.button("Hủy", func(): dim.queue_free(), 24, 180))
+	hb.add_child(UI.gold_button("Xem QC & đổi", func(): _rename(ed.text, dim), 24, 240))
+	ed.text_submitted.connect(func(t): _rename(t, dim))
+	ed.call_deferred("grab_focus")
+	ed.call_deferred("select_all")
+
+func _rename(raw: String, dim: Control) -> void:
+	var h := Game.hero
+	var n := Hero.tidy_name(raw)
+	var why := Hero.name_problem(h, n)
+	if why != "":
+		toast(why, Color(1, 0.6, 0.5))
+		return
+	if Hero.rename_left(h) > 0.0:
+		dim.queue_free()
+		return
+	if not Ads.show_rewarded(func(): _renamed(n)):
+		toast("Chưa có quảng cáo, thử lại sau", Color(1, 0.7, 0.5))
+		return
+	dim.queue_free()
+
+func _renamed(n: String) -> void:
+	var h := Game.hero
+	h.name = n
+	h.rename_at = Time.get_unix_time_from_system()
+	Game.save()   # also republishes the Bảng Xếp Hạng row
+	if is_inside_tree():
+		toast("Đã đổi danh xưng: " + n, Color(0.6, 1, 0.7))
+		_build()
 
 func back() -> void:
 	Game.goto(HubScreen.new())

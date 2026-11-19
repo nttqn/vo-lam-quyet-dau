@@ -15,13 +15,37 @@ static func create(name: String, sect_id: String) -> Dictionary:
 		"gear": {}, "bag": [], "mats": {}, "insight": {}, "foreign": {},
 		"stars": {}, "region": 0,
 		"arena_best": 0, "wins": 0, "losses": 0, "fights": 0,
-		"color": 0, "created": Time.get_unix_time_from_system(),
+		"color": 0, "rename_at": 0, "created": Time.get_unix_time_from_system(),
 		"appearance": Appearance.default_for(sect_id, sect_id == "nga_mi"),
 	}
 	var s := Sects.get_sect(sect_id)
 	h.gear["weapon"] = Items.make("weapon", 1, 0, 0)
 	h.gear["armor"] = Items.make("armor", 1, 0, 0)
 	return h
+
+## Đổi tên: once per RENAME_GAP seconds, each time after a rewarded ad.
+const RENAME_GAP := 7 * 86400
+const NAME_MIN := 2
+const NAME_MAX := 16
+
+## Seconds until this hero may rename again (0 = now).
+static func rename_left(h: Dictionary) -> float:
+	return maxf(0.0, float(h.get("rename_at", 0)) + RENAME_GAP - Time.get_unix_time_from_system())
+
+## A typed name made tidy: one line, single spaces, at most NAME_MAX chars.
+static func tidy_name(raw: String) -> String:
+	var re := RegEx.create_from_string("\\s+")
+	return re.sub(raw, " ", true).strip_edges().substr(0, NAME_MAX).strip_edges()
+
+## "" when the name is fine, else why not.
+static func name_problem(h: Dictionary, n: String) -> String:
+	if n.length() < NAME_MIN:
+		return "Danh xưng cần ít nhất %d ký tự" % NAME_MIN
+	if n == str(h.get("name", "")):
+		return "Danh xưng mới trùng tên cũ"
+	if Chat.censor(n) != n:
+		return "Danh xưng có từ ngữ không phù hợp"
+	return ""
 
 static func migrate(d: Dictionary) -> Dictionary:
 	var base := create(d.get("name", "Vô Danh"), d.get("sect", "vo_dang"))
