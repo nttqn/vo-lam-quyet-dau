@@ -84,5 +84,55 @@ func _process(delta: float) -> void:
 			else:
 				b.pose(ic[0], _t + i, 0.0)
 		b.finish(delta)
-		if spin:
-			b.rotation.y = _base_yaw[i] + sin(_t * 0.5) * 0.6
+		if spin or turnable:
+			b.rotation.y = _base_yaw[i] + turn + sin(_t * 0.5) * 0.6 * _spin_w
+
+# ------------------------------------------------------------ swipe to turn
+## Set by Screen.enable_turn(): the player can swipe to spin the fighters.
+var turnable := false
+var turn := 0.0          # extra yaw from the player's swipes (radians)
+var dragging := false
+var _turn_v := 0.0       # fling speed after release (rad/s)
+var _idle := 99.0        # seconds since the last swipe
+var _spin_w := 1.0       # auto-sway weight, faded out while the player turns
+
+const TURN_PER_PX := 0.012
+const TURN_BACK_AFTER := 5.0
+
+func drag_begin() -> void:
+	dragging = true
+	_turn_v = 0.0
+	_idle = 0.0
+
+var _last_vx := 0.0
+var _last_move_ms := 0
+
+func drag_by(dx: float, vx: float) -> void:
+	turn += dx * TURN_PER_PX
+	_last_vx = vx
+	_last_move_ms = Time.get_ticks_msec()
+	_idle = 0.0
+
+func drag_end() -> void:
+	dragging = false
+	# fling only if the finger was still moving when it lifted
+	var vx := _last_vx if Time.get_ticks_msec() - _last_move_ms < 90 else 0.0
+	_turn_v = clampf(vx * TURN_PER_PX * 0.5, -8.0, 8.0)
+	_idle = 0.0
+
+func _physics_process(delta: float) -> void:
+	if not turnable:
+		return
+	_idle += delta
+	var busy := dragging or _idle < TURN_BACK_AFTER
+	_spin_w = move_toward(_spin_w, 0.0 if busy else 1.0, delta * (4.0 if busy else 0.5))
+	if dragging:
+		return
+	if absf(_turn_v) > 0.01:
+		turn += _turn_v * delta
+		_turn_v *= exp(-2.5 * delta)
+		_idle = 0.0
+	elif _idle > TURN_BACK_AFTER:
+		# drift back to the posed angle the short way round
+		turn = wrapf(turn, -PI, PI)
+		turn = lerpf(turn, 0.0, 1.0 - exp(-1.5 * delta))

@@ -14,6 +14,7 @@ func _ready() -> void:
 	show.add_body(Hero.look(h), s.style, 0.2, -0.5)
 	shade(false, 0.55, 0.85)
 	shade(true, 0.3, 0.55)
+	enable_turn(DOCK_H)
 	_header(h, s)
 	_right(h)
 	_dock(h, s)

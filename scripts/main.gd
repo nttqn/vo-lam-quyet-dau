@@ -226,7 +226,11 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			var cs := CreateScreen.new(0)
 			Game.goto(cs)
 			cs._pick.call_deferred(sect if sect != "thieu_lam" else "nga_mi")
-		"hub": Game.goto(HubScreen.new())
+		"hub":
+			var hub := HubScreen.new()
+			Game.goto(hub)
+			if "--turntest" in args:
+				_turn_test.call_deferred(hub)
 		"settings":
 			var hs := HubScreen.new()
 			Game.goto(hs)
@@ -369,3 +373,34 @@ func _drag_test(rs: RankScreen) -> void:
 		await get_tree().process_frame
 	print("DRAGTEST scroll_vertical=%d max=%d draw_calls=%d prims=%d" % [sc.scroll_vertical, int(sc.get_v_scroll_bar().max_value), Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)])
 	get_tree().quit()
+
+## Swipe across the hub hero with real touch events; the hero must turn.
+func _turn_test(hs: HubScreen) -> void:
+	for i in 20:
+		await get_tree().process_frame
+	var start := Vector2(500, 400)
+	var t := InputEventScreenTouch.new()
+	t.index = 0
+	t.position = start
+	t.pressed = true
+	Input.parse_input_event(t)
+	var p := start
+	for k in 15:
+		await get_tree().process_frame
+		var d := InputEventScreenDrag.new()
+		d.index = 0
+		d.relative = Vector2(20, 0)
+		p += d.relative
+		d.position = p
+		d.velocity = Vector2(1200, 0)
+		Input.parse_input_event(d)
+	await get_tree().process_frame
+	t = InputEventScreenTouch.new()
+	t.index = 0
+	t.position = p
+	t.pressed = false
+	Input.parse_input_event(t)
+	var after_drag := hs.show.turn
+	for i in 40:
+		await get_tree().process_frame
+	print("TURNTEST after_drag=%.2f after_fling=%.2f" % [after_drag, hs.show.turn])

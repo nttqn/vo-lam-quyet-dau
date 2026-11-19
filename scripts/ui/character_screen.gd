@@ -13,6 +13,7 @@ const RESET_COST := 10
 
 func _ready() -> void:
 	_init_ui("temple")
+	enable_turn()
 	var h := Game.hero
 	show.set_focus(1.6)
 	show.add_body(Hero.look(h), Hero.sect(h).style, 0.2, -0.6)

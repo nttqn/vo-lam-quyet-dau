@@ -22,6 +22,29 @@ func _init_ui(theme_3d := "") -> void:
 	if show:
 		ui.add_child(UI.vignette(0.45))
 
+## Swipe anywhere the UI leaves open (above `bottom_px` from the bottom)
+## to spin the showcased fighter. The catcher sits under every other
+## control, so buttons and lists keep their own touches.
+func enable_turn(bottom_px := 0.0) -> void:
+	if show == null:
+		return
+	show.turnable = true
+	var c := Control.new()
+	c.name = "TurnArea"
+	c.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	c.offset_bottom = -bottom_px
+	c.mouse_filter = Control.MOUSE_FILTER_STOP
+	c.gui_input.connect(func(e: InputEvent) -> void:
+		if e is InputEventMouseButton and e.button_index == MOUSE_BUTTON_LEFT:
+			if e.pressed:
+				show.drag_begin()
+			elif show.dragging:
+				show.drag_end()
+		elif e is InputEventMouseMotion and show.dragging:
+			show.drag_by(e.relative.x, e.velocity.x))
+	ui.add_child(c)
+	ui.move_child(c, 1)   # just above the vignette, under everything else
+
 ## Android back / Esc (routed by Game._go_back).
 func back() -> void:
 	pass

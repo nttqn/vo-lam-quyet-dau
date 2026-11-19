@@ -9,6 +9,7 @@ func _ready() -> void:
 	var h := Game.hero
 	_preview = str(h.get("outfit", ""))
 	_init_ui("temple")
+	enable_turn()
 	shade(false, 0.55, 0.8)
 	top_bar("Y Phục", back)
 	var card := UI.panel(Color(0.06, 0.05, 0.07, 0.88))
