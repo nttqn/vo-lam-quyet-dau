@@ -24,6 +24,32 @@ service cloud.firestore {
       return d.data is string && d.data.size() < 20000 && d.score is int
         && d.name is string && d.name.size() <= 24;
     }
+    // Boss Thế Giới: wb_<yyyymmdd>/{uid}_{slot} = that hero's damage today.
+    // At most 4 tries a day (3 + 1 ad) and 50,000 damage a try; tries and
+    // damage only grow. The pool = sum(dmg) of the day's collection.
+    match /{coll}/{id} {
+      allow read: if request.auth != null && coll.matches('wb_[0-9]{8}');
+      allow delete: if request.auth != null && coll.matches('wb_[0-9]{8}') && myHero(id);
+      allow create: if request.auth != null && coll.matches('wb_[0-9]{8}') && myHero(id)
+        && goodWb(request.resource.data);
+      allow update: if request.auth != null && coll.matches('wb_[0-9]{8}') && myHero(id)
+        && goodWb(request.resource.data)
+        && request.resource.data.tries >= resource.data.tries
+        && request.resource.data.dmg >= resource.data.dmg;
+    }
+    function myHero(id) {
+      return id in [request.auth.uid + '_0', request.auth.uid + '_1', request.auth.uid + '_2', request.auth.uid + '_3', request.auth.uid + '_4', request.auth.uid + '_5'];
+    }
+    function goodWb(d) {
+      return d.keys().hasOnly(['name', 'sect', 'level', 'dmg', 'tries'])
+        && d.name is string && d.name.size() <= 24 && d.sect is string && d.sect.size() <= 16
+        && d.level is int && d.tries is int && d.tries >= 1 && d.tries <= 4
+        && d.dmg is int && d.dmg >= 0 && d.dmg <= d.tries * 50000;
+    }
+    // tuning read by the game, written in the console (config/wboss {pool})
+    match /config/{id} {
+      allow read: if request.auth != null;
+    }
     // Bảng xếp hạng: rank/{uid}_{slot}, readable by everyone signed in
     match /rank/{id} {
       allow read: if request.auth != null;

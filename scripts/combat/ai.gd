@@ -60,7 +60,7 @@ func decide(sim: FightSim) -> Dictionary:
 	var o_reach := 0.0
 	if threat:
 		var sm: Dictionary = seen.move
-		o_reach = float(sm.get("reach", 1.0)) + Fighter.RADIUS * 2.0 + float(sm.get("lunge", 0.0)) * 0.25
+		o_reach = float(sm.get("reach", 1.0)) * o.size + o.rad() + me.rad() + float(sm.get("lunge", 0.0)) * 0.25
 		if sm.get("kind", "") in ["proj", "rain"]:
 			o_reach = 99.0
 	if threat and dist < o_reach + 0.5 and _block_t <= 0:
@@ -170,7 +170,7 @@ func _sealed() -> bool:
 	return me.seal[0] > 0 or me.seal[1] > 0 or me.seal[2] > 0
 
 func _best_reach() -> float:
-	return float(me.moves.p1.reach) + Fighter.RADIUS * 2.0
+	return float(me.moves.p1.reach) * me.size + me.rad() * 2.0
 
 func _attack(inp: Dictionary, dist: float, o: Fighter) -> Dictionary:
 	var r := rng.randf()
@@ -209,7 +209,7 @@ func _pick_skill(dist: float, o: Fighter) -> int:
 			"blink":
 				score += 0.4 if dist > 2.0 else 0.0
 			_:
-				var reach: float = float(m.reach) + Fighter.RADIUS * 2.0 + float(m.get("lunge", 0.0)) * 0.3
+				var reach: float = float(m.reach) * me.size + me.rad() + o.rad() + float(m.get("lunge", 0.0)) * 0.3
 				score += 0.7 if dist <= reach else -1.0
 		if m.get("ult", false):
 			score += 0.5

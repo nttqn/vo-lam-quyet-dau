@@ -117,7 +117,7 @@ func _separate(a: Fighter, b: Fighter) -> void:
 	if a.y > 0.9 or b.y > 0.9:
 		return
 	var d := b.x - a.x
-	var min_d := Fighter.RADIUS * 2.0
+	var min_d := a.rad() + b.rad()
 	if absf(d) < min_d:
 		var push := (min_d - absf(d)) * 0.5
 		var s := 1.0 if d >= 0 else -1.0
@@ -166,11 +166,13 @@ func _in_reach(a: Fighter, d: Fighter, m: Dictionary) -> bool:
 	var front := (d.x - a.x) * a.facing
 	if front < -0.25:
 		return false
-	if front - Fighter.RADIUS * 2.0 > m.reach:
+	if front - (a.rad() + d.rad()) > float(m.reach) * a.size:
 		return false
 	var h: String = m.h
 	var d_air := d.y > 0.25
 	if kind_of(m) == "throw":
+		if d.size > 1.2:
+			return false   # nobody throws a giant
 		return not d_air and d.state not in [Fighter.HITSTUN, Fighter.AIRHIT] and d.grounded()
 	if h == "low" and d_air:
 		return false
@@ -327,11 +329,11 @@ func _step_projs() -> void:
 		var dead: bool = p.life <= 0 or absf(p.x) > WALL + 2.0 or p.y < -0.1
 		var d := f[1 - int(p.owner)]
 		var a := f[int(p.owner)]
-		if not dead and d.state == Fighter.DODGE and d.inv > 0 and absf(p.x - d.x) < 0.42:
+		if not dead and d.state == Fighter.DODGE and d.inv > 0 and absf(p.x - d.x) < 0.42 * d.size:
 			insight(a, d, p.m, 2)
 		if not dead and _can_be_hit(d):
-			var top := d.y + (1.05 if d.crouching() else 1.75)
-			if absf(p.x - d.x) < 0.42 and p.y >= d.y - 0.05 and p.y <= top:
+			var top := d.y + (1.05 if d.crouching() else 1.75) * d.size
+			if absf(p.x - d.x) < 0.42 * d.size and p.y >= d.y - 0.05 and p.y <= top:
 				var m: Dictionary = p.m
 				resolve(a, d, m, true)
 				dead = true

@@ -90,13 +90,23 @@ func _right(h: Dictionary) -> void:
 		var t := _tile(m[0], m[1], m[2], m[3], m[4], 112, 20)
 		t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		grid.add_child(t)
-	# Phó Bản: forge materials; full-width tile with today's entries
+	# Phó Bản (forge materials) + Boss Thế Giới, with today's entries
+	var row2 := UI.hbox(12)
+	right.add_child(row2)
 	var dl_left := Dungeon.left(h)
-	var pb := _tile("Phó Bản", "Còn %d lượt hôm nay · nguyên liệu rèn đồ" % dl_left if dl_left > 0 else "Hết lượt hôm nay · quay lại ngày mai",
-		"dungeon", Color(0.2, 0.42, 0.6), func(): Game.goto(DungeonScreen.new()), 104, 22)
-	right.add_child(pb)
+	var pb := _tile("Phó Bản", "Còn %d lượt hôm nay" % dl_left if dl_left > 0 else "Hết lượt hôm nay",
+		"dungeon", Color(0.2, 0.42, 0.6), func(): Game.goto(DungeonScreen.new()), 104, 20)
+	pb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row2.add_child(pb)
 	if dl_left > 0:
 		_glow(pb)
+	var wb_left := WBoss.left(h)
+	var wsub: String = ("Cấp %d mở" % WBoss.MIN_LEVEL) if not WBoss.unlocked(h) else 		("Nhận thưởng hôm qua!" if WBoss.claimable(h) else ("Còn %d lượt hôm nay" % wb_left if wb_left > 0 else "Hết lượt hôm nay"))
+	var wb := _tile("Boss Thế Giới", wsub, "wboss", Color(0.62, 0.12, 0.2), func(): Game.goto(WBossScreen.new()), 104, 20)
+	wb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row2.add_child(wb)
+	if WBoss.unlocked(h) and (wb_left > 0 or WBoss.claimable(h)):
+		_glow(wb)
 
 func _next_stage(h: Dictionary) -> Array:
 	for r in Journey.REGIONS.size():

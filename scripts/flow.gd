@@ -280,3 +280,39 @@ static func _duel_done(doc: Dictionary, res: Dictionary) -> void:
 	if Cloud.enabled():
 		Duel.publish(h)
 	Game.goto(ResultScreen.new(out))
+
+# ------------------------------------------------------------- Boss Thế Giới
+## One try against today's boss. The try is spent when the fight starts, so
+## quitting the app mid-fight doesn't give it back.
+static func start_wboss() -> void:
+	var h := Game.hero
+	if not WBoss.unlocked(h) or WBoss.left(h) <= 0:
+		return
+	var w := WBoss.ensure(h)
+	w.tries = int(w.tries) + 1
+	Game.save()
+	var b := WBoss.today_boss()
+	var cfg := {"p": Hero.side(h), "e": WBoss.side(h, b), "theme": b.theme, "rounds": 1, "seed": randi(),
+		"time": WBoss.FIGHT_SECONDS, "wboss": true}
+	_launch(cfg, func(res: Dictionary): _wboss_done(cfg, res))
+
+static func _wboss_done(cfg: Dictionary, res: Dictionary) -> void:
+	var h := Game.hero
+	h.fights = int(h.fights) + 1
+	Daily.on_fight(h, "wboss", res)
+	var w := WBoss.ensure(h)
+	var hp_max: float = cfg.e.stats.hp_max
+	var dmg := int(clampf(float(res.get("dmg", 0.0)), 0.0, hp_max))
+	var killed: bool = res.won and not res.get("forfeit", false)
+	w.dmg = int(w.dmg) + dmg
+	w.best = maxi(int(w.best), dmg)
+	var rw := WBoss.try_rewards(int(h.level), dmg / hp_max, killed)
+	var out := {"mode": "wboss", "won": killed, "res": res, "dmg": dmg, "ratio": dmg / hp_max,
+		"boss": str(cfg.e.name), "rewards": rw}
+	out.levels = _grant(rw)
+	if killed:
+		h.wins = int(h.wins) + 1
+	Game.save()
+	if Cloud.enabled():
+		WBoss.publish(h, Game.slot)
+	Game.goto(ResultScreen.new(out))

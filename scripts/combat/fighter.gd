@@ -68,6 +68,16 @@ var seal := [0, 0, 0]           # frames left sealed per zone
 var insight_sent := false       # this move already taught the defender once
 var last_hit := ""              # name of the move that last damaged this fighter
 var ripost := 0                 # Cương Nhu: frames left of the empowered next hit
+# Boss Thế Giới: a giant. size scales body width and reach; poise (Bá Thể) soaks
+# hits without flinching until it breaks (Phá Thế) and the boss staggers.
+var size := 1.0
+var poise_max := 0.0
+var poise := 0.0
+var broken := 0                 # frames left of the Phá Thế stagger window
+const BREAK_FRAMES := 150
+
+func rad() -> float:
+	return RADIUS * size
 
 func setup(p_sect: Dictionary, p_stats: Dictionary, p_skills: Array) -> void:
 	sect = p_sect
@@ -94,6 +104,8 @@ func reset_round(px: float, face: int) -> void:
 	poison_t = 0
 	inv = 0
 	dead = false
+	poise = poise_max
+	broken = 0
 	combo_taken = 0
 	cds.clear()
 	buf_btn = ""
@@ -333,6 +345,10 @@ func step(opp: Fighter, sim) -> void:
 		inv -= 1
 	if dodge_cd > 0:
 		dodge_cd -= 1
+	if broken > 0:
+		broken -= 1
+		if broken == 0:
+			poise = poise_max
 	for k in cds.keys():
 		cds[k] = int(cds[k]) - 1
 	for i in range(buffs.size() - 1, -1, -1):
@@ -354,7 +370,9 @@ func step(opp: Fighter, sim) -> void:
 			press[z] = maxf(0.0, press[z] - PRESS_DECAY * DT)
 	if poison_t > 0 and not dead:
 		poison_t -= 1
+		var pd := minf(poison_dps * DT, maxf(0.0, hp - 1.0))
 		hp -= poison_dps * DT
+		opp.stats_dealt += pd   # counts toward the poisoner (Boss Thế Giới score)
 		if hp <= 1.0:
 			hp = 1.0     # poison never kills
 	match state:
@@ -431,7 +449,7 @@ func _step_attack(opp: Fighter, sim) -> void:
 		vx = facing * m.lunge * (1.0 if sf >= m.st * 0.5 else 0.5)
 		# stop at the opponent instead of pushing through
 		var gap := (opp.x - x) * facing
-		if gap < RADIUS * 2.0 + 0.15 and gap > -0.2:
+		if gap < rad() + opp.rad() + 0.15 and gap > -0.2:
 			vx = 0.0
 	elif not m.get("air", false) and kind != "leap":
 		vx *= 0.8
@@ -493,6 +511,8 @@ func take_hit(att: Fighter, m: Dictionary, dmg: float, sim, crit: bool) -> void:
 	if m.get("poison", 0.0) > 0.0:
 		poison_t = 300
 		poison_dps = att.st.qi * m.poison * 0.5
+		if poise_max > 0.0:
+			poison_dps *= 0.4   # giants shrug off most poison (long fights)
 	var dir := float(att.facing)
 	hp -= dmg
 	last_hit = str(m.get("name", ""))
@@ -507,6 +527,8 @@ func take_hit(att: Fighter, m: Dictionary, dmg: float, sim, crit: bool) -> void:
 		set_state(AIRHIT)
 		vy = 5.5
 		vx = dir * 4.0
+		return
+	if poise_max > 0.0 and _poise_hit(m, dir, sim):
 		return
 	var armored: bool = (armor_left > 0 and state == ATTACK and sf < move.st + move.act) or has_buff("armor")
 	if armored and att.sect.get("passive", "") == "am_khi" and m.get("kind", "") in ["proj", "rain"]:
@@ -533,3 +555,25 @@ func take_hit(att: Fighter, m: Dictionary, dmg: float, sim, crit: bool) -> void:
 	hit_low = m.h == "low"
 	vx = dir * m.push
 	move = {}
+
+## Giant's poise: true when the hit was soaked (no reaction). Skills chip 3,
+## heavy blows 2, others 1. At 0 the boss staggers (Phá Thế) and for
+## BREAK_FRAMES flinches on every hit, but never flies or falls.
+func _poise_hit(m: Dictionary, dir: float, sim) -> bool:
+	if broken <= 0:
+		var cost := 3.0 if m.get("skill", false) else (2.0 if float(m.get("dmg", 1.0)) >= 1.5 or m.get("kd", false) else 1.0)
+		poise -= cost
+		if poise > 0.0:
+			return true
+		broken = BREAK_FRAMES
+		sim.emit({"t": "break", "i": idx})
+		set_state(HITSTUN)
+		stun = 70
+		vx = dir * 1.5
+		move = {}
+		return true
+	set_state(HITSTUN)
+	stun = int(float(m.hs) * 0.8)
+	vx = dir * absf(float(m.push)) * 0.3
+	move = {}
+	return true

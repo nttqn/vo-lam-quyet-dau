@@ -46,6 +46,8 @@ static func set_hidden(on: bool) -> void:
 		for i in Game.SLOTS:
 			await Cloud.delete_doc(COLLECTION, "_%d" % i)
 		await Cloud.delete_doc(Duel.collection(), "")
+		for i in Game.SLOTS:
+			await Cloud.delete_doc(WBoss.collection(), "_%d" % i)
 	elif Game.slot >= 0 and not Game.hero.is_empty():
 		var f := fields(Game.hero)
 		_last[Game.slot] = f

@@ -41,3 +41,10 @@ Dán PHẦN CHUNG rồi thay câu đầu bằng "A single game menu icon" và th
 One icon centered: World chat: two ink-brush speech bubbles overlapping in front of a small globe of drifting clouds, with a paper crane flying between them, sky blue and gold.
 ```
 Cắt: `godot --headless --path . --script res://tools/icon_cut.gd -- menu_3` → `assets/ui/menu/chat.png`.
+
+## Tấm 4 — `menu_4.png` (1 icon Boss Thế Giới, canvas 1024x1024)
+Dán PHẦN CHUNG rồi thay câu đầu bằng "A single game menu icon" và thêm:
+```
+One icon centered: World boss: a huge horned demon silhouette towering over a tiny swordsman on a cliff, glowing red eyes, crimson storm clouds and lightning behind, deep red and gold.
+```
+Cắt: `godot --headless --path . --script res://tools/icon_cut.gd -- menu_4` → `assets/ui/menu/wboss.png`.

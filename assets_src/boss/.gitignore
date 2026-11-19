@@ -1,0 +1,5 @@
+# Meshy / ChatGPT sources (big, not in git); only the prompt is tracked
+*.fbx
+*.png
+*.jpg
+*.import

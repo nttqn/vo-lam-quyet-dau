@@ -46,6 +46,9 @@ static func make_fighter(side: Dictionary) -> Fighter:
 	f.setup(s, side.stats, side.skills)
 	f.name = side.name
 	f.title = side.get("title", "")
+	f.size = float(side.get("size", 1.0))
+	f.poise_max = float(side.get("poise", 0.0))
+	f.poise = f.poise_max
 	return f
 
 func _ready() -> void:
@@ -55,6 +58,9 @@ func _ready() -> void:
 	sim.rounds_to_win = cfg.get("rounds", 2)
 	if cfg.get("rule", "") == "time":
 		sim.round_frames = 30 * 60
+		sim.timer = sim.round_frames
+	if cfg.has("time"):   # Boss Thế Giới: a fixed-length try
+		sim.round_frames = int(cfg.time) * 60
 		sim.timer = sim.round_frames
 	ai = FightAI.new(fe, cfg.e.get("ai", 0.5))
 	if cfg.get("autoplay", false) or Game.autoplay:
@@ -69,6 +75,13 @@ func _ready() -> void:
 		add_child(v)
 		views.append(v)
 		_shadow(v)
+		if side.has("aura"):   # Boss Thế Giới: a steady coloured glow on the giant
+			var al := OmniLight3D.new()
+			al.light_color = side.aura
+			al.light_energy = 1.6
+			al.omni_range = 4.5
+			al.position = Vector3(0, 1.6, 0.9)
+			v.add_child(al)
 	cam = Camera3D.new()
 	cam.fov = 42
 	cam.near = 0.1
@@ -99,6 +112,7 @@ func _ready() -> void:
 	hud.sim = sim
 	hud.names = [fp.name, fe.name]
 	hud.levels = [cfg.p.level, cfg.e.level]
+	hud.dmg_mode = cfg.get("wboss", false)
 	root.add_child(hud)
 	pad = TouchPad.new()
 	pad.fighter = fp
@@ -116,8 +130,9 @@ func _ready() -> void:
 	pb.pressed.connect(toggle_pause)
 	root.add_child(pb)
 	_pause_btn = pb
-	if "--clean" in OS.get_cmdline_user_args():   # store art: scene only
-		hud.visible = false
+	var ua := OS.get_cmdline_user_args()
+	if "--clean" in ua or "--promo" in ua:   # store art / promo video: no touch controls
+		hud.visible = not "--clean" in ua
 		pad.visible = false
 		pb.visible = false
 	for a in OS.get_cmdline_user_args():
@@ -342,6 +357,14 @@ func _events() -> void:
 				fx.text(Vector3(fs_.x, 2.5, 0.3), "Phong Huyệt: " + Fighter.ZONE_NAMES[e.z], Color(1.0, 0.45, 0.6))
 				views[e.i].body.flash(0.7)
 				Game.sfx("counter", 0.1, 0.8)
+			"break":
+				var fb: Fighter = sim.f[e.i]
+				fx.ring(Vector3(fb.x, 1.6, 0.2), Color(1.0, 0.85, 0.3), 2.4)
+				fx.text(Vector3(fb.x, 3.4, 0.3), "Phá Thế!", Color(1.0, 0.85, 0.3))
+				hud.banner("Phá Thế!", "Boss choáng váng — dồn sát thương!", 1.2, Color(1.0, 0.8, 0.3))
+				_shake = 0.25
+				Game.sfx("counter")
+				Game.sfx("hit_heavy", 0.0, 0.7)
 			"cleanse":
 				var fc: Fighter = sim.f[e.i]
 				fx.text(Vector3(fc.x, 2.7, 0.3), "Giải Huyệt", Color(0.6, 1.0, 0.7))
@@ -370,7 +393,10 @@ func _events() -> void:
 			"match_end":
 				_done = true
 				var won: bool = e.winner == 0
-				hud.banner("Chiến Thắng" if won else "Thất Bại", "", 3.0, UI.GOLD if won else Color(0.7, 0.7, 0.75))
+				if cfg.get("wboss", false):
+					hud.banner("Hạ Gục Boss!" if won else "Kết Thúc", "Sát thương: " + UI.fmt(sim.f[0].stats_dealt), 3.0, UI.GOLD)
+				else:
+					hud.banner("Chiến Thắng" if won else "Thất Bại", "", 3.0, UI.GOLD if won else Color(0.7, 0.7, 0.75))
 				Game.sfx("win" if won else "lose")
 	sim.events.clear()
 
@@ -526,7 +552,7 @@ func _finish(won: bool, forfeit := false) -> void:
 		"won": won, "forfeit": forfeit, "rounds_won": sim.wins[0], "rounds_lost": sim.wins[1],
 		"hp_left": fp.hp / fp.st.hp_max, "max_combo": fp.max_combo, "seconds": sim.frame / 60.0,
 		"perfect": won and sim.wins[1] == 0, "skills": _skills_used, "ults": _ults_used,
-		"insight": _insight,
+		"insight": _insight, "dmg": fp.stats_dealt,
 	}
 	Engine.time_scale = 1.0
 	finished.emit(res)
@@ -544,7 +570,7 @@ func _process(delta: float) -> void:
 		v.intro_frame = sim.pf if sim.phase == FightSim.INTRO else -1
 		var sh: MeshInstance3D = v.get_meta("shadow")
 		sh.position = Vector3(v.f.x, 0.06, 0)
-		var s := clampf(1.0 - v.f.y * 0.25, 0.4, 1.0)
+		var s := clampf(1.0 - v.f.y * 0.25, 0.4, 1.0) * v.f.size
 		sh.scale = Vector3(s, 1, s)
 	_camera(delta)
 
@@ -553,15 +579,16 @@ func _camera(delta: float) -> void:
 	var b: Fighter = sim.f[1]
 	var mid := (a.x + b.x) * 0.5
 	var sep := absf(a.x - b.x)
-	var target_d := clampf(3.6 + sep * 0.75, 5.0, 9.0)
+	var big := maxf(a.size, b.size) - 1.0   # a giant needs a wider, higher frame
+	var target_d := clampf(3.6 + sep * 0.75, 5.0, 9.0) + big * 2.6
 	if _zoom_t > 0:
 		_zoom_t -= delta
-		target_d = 4.2
+		target_d = 4.2 + big * 2.6
 	_cam_x = lerpf(_cam_x, mid, minf(1.0, delta * 5.0))
 	_cam_x = clampf(_cam_x, -FightSim.WALL + 2.5, FightSim.WALL - 2.5)
 	_cam_d = lerpf(_cam_d, target_d, minf(1.0, delta * 3.0))
 	var ymax := maxf(a.y, b.y)
-	var look := Vector3(_cam_x, 1.05 + ymax * 0.35, 0)
+	var look := Vector3(_cam_x, 1.05 + ymax * 0.35 + big * 0.7, 0)
 	var pos := Vector3(_cam_x, 1.55 + ymax * 0.3 + _cam_d * 0.05, _cam_d)
 	if _shake > 0:
 		_shake = maxf(0.0, _shake - delta * 0.6)

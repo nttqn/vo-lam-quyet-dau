@@ -262,6 +262,7 @@ func delete_account() -> bool:
 	await _req(HTTPClient.METHOD_DELETE, _base_url() + "%s/%s" % [Duel.collection(), uid], "", true)
 	for i in Game.SLOTS:
 		await _req(HTTPClient.METHOD_DELETE, _base_url() + "%s/%s_%d" % [Ranks.COLLECTION, uid, i], "", true)
+		await _req(HTTPClient.METHOD_DELETE, _base_url() + "%s/%s_%d" % [WBoss.collection(), uid, i], "", true)
 	await Chat.delete_mine()
 	var r := await _req(HTTPClient.METHOD_POST, _auth_url("accounts:delete"), JSON.stringify({"idToken": _id_token}))
 	if r.code != 200:
@@ -500,6 +501,37 @@ func count_above(collection: String, field: String, v) -> int:
 		var res = (row as Dictionary).get("result")
 		if res is Dictionary:
 			return int(_fs_plain(res.get("aggregateFields", {}).get("n", {})))
+	return -1
+
+## One document's plain fields ({} if missing or offline), e.g. config/wboss.
+func get_doc(path: String) -> Dictionary:
+	if not await _ensure_token():
+		return {}
+	var r := await _req(HTTPClient.METHOD_GET, _base_url() + path, "", true)
+	if r.code != 200 or not (r.get("body") is Dictionary):
+		return {}
+	var out := {}
+	var fl: Dictionary = r.body.get("fields", {})
+	for k in fl:
+		out[k] = _fs_plain(fl[k])
+	return out
+
+## Sum of a numeric field over a whole collection (Boss Thế Giới pool); -1 on error.
+func sum_field(collection: String, field: String) -> int:
+	if not await _ensure_token():
+		return -1
+	var body := {"structuredAggregationQuery": {
+		"structuredQuery": {"from": [{"collectionId": collection}]},
+		"aggregations": [{"alias": "s", "sum": {"field": {"fieldPath": field}}}]}}
+	var url := "https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents:runAggregationQuery" % project_id
+	var r := await _req(HTTPClient.METHOD_POST, url, JSON.stringify(body), true)
+	if r.code != 200:
+		last_error = "HTTP %d" % r.code
+		return -1
+	for row in r.get("list", []):
+		var res = (row as Dictionary).get("result")
+		if res is Dictionary:
+			return int(_fs_plain(res.get("aggregateFields", {}).get("s", {})))
 	return -1
 
 ## Documents of a collection ordered by `order_field` (descending), optionally

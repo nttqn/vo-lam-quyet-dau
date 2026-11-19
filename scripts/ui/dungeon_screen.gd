@@ -191,7 +191,7 @@ func _ad_entry() -> void:
 		Dungeon.add_ad_entry(Game.hero)
 		Game.save()
 		if is_inside_tree():
-			_build()):
+			_build(), Callable(), "dungeon"):
 		toast("Chưa có quảng cáo, thử lại sau", Color(1, 0.7, 0.5))
 
 func back() -> void:

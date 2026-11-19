@@ -180,7 +180,7 @@ func _rename(raw: String, dim: Control) -> void:
 	if Hero.rename_left(h) > 0.0:
 		dim.queue_free()
 		return
-	if not Ads.show_rewarded(func(): _renamed(n)):
+	if not Ads.show_rewarded(func(): _renamed(n), Callable(), "rename"):
 		toast("Chưa có quảng cáo, thử lại sau", Color(1, 0.7, 0.5))
 		return
 	dim.queue_free()

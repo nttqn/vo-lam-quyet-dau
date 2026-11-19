@@ -128,14 +128,15 @@ const AURA_COL := [Color(0.35, 0.65, 1.0), Color(0.7, 0.35, 1.0), Color(1.0, 0.7
 const AURA_STR := [0.6, 0.85, 1.1, 1.5]
 const AURA_THICK := [0.006, 0.009, 0.012, 0.016]
 
-static func enchant(g: Node3D, level: int) -> void:
+## size: the holder's height scale (giant bosses get a thicker halo).
+static func enchant(g: Node3D, level: int, size := 1.0) -> void:
 	if level <= 0:
 		return
 	var m := ShaderMaterial.new()
 	m.shader = load("res://assets/shaders/aura.gdshader")
 	m.set_shader_parameter("col", AURA_COL[clampi(level, 1, 4) - 1])
 	m.set_shader_parameter("strength", AURA_STR[clampi(level, 1, 4) - 1])
-	m.set_shader_parameter("thick", AURA_THICK[clampi(level, 1, 4) - 1])
+	m.set_shader_parameter("thick", AURA_THICK[clampi(level, 1, 4) - 1] * size)
 	for mi in g.find_children("*", "MeshInstance3D", true, false):
 		(mi as MeshInstance3D).material_overlay = m
 

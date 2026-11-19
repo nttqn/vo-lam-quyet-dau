@@ -40,6 +40,8 @@ var _reward_cb := OnUserEarnedRewardListener.new()
 var _on_reward: Callable
 var _rewarded := false
 var _on_close: Callable
+var _place := ""
+const AD_STEPS := [1, 5, 20, 50, 100, 200, 500]   # per-phone funnel steps f_ad<n>
 
 func _ready() -> void:
 	if not _ads_on:
@@ -92,6 +94,7 @@ func maybe_interstitial() -> void:
 	_full_showing = true
 	Game.music_pause(true)
 	ad.show()
+	_count("inter", false)
 
 func _notification(what: int) -> void:
 	if not _ads_on:
@@ -117,6 +120,7 @@ func _maybe_app_open() -> void:
 	_full_showing = true
 	Game.music_pause(true)
 	ad.show()
+	_count("open", false)
 
 func _plain_done() -> void:
 	_full_showing = false
@@ -168,7 +172,8 @@ func is_ready() -> bool:
 
 ## Plays a rewarded ad. on_reward runs (once) only if the player watched it to
 ## the end; on_close always runs afterwards (ad closed, failed, or none).
-func show_rewarded(on_reward: Callable, on_close := Callable()) -> bool:
+## place names the button for the counters (Funnel event ad_r_<place>).
+func show_rewarded(on_reward: Callable, on_close := Callable(), place := "") -> bool:
 	# Bỏ Quảng Cáo: the reward without the ad
 	if Iap.no_ads():
 		on_reward.call()
@@ -187,6 +192,7 @@ func show_rewarded(on_reward: Callable, on_close := Callable()) -> bool:
 		return false
 	_on_reward = on_reward
 	_on_close = on_close
+	_place = place
 	_rewarded = false
 	_full_showing = true
 	Game.music_pause(true)
@@ -256,9 +262,27 @@ func _finish() -> void:
 	var c := _on_close
 	_on_reward = Callable()
 	_on_close = Callable()
+	if _rewarded:
+		_count("r_" + (_place if _place != "" else "other"), true)
 	if _rewarded and r.is_valid():
 		r.call()
 	_rewarded = false
 	if c.is_valid():
 		c.call()
 	_load()
+
+## Ad counters (Firestore funnel/, read with node tools/funnel_report.mjs):
+## ad_<kind> +1 for every ad shown (rewarded only when watched to the end), and
+## for rewarded ads a per-phone running total (settings "ads_seen") that sends
+## the funnel steps f_ad1, f_ad5, ... once each, so the report shows how many
+## players ever watched 1, 5, 20... rewarded ads.
+func _count(kind: String, rewarded: bool) -> void:
+	Funnel.event("ad_" + kind)
+	if not rewarded:
+		return
+	var n := int(Game.settings.get("ads_seen", 0)) + 1
+	Game.settings["ads_seen"] = n
+	Game.save_settings()
+	for m in AD_STEPS:
+		if n >= m:
+			Funnel.device("f_ad%d" % m)

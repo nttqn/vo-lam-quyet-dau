@@ -39,6 +39,7 @@ const order = (id) => {
   if ((x = m(/^f_(fight|win)(\d+)$/))) return 2 + Number(x[2]) / 1000;
   if ((x = m(/^f_lv(\d+)$/))) return 3 + Number(x[1]) / 100;
   if ((x = m(/^f_r(\d+)s(\d+)$/))) return 4 + Number(x[1]) / 10 + Number(x[2]) / 100;
+  if ((x = m(/^f_ad(\d+)$/))) return 5.5 + Number(x[1]) / 10000;   // players who watched n rewarded ads
   if ((x = m(/^f_day(\d+)$/))) return 6 + Number(x[1]) / 100;
   if (id.startsWith("f_")) return 5;
   return 9;

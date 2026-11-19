@@ -127,6 +127,8 @@ var _hip_ue := -1
 var _hip_v := -1
 var _hip_ratio := 1.0
 var _face: MeshInstance3D
+var _wrist_mats: Array[ShaderMaterial] = []   # unarmed cường hóa glow on the wrist guards
+var _wrist_pts: Array = []        # [hand_r, lowerarm_r, hand_l, lowerarm_l] attachments
 var expr := ""                   # set each frame by the view
 var _expr_w := {}                # blend shape index -> current weight
 var _blink_t := 0.0
@@ -195,6 +197,8 @@ func _build_vrm(path: String) -> void:
 				nm.albedo_color = src.albedo_color * Color(BAKED_LIT, BAKED_LIT, BAKED_LIT)
 				nm.metallic = 0.0
 				nm.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+			if look.has("tint"):   # Boss Thế Giới stand-in: a sect model recoloured
+				nm.albedo_color *= look.tint
 			mi.set_surface_override_material(s, nm)
 			_tinted.append(nm)
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
@@ -385,8 +389,10 @@ func _weapons_and_anim() -> void:
 	# cường hóa +7 and up: glowing weapon
 	var wg := int(look.get("wglow", 0))
 	if wg > 0 and w != "none":
-		Weapons.enchant(grip_r, wg)
-		Weapons.enchant(grip_l, wg)
+		Weapons.enchant(grip_r, wg, float(look.get("height", 1.0)))
+		Weapons.enchant(grip_l, wg, float(look.get("height", 1.0)))
+	elif wg > 0:
+		_wrist_glow(wg, hr, hl)
 	hand_r_tip = _marker(hr, Vector3(0, 0.08, 0))
 	hand_l_tip = _marker(hl, Vector3(0, 0.08, 0))
 	foot_r_tip = _marker(_bone_att("ball_r"), Vector3.ZERO)
@@ -400,6 +406,95 @@ func _weapons_and_anim() -> void:
 	if L[2] != null:
 		ap.add_animation_library("m", L[2])
 	ap.callback_mode_process = AnimationMixer.ANIMATION_CALLBACK_MODE_PROCESS_MANUAL
+
+## Unarmed sects (Cái Bang, Vovinam) at cường hóa +7 and up: the weapon aura
+## goes on the wrist guards instead: an additive shell of the body mesh drawn
+## only round the forearm just above each wrist (wrist_glow.gdshader).
+func _wrist_glow(level: int, hr: Node3D, hl: Node3D) -> void:
+	var i := clampi(level, 1, 4) - 1
+	_wrist_pts = [hr, _bone_att("lowerarm_r"), hl, _bone_att("lowerarm_l")]
+	var body := vskel if vskel != null else skel
+	var want := []
+	for ub in ["lowerarm_r", "hand_r", "lowerarm_l", "hand_l"]:
+		want.append(str(_vmap.get(ub, ub)) if vskel != skel else ub)
+	for n in body.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		if String(mi.name) == "Face" or mi.skin == null:
+			continue
+		# the mesh's bone indices are skin bind slots, not skeleton bones
+		var b4 := Vector4i(-1, -1, -1, -1)
+		for b in mi.skin.get_bind_count():
+			var bn := String(mi.skin.get_bind_name(b))
+			if bn == "" and mi.skin.get_bind_bone(b) >= 0:
+				bn = body.get_bone_name(mi.skin.get_bind_bone(b))
+			var k := want.find(bn)
+			if k >= 0:
+				b4[k] = b
+		if b4 == Vector4i(-1, -1, -1, -1):
+			continue
+		mi.mesh = _arm_masked(mi.mesh, b4)
+		var m := ShaderMaterial.new()
+		m.shader = load("res://assets/shaders/wrist_glow.gdshader")
+		m.set_shader_parameter("col", Weapons.AURA_COL[i])
+		m.set_shader_parameter("strength", Weapons.AURA_STR[i])
+		m.set_shader_parameter("thick", Weapons.AURA_THICK[i])
+		mi.material_overlay = m
+		_wrist_mats.append(m)
+	_update_wrists()
+
+## The skinned mesh with UV2.x = how much each vertex follows the forearm and
+## hand bones (b4: skin bind slots). Spatial shaders cannot read bone weights
+## (skinning runs before them), so the mask is baked once per model and kept.
+static var _arm_cache := {}
+
+static func _arm_masked(src: Mesh, b4: Vector4i) -> Mesh:
+	var key := "%d:%s" % [src.get_instance_id(), b4]
+	if _arm_cache.has(key):
+		return _arm_cache[key]
+	var out := ArrayMesh.new()
+	for s in src.get_surface_count():
+		var arr: Array = src.surface_get_arrays(s)
+		var bones: PackedInt32Array = arr[Mesh.ARRAY_BONES]
+		var wts: PackedFloat32Array = arr[Mesh.ARRAY_WEIGHTS]
+		var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+		var n := verts.size()
+		var per := bones.size() / maxi(1, n)
+		var uv2 := PackedVector2Array()
+		uv2.resize(n)
+		for v in n:
+			var m := 0.0
+			for j in per:
+				var b := bones[v * per + j]
+				if b == b4.x or b == b4.y or b == b4.z or b == b4.w:
+					m += wts[v * per + j]
+			uv2[v] = Vector2(m, 0.0)
+		arr[Mesh.ARRAY_TEX_UV2] = uv2
+		var flags: int = src.surface_get_format(s) & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS
+		out.add_surface_from_arrays(src.surface_get_primitive_type(s), arr, [], {}, flags)
+		out.surface_set_material(s, src.surface_get_material(s))
+	_arm_cache[key] = out
+	return out
+
+const WRIST_LEN := 0.11      # guard length up the forearm (m, before height scale)
+const WRIST_RAD := 0.08     # reach round the forearm axis (m)
+
+func _update_wrists() -> void:
+	if not is_inside_tree() or _wrist_mats.is_empty():
+		return
+	var k := float(look.get("height", 1.0))
+	var pr := {}
+	for side in 2:
+		var wr: Node3D = _wrist_pts[side * 2]
+		var el: Node3D = _wrist_pts[side * 2 + 1]
+		var a := wr.global_position
+		var dir := (el.global_position - a).normalized()
+		var p := "r_" if side == 0 else "l_"
+		pr[p + "a"] = a - dir * 0.02 * k
+		pr[p + "b"] = a + dir * WRIST_LEN * k
+	pr["radius"] = WRIST_RAD * k
+	for m in _wrist_mats:
+		for key in pr:
+			m.set_shader_parameter(key, pr[key])
 
 func _tint(mi: MeshInstance3D, col: Color) -> void:
 	for s in mi.mesh.get_surface_count():
@@ -639,7 +734,7 @@ static func _head(g: String) -> Dictionary:
 		arr[Mesh.ARRAY_INDEX] = nidx
 		for ci in [Mesh.ARRAY_CUSTOM0, Mesh.ARRAY_CUSTOM1, Mesh.ARRAY_CUSTOM2, Mesh.ARRAY_CUSTOM3]:
 			arr[ci] = null
-		var flags := src.surface_get_format(s) & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS
+		var flags: int = src.surface_get_format(s) & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS
 		out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr, [], {}, flags)
 		out.surface_set_material(s, src.surface_get_material(s))
 	var res := {"mesh": out, "skin": skin, "extras": extras}
@@ -722,6 +817,8 @@ func finish(delta: float) -> void:
 		_ground_feet(delta)
 		if _face:
 			_update_face(delta)
+	if not _wrist_mats.is_empty():
+		_update_wrists()
 	for sm in _shaders:
 		sm.set_shader_parameter("flash", Vector3.ONE * _flash * 0.6)
 	# keep emission always on and only change its colour: toggling emission_enabled

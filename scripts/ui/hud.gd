@@ -15,6 +15,7 @@ var _banner_col := UI.GOLD
 var _skill_name := ["", ""]
 var _skill_t := [0.0, 0.0]
 var ink := false            # thủy mặc finisher: only the banner is drawn
+var dmg_mode := false       # Boss Thế Giới: running damage + the boss's Bá Thể bar
 const SEAL_COL := [Color(1.0, 0.62, 0.3), Color(0.55, 0.85, 0.45), Color(0.45, 0.7, 1.0)]
 const SEAL_TAG := ["T", "C", "Đ"]
 
@@ -120,11 +121,24 @@ func _draw() -> void:
 			draw_line(Vector2(qx, top + 36), Vector2(qx, top + 48), Color(0, 0, 0, 0.6), 2)
 		draw_rect(Rect2(ex, top + 36, ew, 12), Color(0.6, 0.75, 1.0, 0.6), false, 1.5)
 		_seal_pips(f, (ex + ew + 22.0) if left else (ex - 22.0), top + 42, 1 if left else -1)
+		if f.poise_max > 0.0:
+			# Bá Thể: drains with each hit; flashes "Phá Thế" while broken
+			var pw := bw * 0.62
+			var px0 := x0 if left else x0 + bw - pw
+			var py := top + 52
+			draw_rect(Rect2(px0, py, pw, 8), Color(0, 0, 0, 0.6))
+			if f.broken > 0:
+				var fl := 0.55 + 0.45 * sin(Time.get_ticks_msec() * 0.02)
+				draw_rect(Rect2(px0, py, pw * f.broken / float(Fighter.BREAK_FRAMES), 8), Color(1.0, 0.35, 0.2, fl))
+			else:
+				var pr := clampf(f.poise / f.poise_max, 0.0, 1.0)
+				draw_rect(Rect2(px0 + (0.0 if left else pw * (1.0 - pr)), py, pw * pr, 8), Color(1.0, 0.8, 0.3))
+			draw_rect(Rect2(px0, py, pw, 8), Color(1.0, 0.85, 0.5, 0.6), false, 1.0)
 		# name + level
 		var nm := "%s  ·  Cấp %d" % [names[i], levels[i]]
-		_text(Vector2(x0 if left else x0 + bw, top + 72), nm, 20, UI.PAPER, null, 0 if left else 2)
+		_text(Vector2(x0 if left else x0 + bw, top + 72 + (10.0 if f.poise_max > 0.0 else 0.0)), nm, 20, UI.PAPER, null, 0 if left else 2)
 		# round pips
-		for k in sim.rounds_to_win:
+		for k in (sim.rounds_to_win if not dmg_mode else 0):
 			var px := (x0 + bw - 14 - k * 26) if left else (x0 + 14 + k * 26)
 			var c := Vector2(px, top + 60)
 			draw_circle(c, 9, Color(0, 0, 0, 0.6))
@@ -150,6 +164,9 @@ func _draw() -> void:
 	draw_circle(Vector2(W * 0.5, top + 22), 34, Color(0, 0, 0, 0.6))
 	draw_arc(Vector2(W * 0.5, top + 22), 34, 0, TAU, 40, UI.GOLD, 2.5)
 	_text(Vector2(W * 0.5, top + 36), str(maxi(0, secs)), 36, UI.PAPER if secs > 10 else Color(1, 0.4, 0.3), UI.title, 1)
+	if dmg_mode:
+		_text(Vector2(W * 0.5, 186), "Sát thương", 18, UI.PAPER, null, 1)
+		_text(Vector2(W * 0.5, 222), UI.fmt(sim.f[0].stats_dealt), 34, Color(1, 0.85, 0.35), UI.title, 1, 6)
 	_draw_banner()
 
 func _draw_banner() -> void:

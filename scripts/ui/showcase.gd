@@ -23,9 +23,14 @@ func _ready() -> void:
 	add_child(cam)
 	_place_cam()
 
+## Camera distance / height / look height (a giant needs a wider frame).
+var cam_d := 5.2
+var cam_y := 1.35
+var look_y := 1.0
+
 func _place_cam() -> void:
-	cam.position = Vector3(focus_x, 1.35, 5.2)
-	cam.look_at(Vector3(focus_x, 1.0, 0))
+	cam.position = Vector3(focus_x, cam_y, cam_d)
+	cam.look_at(Vector3(focus_x, look_y, 0))
 
 func set_focus(x: float) -> void:
 	focus_x = x

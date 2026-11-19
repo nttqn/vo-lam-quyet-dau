@@ -14,11 +14,13 @@ func _ready() -> void:
 		theme = Journey.REGIONS[out.r].theme
 	elif out.mode == "dungeon":
 		theme = Dungeon.LIST[int(out.i)].theme
+	elif out.mode == "wboss":
+		theme = WBoss.today_boss().theme
 	_init_ui(theme)
 	var s := Hero.sect(h)
 	show.set_focus(1.3)
 	var b := show.add_body(Hero.look(h), s.style, 0.0, -0.4)
-	if out.won:
+	if out.won or out.mode == "wboss":
 		show.hold[0] = {"clip": "b/Idle_FoldArms", "frac": -1.0}
 	else:
 		show.hold[0] = {"clip": "b/Idle_No", "frac": -1.0}
@@ -41,7 +43,9 @@ func _ready() -> void:
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sc.add_child(body)
 	var title := UI.heading("Chiến Thắng" if out.won else "Thất Bại", 64)
-	if not out.won:
+	if out.mode == "wboss":
+		title.text = "Hạ Gục Boss!" if out.won else "Kết Thúc Lượt"
+	elif not out.won:
 		title.add_theme_color_override("font_color", Color(0.75, 0.75, 0.8))
 	body.add_child(title)
 	if out.mode == "stage":
@@ -61,6 +65,10 @@ func _ready() -> void:
 		var dl := int(out.delta)
 		body.add_child(UI.label("Tỉ Võ với %s" % out.foe, 24))
 		body.add_child(UI.label("Điểm tỉ võ %s%d  →  %d (%s)" % ["+" if dl >= 0 else "", dl, int(h.duel.score), Duel.tier(int(h.duel.score))[0]], 26, Color(0.6, 1, 0.6) if dl >= 0 else Color(1, 0.6, 0.5), UI.bold))
+	elif out.mode == "wboss":
+		var wb := WBoss.ensure(h)
+		body.add_child(UI.label("%s — sát thương %s (%d%% sinh lực lượt này)" % [out.boss, UI.fmt(int(out.dmg)), int(round(float(out.ratio) * 100))], 24, UI.GOLD, UI.bold))
+		body.add_child(UI.label("Hôm nay: %s sát thương  ·  còn %d lượt" % [UI.fmt(int(wb.dmg)), WBoss.left(h)], 20, Color(0.85, 0.82, 0.76)))
 	elif out.mode == "tower":
 		body.add_child(UI.label("Tháp Thí Luyện — Tầng %d" % int(out.f) + (" · vượt tầng mới!" if out.won and int(out.f) == Tower.best(h) else ""), 26, UI.GOLD, UI.bold))
 	elif out.mode == "arena":
@@ -131,7 +139,7 @@ func _ready() -> void:
 		rv.add_child(us)
 	body.add_child(rp)
 	# rewarded ad: double the experience and gold of a won fight
-	if out.won and (int(rw.get("exp", 0)) > 0 or int(rw.get("gold", 0)) > 0):
+	if (out.won or out.mode == "wboss") and (int(rw.get("exp", 0)) > 0 or int(rw.get("gold", 0)) > 0):
 		var dbl := UI.gold_button("▶ Xem quảng cáo: x2 kinh nghiệm & vàng", func(): pass, 19)
 		dbl.disabled = not Ads.is_ready()
 		dbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -171,6 +179,10 @@ func _ready() -> void:
 		elif not out.won and Dungeon.left(h) > 0:
 			row.add_child(UI.button("Thử lại", func(): Flow.start_dungeon(int(out.i), int(out.d)), 24, 160))
 		row.add_child(UI.button("Về Phó Bản", func(): Game.goto(DungeonScreen.new(int(out.i))), 24, 190))
+	elif out.mode == "wboss":
+		if WBoss.left(h) > 0:
+			row.add_child(UI.gold_button("Đánh tiếp (%d)" % WBoss.left(h), Flow.start_wboss, 24, 210))
+		row.add_child(UI.button("Về Boss", func(): Game.goto(WBossScreen.new()), 24, 160))
 	elif out.mode == "tower":
 		if out.won:
 			row.add_child(UI.gold_button("Tầng kế", func(): Flow.start_tower(int(out.f) + 1), 24, 170))
@@ -198,7 +210,7 @@ func back() -> void:
 
 func _double(dbl: Button, rw: Dictionary) -> void:
 	dbl.disabled = true
-	var ok := Ads.show_rewarded(func(): _doubled(dbl, rw))
+	var ok := Ads.show_rewarded(func(): _doubled(dbl, rw), Callable(), "x2")
 	if not ok:
 		dbl.disabled = false
 		toast("Chưa có quảng cáo, thử lại sau", Color(1, 0.7, 0.5))
@@ -214,7 +226,7 @@ func _doubled(dbl: Button, rw: Dictionary) -> void:
 		toast("Thăng cấp! Đạt cấp %d" % int(Game.hero.level), Color(0.6, 1.0, 0.6))
 
 func _revive() -> void:
-	if not Ads.show_rewarded(func(): Flow.start_arena(int(out.n), true)):
+	if not Ads.show_rewarded(func(): Flow.start_arena(int(out.n), true), Callable(), "arena"):
 		toast("Chưa có quảng cáo, thử lại sau", Color(1, 0.7, 0.5))
 
 ## Leaving for a menu (not straight into the next fight or its story

@@ -24,6 +24,7 @@ func _ready() -> void:
 			Gfx.set_level(int(a.substr(6)))
 			Gfx.apply(get_tree())
 		if a.begins_with("--screen="): screen = a.substr(9)
+		if a.begins_with("--wb="): WBoss.test_pick = int(a.substr(5))
 	for a in args:
 		if a.begins_with("--facetest"):
 			add_child(load("res://tools/face_test.gd").new())
@@ -54,6 +55,9 @@ func _ready() -> void:
 			return
 		if a == "--iaptest":
 			add_child(load("res://tools/iap_test.gd").new())
+			return
+		if a == "--wbsim":
+			add_child(load("res://tools/wboss_sim.gd").new())
 			return
 		if a == "--chattest":
 			add_child(load("res://tools/chat_test.gd").new())
@@ -94,7 +98,16 @@ func _ready() -> void:
 			for b in args:
 				if b.begins_with("--ehp="): e.stats.hp_max *= float(b.substr(6))   # quick KO for finisher shots
 				if b.begins_with("--rounds="): rounds = int(b.substr(9))
-			var fs := FightScene.new({"p": p, "e": e, "theme": th, "autoplay": true, "seed": 3, "rounds": rounds})
+			var fcfg := {"p": p, "e": e, "theme": th, "autoplay": true, "seed": 3, "rounds": rounds}
+			if "--boss" in args:   # Boss Thế Giới giant (pick with --wb=i)
+				var bh := Hero.create("Thử", ps)
+				bh.level = 20
+				fcfg.e = WBoss.side(bh)
+				fcfg.theme = WBoss.today_boss().theme
+				fcfg.rounds = 1
+				fcfg["time"] = WBoss.FIGHT_SECONDS
+				fcfg["wboss"] = true
+			var fs := FightScene.new(fcfg)
 			Game.goto(fs)
 			return
 	if "--backtest" in args:
@@ -115,6 +128,9 @@ func _ready() -> void:
 			var p := dgn.split(",")
 			Hero.add_exp(Game.hero, 4000)
 			Flow.start_dungeon(int(p[0]), int(p[1]), int(p[2]) if p.size() > 2 else 0, 0.7)
+		elif "--wboss" in args:
+			Hero.add_exp(Game.hero, 4000)
+			Flow.start_wboss()
 		elif "--duel" in args:
 			Flow.start_duel(Duel.bots(Game.hero, 1)[0])
 		elif tw > 0:
@@ -217,6 +233,18 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			hs.ui.add_child.call_deferred(SettingsPanel.new())
 		"map": Game.goto(MapScreen.new())
 		"char": Game.goto(CharacterScreen.new())
+		"wbossresult":
+			var wr := {"max_combo": 9, "seconds": 90.0}
+			WBoss.ensure(Game.hero).dmg = 2480
+			Game.goto(ResultScreen.new({"mode": "wboss", "won": false, "res": wr, "dmg": 2480, "ratio": 0.31, "boss": WBoss.today_boss().name, "rewards": WBoss.try_rewards(int(Game.hero.level), 0.31, false), "levels": 0}))
+		"wboss", "wbossboard":
+			var wbs := WBossScreen.new()
+			Game.goto(wbs)
+			if screen == "wbossboard":
+				var names := ["Tiêu Dao Khách", "Nguyệt Ảnh", "Bạch Vân", "Lãng Tử", "Thiết Quyền", "Hàn Băng", "Phi Yến", "Cuồng Đao"]
+				for n in 12:
+					wbs.fake_rows.append({"_id": "f%d" % n, "name": names[n % names.size()], "sect": Sects.IDS[n % 5], "level": 58 - n * 3, "dmg": 412000 - n * 27300})
+				wbs._board.call_deferred()
 		"rename":
 			var cs := CharacterScreen.new()
 			Game.goto(cs)
