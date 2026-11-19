@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- What the google-services gradle plugin would generate from google-services.json
+     for app 1:129785761911:android:9718fd14de99b18bab3672. Merged into the game's
+     resources, so FirebaseInitProvider starts Firebase (and Analytics) at launch. -->
+<resources>
+    <string name="google_app_id" translatable="false">1:129785761911:android:9718fd14de99b18bab3672</string>
+    <string name="gcm_defaultSenderId" translatable="false">129785761911</string>
+    <string name="project_id" translatable="false">vo-lam-quyet-dau</string>
+    <string name="google_api_key" translatable="false">AIzaSyDfk4DvjasObAKlireDc0Yp07Suo-HSuCc</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyDfk4DvjasObAKlireDc0Yp07Suo-HSuCc</string>
+</resources>

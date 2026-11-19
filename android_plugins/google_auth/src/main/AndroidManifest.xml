@@ -4,5 +4,8 @@
         <meta-data
             android:name="org.godotengine.plugin.v2.VLGoogleAuth"
             android:value="com.trungsmail.vlauth.VLGoogleAuth" />
+        <meta-data
+            android:name="org.godotengine.plugin.v2.VLAnalytics"
+            android:value="com.trungsmail.vlauth.VLAnalytics" />
     </application>
 </manifest>

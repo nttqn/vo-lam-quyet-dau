@@ -1,7 +1,7 @@
 @tool
 extends EditorPlugin
 ## Adds the VLGoogleAuth AAR (built in CI into bin/) and its libraries to
-## Android gradle exports.
+## Android gradle exports (also VLAnalytics: Firebase Analytics).
 
 var _exp: VLGoogleAuthExport
 
@@ -25,6 +25,7 @@ class VLGoogleAuthExport extends EditorExportPlugin:
 			"androidx.credentials:credentials:1.5.0",
 			"androidx.credentials:credentials-play-services-auth:1.5.0",
 			"com.google.android.libraries.identity.googleid:googleid:1.1.1",
+			"com.google.firebase:firebase-analytics:22.5.0",
 		])
 
 	func _get_name() -> String:

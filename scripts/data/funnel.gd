@@ -79,6 +79,7 @@ static func track(h: Dictionary) -> void:
 	for s in reached(h):
 		if not s in sent and not s in wait:
 			wait.append(s)
+			Analytics.event(s)
 			grew = true
 	if grew:
 		Game.settings["funnel_wait"] = wait
@@ -94,6 +95,7 @@ static func device(step: String) -> void:
 	if step in sent or step in wait:
 		return
 	wait.append(step)
+	Analytics.event(step)
 	Game.settings["funnel_wait"] = wait
 	Game.save_settings()
 	flush()
@@ -102,6 +104,7 @@ static func device(step: String) -> void:
 static func event(name: String) -> void:
 	if not _on() or not Cloud.enabled():
 		return
+	Analytics.event(_clean(name))
 	Cloud.bump(COLLECTION, [_clean(name)])
 
 static func _clean(s: String) -> String:

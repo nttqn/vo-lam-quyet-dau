@@ -38,6 +38,8 @@ func goto(node: Node) -> void:
 	_current = node
 	Engine.time_scale = 1.0
 	root.add_child(node)
+	var sc: Script = node.get_script()
+	Analytics.screen(sc.get_global_name() if sc else node.name)
 
 # ------------------------------------------------------------- back button
 ## Android back arrives two ways in Godot 4.7: with the classic back key the
