@@ -272,11 +272,24 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 		"rank":
 			# 50 fake rows; with --dragtest a real touch swipe is injected and the scroll offset printed
 			var rs := RankScreen.new()
-			for n in 50:
-				rs.fake_rows.append({"_id": "f%d" % n, "name": "Hiệp Khách %d" % (n + 1), "sect": Sects.IDS[n % 6], "level": 60 - n, "power": 9000 - n * 97, "tower": 80 - n, "stars": 120 - n})
+			# --ranktest: 140 rows + this hero's own, then "Xem thêm" and "Vị trí của tôi"
+			var rt := "--ranktest" in args
+			var live := "--live" in args   # --ranktest --live: real Firestore rows
+			for n in (0 if live else 140 if rt else 50):
+				rs.fake_rows.append({"_id": "f%d" % n, "name": "Hiệp Khách %d" % (n + 1), "sect": Sects.IDS[n % 6], "level": 60 - n / 3, "power": 9000 - n * (70 if rt else 97), "tower": 80 - n / 2, "stars": 120 - n})
+			if rt and not live and not Game.hero.is_empty():
+				var mine := Ranks.fields(Game.hero)
+				mine["_id"] = "%s_%d" % [Cloud.uid, Game.slot]
+				rs.fake_rows.append(mine)
+			if live:
+				# read-only: no RankScreen (it would publish the test hero)
+				_rank_live_test.call_deferred()
+				return
 			Game.goto(rs)
 			if "--dragtest" in args:
 				_drag_test.call_deferred(rs)
+			if rt:
+				_rank_test.call_deferred(rs)
 		"foreign", "foreign2":
 			Game.hero.insight = {"cai_bang:0": 18, "nga_mi:1": 7, "duong_mon:2": 3, "vo_dang:3": 1}
 			Insight.equip(Game.hero, "cai_bang:0", 2)
@@ -404,3 +417,35 @@ func _turn_test(hs: HubScreen) -> void:
 	for i in 40:
 		await get_tree().process_frame
 	print("TURNTEST after_drag=%.2f after_fling=%.2f" % [after_drag, hs.show.turn])
+
+## Rank paging: top page, "Xem thêm", then "Vị trí của tôi" (screenshot after).
+func _rank_test(rs: RankScreen) -> void:
+	for i in 15:
+		await get_tree().process_frame
+	print("RANKTEST top rows=%d place=%d me_btn=%s more=%s" % [rs._rows.size(), rs._place, rs._me_btn.visible, not rs._next.is_empty()])
+	await rs._load_more()
+	print("RANKTEST more rows=%d next=%s" % [rs._rows.size(), not rs._next.is_empty()])
+	await rs._load_more()
+	print("RANKTEST more2 rows=%d next=%s" % [rs._rows.size(), not rs._next.is_empty()])
+	await rs._show_me()
+	var me := rs._mine_row()
+	print("RANKTEST around start=%d rows=%d mine_at=%d scroll=%d" % [rs._start, rs._rows.size(), me.get_index() if me else -1, rs._sc.scroll_vertical])
+
+## --ranktest --live: cursor paging and the ascending "above me" query
+## against the real rank collection (pages of 3 must equal one page of 6).
+func _rank_live_test() -> void:
+	for i in 600:
+		await get_tree().process_frame
+		if Cloud.enabled() and Cloud.uid != "":
+			break
+	var six: Array = await Cloud.query(Ranks.COLLECTION, "power", 6)
+	var a: Array = await Cloud.query(Ranks.COLLECTION, "power", 3)
+	var b: Array = await Cloud.query(Ranks.COLLECTION, "power", 3, null, null, false, a.back() if a.size() > 0 else {})
+	var ids := func(rows: Array) -> Array: return rows.map(func(r): return "%s=%d" % [r._id.substr(0, 6), int(r.power)])
+	print("LIVE six  ", ids.call(six), " err=", Cloud.last_error)
+	print("LIVE 3+3  ", ids.call(a + b))
+	var v := int(six[3].power) if six.size() > 3 else 0
+	var up: Array = await Cloud.query(Ranks.COLLECTION, "power", 2, v + 1, null, true)
+	var dn: Array = await Cloud.query(Ranks.COLLECTION, "power", 2, null, v)
+	print("LIVE around v=%d up(asc)=%s down=%s above=%d err=%s" % [v, ids.call(up), ids.call(dn), await Cloud.count_above(Ranks.COLLECTION, "power", v), Cloud.last_error])
+	get_tree().quit()

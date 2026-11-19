@@ -534,16 +534,24 @@ func sum_field(collection: String, field: String) -> int:
 			return int(_fs_plain(res.get("aggregateFields", {}).get("s", {})))
 	return -1
 
-## Documents of a collection ordered by `order_field` (descending), optionally
-## with order_field between lo and hi. Returns plain dicts with "_id" = doc id.
-func query(collection: String, order_field: String, limit: int, lo = null, hi = null) -> Array:
+## Documents of a collection ordered by `order_field` (descending, or
+## ascending with `asc`), optionally with order_field between lo and hi.
+## `after`: a row from a previous page (same query); the page continues
+## right after it (ties broken by document name). Returns plain dicts with
+## "_id" = doc id and "_name" = full document name.
+func query(collection: String, order_field: String, limit: int, lo = null, hi = null, asc := false, after := {}) -> Array:
 	if not await _ensure_token():
 		return []
+	var dir := "ASCENDING" if asc else "DESCENDING"
 	var sq := {
 		"from": [{"collectionId": collection}],
-		"orderBy": [{"field": {"fieldPath": order_field}, "direction": "DESCENDING"}],
+		"orderBy": [{"field": {"fieldPath": order_field}, "direction": dir}],
 		"limit": limit,
 	}
+	if not after.is_empty():
+		# explicit __name__ order (Firestore adds it implicitly in the same direction)
+		sq.orderBy.append({"field": {"fieldPath": "__name__"}, "direction": dir})
+		sq["startAt"] = {"values": [_fs_value(after.get(order_field, 0)), {"referenceValue": str(after.get("_name", ""))}], "before": false}
 	var filters := []
 	if lo != null:
 		filters.append({"fieldFilter": {"field": {"fieldPath": order_field}, "op": "GREATER_THAN_OR_EQUAL", "value": _fs_value(lo)}})
@@ -569,6 +577,7 @@ func query(collection: String, order_field: String, limit: int, lo = null, hi = 
 				plain[k] = _fs_plain(fl[k])
 			var nm := str(d.get("name", ""))
 			plain["_id"] = nm.get_slice("/", nm.get_slice_count("/") - 1)
+			plain["_name"] = nm
 			out.append(plain)
 	return out
 
