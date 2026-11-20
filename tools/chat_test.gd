@@ -21,6 +21,21 @@ func _run() -> void:
 	_ok(Chat.clean("  fuck   you\n bro ") == "**** you bro", "whitespace folded: " + Chat.clean("  fuck   you\n bro "))
 	_ok(Chat.clean("x".repeat(200)).length() == Chat.MAX_LEN, "length cap")
 	_ok(Chat.clean("   ") == "", "blank -> empty")
+	_ok(Chat.safe_name("bú lồn") == "bú ***", "name censor: " + Chat.safe_name("bú lồn"))
+	var dec := "bu" + String.chr(0x301) + " lo" + String.chr(0x302) + String.chr(0x300) + "n"
+	_ok(Chat.censor(dec) != dec, "decomposed lồn caught")
+	var dec2 := "BÚ LÔ" + String.chr(0x300) + "N"
+	_ok(Chat.censor(dec2) != dec2, "partly decomposed caps caught")
+	var dd := "d" + String.chr(0x335) + "i" + String.chr(0x323) + "t"
+	_ok(Chat.censor(dd) != dd, "d-stroke overlay caught")
+	_ok(Chat.compose("Tiêu Dao Khách") == "tiêu dao khách", "compose leaves composed text")
+	_ok(Chat.safe_name("Hỏa Long") == "Hỏa Long" and Chat.safe_name("chơi hèn") == "chơi hèn", "normal names untouched")
+	var mh := Hero.migrate({"name": "bú lồn", "sect": "cai_bang", "rename_at": 999999999999})
+	_ok(mh.name == "bú ***" and float(mh.rename_at) == 0.0, "migrate stars old name, frees rename: %s" % mh.name)
+	if "--offline" in OS.get_cmdline_user_args():
+		print("chattest done, fails=%d" % fails)
+		get_tree().quit(1 if fails > 0 else 0)
+		return
 	_ok(absf(Chat.unix("2026-11-18T10:00:05.250Z") - Chat.unix("2026-11-18T10:00:05Z") - 0.25) < 0.001, "rfc3339 fraction")
 	print("clock: ", Chat.clock("2026-11-18T10:00:05.250Z"))
 	if Cloud.enabled():

@@ -244,7 +244,7 @@ func _board() -> void:
 		var no := UI.label("%d" % (i + 1), 22, UI.GOLD if i < 3 else UI.PAPER, UI.title)
 		no.custom_minimum_size.x = 44
 		line.add_child(no)
-		var nm := UI.label("%s  ·  %s  ·  Cấp %d" % [str(r.get("name", "?")), Sects.get_sect(str(r.get("sect", "vo_dang"))).name, int(r.get("level", 1))], 18, UI.PAPER)
+		var nm := UI.label("%s  ·  %s  ·  Cấp %d" % [Chat.safe_name(r.get("name", "?")), Sects.get_sect(str(r.get("sect", "vo_dang"))).name, int(r.get("level", 1))], 18, UI.PAPER)
 		nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		nm.clip_text = true
 		line.add_child(nm)

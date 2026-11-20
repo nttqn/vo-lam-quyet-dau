@@ -164,7 +164,7 @@ func _msg_row(m: Dictionary) -> Control:
 	var head := UI.hbox(8)
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(head)
-	var nm := UI.label(str(m.get("name", "?")), 18, Color(0.6, 1, 0.6) if me else UI.GOLD, UI.bold)
+	var nm := UI.label(Chat.safe_name(m.get("name", "?")), 18, Color(0.6, 1, 0.6) if me else UI.GOLD, UI.bold)
 	head.add_child(nm)
 	var sect := Sects.get_sect(str(m.get("sect", "vo_dang")))
 	head.add_child(UI.label("%s · Cấp %d" % [sect.get("name", ""), int(m.get("level", 1))], 14, Color(0.72, 0.7, 0.64)))
@@ -281,7 +281,7 @@ func _rules_panel() -> Control:
 	return root
 
 func _actions(m: Dictionary, me: bool) -> Control:
-	var mv := _modal(str(m.get("name", "?")))
+	var mv := _modal(Chat.safe_name(m.get("name", "?")))
 	var root: Control = mv[0]
 	var v: VBoxContainer = mv[1]
 	var t := UI.label("“%s”" % str(m.get("text", "")), 18, Color(0.85, 0.82, 0.75))

@@ -52,6 +52,10 @@ static func migrate(d: Dictionary) -> Dictionary:
 	for k in base:
 		if not d.has(k):
 			d[k] = base[k]
+	# names made before the 1.1.1 swear check: star the word, free the rename
+	if Chat.censor(str(d.name)) != str(d.name):
+		d.name = Chat.censor(str(d.name))
+		d.rename_at = 0
 	# JSON numbers come back as floats
 	d.level = int(d.level)
 	d.exp = int(d.exp)

@@ -48,8 +48,51 @@ static func _res() -> void:
 	_rep_re = RegEx.create_from_string("(.)\\1+")
 	_ws_re = RegEx.create_from_string("\\s+")
 
+## Vietnamese vowels, one row per base, columns = no tone, huyền, sắc, hỏi, ngã, nặng.
+const _VN_ROWS := ["aàáảãạ", "ăằắẳẵặ", "âầấẩẫậ", "eèéẻẽẹ", "êềếểễệ", "iìíỉĩị",
+	"oòóỏõọ", "ôồốổỗộ", "ơờớởỡợ", "uùúủũụ", "ưừứửữự", "yỳýỷỹỵ"]
+const _TONE_MARKS := {0x300: 1, 0x301: 2, 0x309: 3, 0x303: 4, 0x323: 5}
+## base row → row after a circumflex (0x302), breve (0x306) or horn (0x31B)
+const _MOD_MARKS := {0x302: {0: 2, 3: 4, 6: 7}, 0x306: {0: 1}, 0x31B: {6: 8, 9: 10}}
+
+## Lower-cases and folds combining accents (keyboards that type "o" + U+0302 +
+## U+0300 instead of "ồ") into the precomposed letters the swear list uses.
+static func compose(text: String) -> String:
+	var t := text.to_lower()
+	var out := PackedStringArray()
+	for i in t.length():
+		var c := t.unicode_at(i)
+		var tone: int = _TONE_MARKS.get(c, 0)
+		if tone > 0 or _MOD_MARKS.has(c):
+			if out.size() > 0:
+				var prev: String = out[out.size() - 1]
+				for r in _VN_ROWS.size():
+					var row: String = _VN_ROWS[r]
+					var col := row.find(prev)
+					if col < 0:
+						continue
+					if tone > 0:
+						if col == 0:
+							out[out.size() - 1] = row[tone]
+					elif _MOD_MARKS[c].has(r):
+						var to: String = _VN_ROWS[_MOD_MARKS[c][r]]
+						out[out.size() - 1] = to[col]
+					break
+			continue   # stray marks are dropped
+		if c == 0x335 or c == 0x336:   # d + stroke overlay
+			if out.size() > 0 and out[out.size() - 1] == "d":
+				out[out.size() - 1] = "đ"
+			continue
+		out.append(String.chr(c))
+	return "".join(out)
+
+## Another player's name as shown: swear words starred (names made before
+## 1.1.1, old app versions and edited saves were never checked).
+static func safe_name(v) -> String:
+	return censor(str(v))
+
 static func _is_swear(w: String) -> bool:
-	var lower := w.to_lower()
+	var lower := compose(w)
 	if SWEARS.has(lower):
 		return true
 	# repeated letters folded, so "địttt" and "vclll" are caught too

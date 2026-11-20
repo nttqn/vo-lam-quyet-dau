@@ -130,7 +130,7 @@ static func side(doc: Dictionary) -> Dictionary:
 	var st: Dictionary = snap.stats
 	for k in st:
 		st[k] = float(st[k])
-	return {"sect": str(snap.sect), "name": str(snap.name), "level": int(snap.level), "stats": st, "skills": sk,
+	return {"sect": str(snap.sect), "name": Chat.safe_name(snap.name), "level": int(snap.level), "stats": st, "skills": sk,
 		"look": lk, "ai": AI, "boss": false, "title": "%s · %d điểm" % [tier(int(doc.get("score", START)))[0], int(doc.get("score", START))]}
 
 ## Offline / empty-season fallback: generated rivals around the hero's level.

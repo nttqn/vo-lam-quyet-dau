@@ -294,7 +294,7 @@ func _row(r: Dictionary, place: int, me: bool) -> Control:
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.mouse_filter = Control.MOUSE_FILTER_PASS
 	row.add_child(info)
-	var nm := UI.label(str(r.get("name", "?")), 20, Color(0.6, 1, 0.6) if me else UI.GOLD, UI.bold)
+	var nm := UI.label(Chat.safe_name(r.get("name", "?")), 20, Color(0.6, 1, 0.6) if me else UI.GOLD, UI.bold)
 	nm.clip_text = true
 	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	info.add_child(nm)

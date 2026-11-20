@@ -106,7 +106,7 @@ func _rival_row(doc: Dictionary) -> Control:
 	row.add_child(info)
 	var sc := int(doc.get("score", Duel.START))
 	var tr: Array = Duel.tier(sc)
-	info.add_child(UI.label(str(doc.get("name", "?")), 22, UI.GOLD, UI.bold))
+	info.add_child(UI.label(Chat.safe_name(doc.get("name", "?")), 22, UI.GOLD, UI.bold))
 	info.add_child(UI.label("%s  ·  Cấp %d  ·  Lực chiến %d  ·  %s %d" % [Sects.get_sect(str(doc.get("sect", "vo_dang"))).name, int(doc.get("level", 1)), int(doc.get("power", 0)), tr[0], sc], 16, Color(0.85, 0.82, 0.75)))
 	var win := int(round(Duel.K * (1.0 - Duel.expected(int(d.score), sc))))
 	info.add_child(UI.label("Thắng +%d điểm" % maxi(4, win), 15, Color(0.6, 1, 0.6)))
@@ -132,7 +132,7 @@ func _load_board() -> void:
 		var rk := UI.label("%d" % (i + 1), 18, UI.GOLD if i < 3 else UI.PAPER, UI.bold)
 		rk.custom_minimum_size.x = 34
 		row.add_child(rk)
-		var nm := UI.label("%s · %s" % [str(t.get("name", "?")), Sects.get_sect(str(t.get("sect", "vo_dang"))).name], 17, Color(0.6, 1, 0.6) if me else UI.PAPER)
+		var nm := UI.label("%s · %s" % [Chat.safe_name(t.get("name", "?")), Sects.get_sect(str(t.get("sect", "vo_dang"))).name], 17, Color(0.6, 1, 0.6) if me else UI.PAPER)
 		nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		nm.clip_text = true
 		nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
