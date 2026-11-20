@@ -19,6 +19,7 @@ var _rr := 0
 func _ready() -> void:
 	get_tree().set_quit_on_go_back(false)
 	get_tree().node_added.connect(_touch_scroll)
+	get_tree().node_added.connect(_lite_node)
 	_load_settings()
 	Gfx.set_level(settings.get("gfx", -1))
 	Gfx.apply(get_tree())
@@ -27,7 +28,8 @@ func _ready() -> void:
 		var t := Timer.new()
 		t.wait_time = float(Diag.value("memlog_s", 5.0))
 		t.autostart = true
-		t.timeout.connect(func(): print("MEM godot_static=%.1fMB objs=%d tex=%.1fMB fps=%d draws=%d prims=%d objs3d=%d proc=%.1fms phys=%.1fms" % [OS.get_static_memory_usage() / 1048576.0, Performance.get_monitor(Performance.OBJECT_COUNT), Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1048576.0, Engine.get_frames_per_second(), Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME), Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0, Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0]))
+		t.timeout.connect(_memlog)
+		RenderingServer.viewport_set_measure_render_time(get_tree().root.get_viewport_rid(), true)
 		add_child(t)
 
 # ------------------------------------------------------------- navigation
@@ -252,6 +254,11 @@ func _write_json(path: String, data) -> void:
 	f.close()
 	DirAccess.rename_absolute(ProjectSettings.globalize_path(tmp), ProjectSettings.globalize_path(path))
 
+## Gfx Thấp: per-vertex lighting on every 3D mesh that enters the tree.
+func _lite_node(n: Node) -> void:
+	if n is GeometryInstance3D and Gfx.lite():
+		Gfx.lite_geometry.call_deferred(n)
+
 ## Touch scrolling everywhere: panels/containers inside a ScrollContainer default
 ## to MOUSE_FILTER_STOP and swallow the swipe, so lists made of panels could not
 ## be scrolled by dragging on them. Make them PASS (buttons, sliders and the
@@ -269,3 +276,7 @@ func _touch_scroll(n: Node) -> void:
 			return
 		p = p.get_parent()
 
+
+func _memlog() -> void:
+	var vp := get_tree().root.get_viewport_rid()
+	print("MEM godot_static=%.1fMB objs=%d tex=%.1fMB fps=%d draws=%d prims=%d gpu=%.2fms rcpu=%.2fms proc=%.1fms" % [OS.get_static_memory_usage() / 1048576.0, Performance.get_monitor(Performance.OBJECT_COUNT), Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1048576.0, Engine.get_frames_per_second(), Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME), RenderingServer.viewport_get_measured_render_time_gpu(vp), RenderingServer.viewport_get_measured_render_time_cpu(vp) + RenderingServer.get_frame_setup_time_cpu(), Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0])

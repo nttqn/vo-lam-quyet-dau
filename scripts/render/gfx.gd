@@ -6,7 +6,7 @@ class_name Gfx
 
 const NAMES := ["Thấp", "Thường", "Cao"]
 const HINTS := [
-	"Nhẹ máy, tiết kiệm pin: 30 FPS, ít hạt, bớt cây cối, không bóng đổ.",
+	"Nhẹ máy, tiết kiệm pin: 30 FPS, độ phân giải thấp, ánh sáng đơn giản, bớt cây cối, không bóng đổ.",
 	"Cân bằng: 60 FPS, khử răng cưa 2x.",
 	"Đẹp nhất: FPS theo màn hình, khử răng cưa 4x, bóng đổ nét, thêm hạt, hào quang và vệt chém dài.",
 ]
@@ -20,6 +20,10 @@ static func set_level(v) -> void:
 
 static func level() -> int:
 	return auto_level() if _lv < 0 else _lv
+
+## Thấp: everything cut for weak GPUs (Adreno 5xx / Mali-T8xx).
+static func lite() -> bool:
+	return level() == 0
 
 static func high() -> bool:
 	return level() >= 2
@@ -46,7 +50,8 @@ static func apply(tree: SceneTree) -> void:
 	var lv := level()
 	var vp := tree.root
 	vp.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X][lv]
-	vp.scaling_3d_scale = 0.8 if lv == 0 else 1.0
+	# weak phones are fill-rate bound (the menu lagged too): fewer 3D pixels
+	vp.scaling_3d_scale = 0.75 if lv == 0 else 1.0
 	# Meshy models carry auto LODs: Thấp switches to the coarse ones much earlier
 	# (fighters and scenery are 20–50k triangles each; Adreno 5xx chokes on them)
 	vp.mesh_lod_threshold = 6.0 if lv == 0 else 1.0
@@ -66,6 +71,33 @@ static func prop_cap(name: String) -> int:
 	if level() > 0:
 		return -1
 	return {"pine": 4, "tree": 4, "rock": 3}.get(name, -1)
+
+## Thấp: light per vertex instead of per pixel. The fragment shader then only
+## samples the texture, which is most of the cost on a weak GPU. Called for
+## every GeometryInstance3D that enters the tree (Game._lite_node), deferred
+## so the builders have set their materials.
+static func lite_geometry(g: GeometryInstance3D) -> void:
+	if not is_instance_valid(g) or not lite() or Diag.on("no_vlit"):
+		return
+	_vertex_lit(g.material_override)
+	if g is MeshInstance3D:
+		var mi := g as MeshInstance3D
+		if mi.mesh == null:
+			return
+		for s in mi.mesh.get_surface_count():
+			_vertex_lit(mi.get_active_material(s))
+
+static func _vertex_lit(m: Material) -> void:
+	if m is BaseMaterial3D:
+		var bm := m as BaseMaterial3D
+		if bm.shading_mode == BaseMaterial3D.SHADING_MODE_PER_PIXEL:
+			bm.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+			if bm.albedo_texture == null and bm.specular_mode != BaseMaterial3D.SPECULAR_DISABLED:
+				# big flat arena shapes lose the sun sheen per vertex: brighten
+				var c := bm.albedo_color
+				bm.albedo_color = Color(minf(1.0, c.r * 1.3), minf(1.0, c.g * 1.3), minf(1.0, c.b * 1.3), c.a)
+	if m != null and m.next_pass != null:
+		_vertex_lit(m.next_pass)
 
 ## Per-arena sun shadow tweak.
 static func sun(light: DirectionalLight3D) -> void:
