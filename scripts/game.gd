@@ -25,9 +25,9 @@ func _ready() -> void:
 	_load_audio()
 	if Diag.on("memlog"):
 		var t := Timer.new()
-		t.wait_time = 5.0
+		t.wait_time = float(Diag.value("memlog_s", 5.0))
 		t.autostart = true
-		t.timeout.connect(func(): print("MEM godot_static=%.1fMB objs=%d tex=%.1fMB fps=%d" % [OS.get_static_memory_usage() / 1048576.0, Performance.get_monitor(Performance.OBJECT_COUNT), Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1048576.0, Engine.get_frames_per_second()]))
+		t.timeout.connect(func(): print("MEM godot_static=%.1fMB objs=%d tex=%.1fMB fps=%d draws=%d prims=%d objs3d=%d proc=%.1fms phys=%.1fms" % [OS.get_static_memory_usage() / 1048576.0, Performance.get_monitor(Performance.OBJECT_COUNT), Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1048576.0, Engine.get_frames_per_second(), Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME), Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME), Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0, Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0]))
 		add_child(t)
 
 # ------------------------------------------------------------- navigation
@@ -268,3 +268,4 @@ func _touch_scroll(n: Node) -> void:
 			c.mouse_filter = Control.MOUSE_FILTER_PASS
 			return
 		p = p.get_parent()
+

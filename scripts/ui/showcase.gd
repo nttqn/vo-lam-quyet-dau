@@ -39,6 +39,8 @@ func set_focus(x: float) -> void:
 
 func clear() -> void:
 	for b in bodies:
+		if b.has_meta("blob"):
+			(b.get_meta("blob") as Node).queue_free()
 		b.queue_free()
 	bodies.clear()
 	styles.clear()
@@ -57,6 +59,11 @@ func add_body(look: Dictionary, style: String, x: float, yaw := -0.5) -> Avatar:
 		y = -PI * 0.5 + (yaw - PI) * 1.4   # facing left
 	b.rotation.y = y
 	add_child(b)
+	if not Gfx.shadows():
+		var sh := Arena.blob(Vector2(1.0, 0.75) * float(look.get("height", 1.0)))
+		sh.position = Vector3(x, 0.02, 0)
+		add_child(sh)
+		b.set_meta("blob", sh)
 	bodies.append(b)
 	styles.append(style)
 	_base_yaw.append(y)

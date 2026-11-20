@@ -153,24 +153,7 @@ func _ready() -> void:
 	Game.music("fight")
 
 func _shadow(v: FighterView) -> void:
-	var mi := MeshInstance3D.new()
-	var pm := PlaneMesh.new()
-	pm.size = Vector2(1.1, 0.7)
-	mi.mesh = pm
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	var g := Gradient.new()
-	g.set_color(0, Color(0, 0, 0, 0.45))
-	g.set_color(1, Color(0, 0, 0, 0))
-	var gt := GradientTexture2D.new()
-	gt.gradient = g
-	gt.fill = GradientTexture2D.FILL_RADIAL
-	gt.fill_from = Vector2(0.5, 0.5)
-	gt.fill_to = Vector2(1.0, 0.5)
-	m.albedo_texture = gt
-	mi.material_override = m
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mi := Arena.blob()
 	v.set_meta("shadow", mi)
 	add_child(mi)
 

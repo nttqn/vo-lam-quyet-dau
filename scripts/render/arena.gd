@@ -299,7 +299,37 @@ func gate(pos: Vector3, s := 1.0, col := Color(0.65, 0.14, 0.1)) -> void:
 	_mesh(box(1.2 * s, 0.6 * s, 0.1 * s), m(Color(0.1, 0.1, 0.1)), pos + Vector3(0, 3.75 * s, 0.25 * s))
 
 ## Meshy prop if the game has one: <name>_<theme> first, then <name>.
+var _prop_n := {}
+
+## Soft round shadow under a figure, for when real shadows are off (Thấp) or
+## to deepen the contact shadow in fights.
+static func blob(size := Vector2(1.1, 0.7)) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var pm := PlaneMesh.new()
+	pm.size = size
+	mi.mesh = pm
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var g := Gradient.new()
+	g.set_color(0, Color(0, 0, 0, 0.45))
+	g.set_color(1, Color(0, 0, 0, 0))
+	var gt := GradientTexture2D.new()
+	gt.gradient = g
+	gt.fill = GradientTexture2D.FILL_RADIAL
+	gt.fill_from = Vector2(0.5, 0.5)
+	gt.fill_to = Vector2(1.0, 0.5)
+	m.albedo_texture = gt
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return mi
+
 func _prop(name: String, pos: Vector3, height: float, yaw: float) -> bool:
+	var cap := Gfx.prop_cap(name)
+	if cap >= 0 and Props.has(name):
+		_prop_n[name] = int(_prop_n.get(name, 0)) + 1
+		if _prop_n[name] > cap:
+			return true   # skipped on purpose: no built stand-in either
 	for n in [name + "_" + theme, name]:
 		if Props.has(n):
 			return Props.place(self, n, pos, height, yaw) != null
