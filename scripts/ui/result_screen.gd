@@ -50,6 +50,8 @@ func _ready() -> void:
 	body.add_child(title)
 	if out.mode == "stage":
 		var foe: Array = Journey.REGIONS[out.r].foes[out.s]
+		if out.get("nm", false):
+			body.add_child(UI.label("Ác Mộng · %s · Cấp %d" % [Journey.REGIONS[out.r].name, Journey.nm_level(out.r, out.s)], 21, Color(0.85, 0.6, 1.0), UI.bold))
 		body.add_child(UI.label(("Đã hạ " if out.won else "Không địch nổi ") + "%s — %s" % [foe[0], foe[1]], 24))
 		if out.won:
 			var stars: int = out.stars
@@ -165,11 +167,14 @@ func _ready() -> void:
 	var row := UI.hbox(12)
 	right.add_child(row)
 	if out.mode == "stage":
-		row.add_child(UI.button("Đấu lại", func(): Flow.start_stage(out.r, out.s), 24, 160))
+		var nm: bool = out.get("nm", false)
+		row.add_child(UI.button("Đấu lại", func(): Flow.start_any(out.r, out.s, nm), 24, 160))
 		var next_ok: bool = out.won and out.s < 5
 		if next_ok:
-			row.add_child(UI.gold_button("Trận kế", func(): Flow.start_stage(out.r, out.s + 1), 24, 170))
-		row.add_child(UI.button("Bản đồ", func(): Game.goto(MapScreen.new()), 24, 150))
+			row.add_child(UI.gold_button("Trận kế", func(): Flow.start_any(out.r, out.s + 1, nm), 24, 170))
+		row.add_child(UI.button("Bản đồ", func():
+			MapScreen.last_nm = nm
+			Game.goto(MapScreen.new()), 24, 150))
 	elif out.mode == "duel":
 		row.add_child(UI.gold_button("Tỉ võ tiếp", func(): Game.goto(DuelScreen.new()), 24, 190))
 		row.add_child(UI.button("Về sảnh", func(): Game.goto(HubScreen.new()), 24, 170))

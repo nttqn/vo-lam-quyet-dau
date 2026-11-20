@@ -108,14 +108,90 @@ func _reset() -> void:
 	refresh_wallet()
 	_build()
 
+# ------------------------------------------------------------ danh hiệu
+func _title_dialog() -> void:
+	var h := Game.hero
+	var root := Control.new()
+	root.add_to_group("modal")
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.7)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.add_child(dim)
+	var p := UI.panel()
+	p.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	p.offset_left = 180
+	p.offset_right = -180
+	p.offset_top = 40
+	p.offset_bottom = -40
+	root.add_child(p)
+	var v := UI.vbox(10)
+	p.add_child(v)
+	v.add_child(UI.heading("Danh Hiệu", 40))
+	v.add_child(UI.label("Danh hiệu hiện dưới tên ở sảnh, bảng xếp hạng và khi người khác xem thông tin của bạn.", 17, Color(0.8, 0.77, 0.7)))
+	var sc := ScrollContainer.new()
+	sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	sc.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	v.add_child(sc)
+	var list := UI.vbox(6)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sc.add_child(list)
+	var owned := Titles.owned(h)
+	var worn := Titles.worn(h)
+	for id in Titles.LIST:
+		var has: bool = id in owned
+		var r := UI.hbox(12)
+		var info := UI.vbox(0)
+		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		r.add_child(info)
+		info.add_child(UI.label(Titles.name_of(id), 22, Titles.color(id) if has else Color(0.5, 0.48, 0.45), UI.bold))
+		info.add_child(UI.label(Titles.LIST[id][2], 16, Color(0.8, 0.77, 0.7) if has else Color(0.55, 0.52, 0.5)))
+		var tid: String = id
+		var b: Button
+		if id == worn:
+			b = UI.button("Đang đeo", func(): pass, 18, 140)
+			b.disabled = true
+		elif has:
+			b = UI.gold_button("Đeo", func():
+				Titles.wear(h, tid)
+				Game.save()
+				root.queue_free()
+				_build(), 18, 140)
+		else:
+			b = UI.button("Chưa đạt", func(): pass, 18, 140)
+			b.disabled = true
+		r.add_child(b)
+		list.add_child(r)
+	var br := UI.hbox(12)
+	br.alignment = BoxContainer.ALIGNMENT_CENTER
+	v.add_child(br)
+	if worn != "":
+		br.add_child(UI.button("Bỏ danh hiệu", func():
+			Titles.wear(h, "")
+			Game.save()
+			root.queue_free()
+			_build(), 20, 200))
+	br.add_child(UI.gold_button("Đóng", root.queue_free, 20, 160))
+	ui.add_child(root)
+
 # ------------------------------------------------------------ đổi tên
 func _name_row() -> HBoxContainer:
 	var h := Game.hero
-	var row := UI.hbox(12)
+	var row := UI.hbox(10)
+	var nv := UI.vbox(0)
+	nv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(nv)
 	var n := UI.label(str(h.name), 30, UI.GOLD, UI.bold)
-	n.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	n.clip_text = true
-	row.add_child(n)
+	nv.add_child(n)
+	# worn danh hiệu under the name; the button opens the list
+	var tid := Titles.worn(h)
+	var tl := UI.label("« %s »" % Titles.name_of(tid) if tid != "" else "Chưa đeo danh hiệu", 17, Titles.color(tid) if tid != "" else Color(0.7, 0.67, 0.6), UI.bold)
+	tl.clip_text = true
+	nv.add_child(tl)
+	var tb := UI.button("Danh hiệu %d/%d" % [Titles.owned(h).size(), Titles.LIST.size()], _title_dialog, 18)
+	tb.custom_minimum_size.y = 50
+	row.add_child(tb)
 	var left := Hero.rename_left(h)
 	var b: Button
 	if left > 0.0:

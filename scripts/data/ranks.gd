@@ -14,15 +14,26 @@ const BOARDS := [
 
 static var _last := {}   # slot -> fields last sent
 
+## Heroes below this level are not listed (fresh throwaway heroes were most
+## of the rank writes and of the rows people scrolled past).
+const MIN_LEVEL := 2
+
+## Giang Hồ stars: story + Ác Mộng.
 static func stars(h: Dictionary) -> int:
 	var n := 0
 	for k in h.get("stars", {}):
 		n += int(h.stars[k])
+	for k in h.get("nstars", {}):
+		n += int(h.nstars[k])
 	return n
 
 static func fields(h: Dictionary) -> Dictionary:
 	return {"name": str(h.name).substr(0, 24), "sect": str(h.sect), "level": int(h.level),
-		"power": Hero.power(h), "tower": Tower.best(h), "stars": stars(h), "outfit": str(h.get("outfit", ""))}
+		"power": Hero.power(h), "tower": Tower.best(h), "stars": stars(h), "outfit": str(h.get("outfit", "")),
+		"title": Titles.worn(h)}
+
+static func listed(h: Dictionary) -> bool:
+	return not h.is_empty() and int(h.get("level", 1)) >= MIN_LEVEL
 
 static func value(h: Dictionary, board: String) -> int:
 	return int(fields(h)[board])
@@ -48,14 +59,14 @@ static func set_hidden(on: bool) -> void:
 		await Cloud.delete_doc(Duel.collection(), "")
 		for i in Game.SLOTS:
 			await Cloud.delete_doc(WBoss.collection(), "_%d" % i)
-	elif Game.slot >= 0 and not Game.hero.is_empty():
+	elif Game.slot >= 0 and listed(Game.hero):
 		var f := fields(Game.hero)
 		_last[Game.slot] = f
 		await Cloud.put_doc(COLLECTION, "_%d" % Game.slot, f)
 
 ## Fire-and-forget upload of this hero's row if it changed.
 static func publish(h: Dictionary, slot: int) -> void:
-	if not Cloud.enabled() or slot < 0 or h.is_empty() or hidden():
+	if not Cloud.enabled() or slot < 0 or not listed(h) or hidden():
 		return
 	var f := fields(h)
 	if _last.get(slot, {}) == f:

@@ -1,28 +1,33 @@
 class_name MapScreen
 extends Screen
-## Journey: region tabs + duel list.
+## Journey: region tabs + duel list, story (Thường) or Ác Mộng.
 
 static var last_region := -1
+static var last_nm := false
+const NM_COL := Color(0.85, 0.6, 1.0)
 var region := 0
+var nm := false
 var _tabs: VBoxContainer
 var _list: VBoxContainer
 var _title: Label
 var _intro: Label
+var _mode_row: HBoxContainer
 
 func _ready() -> void:
 	var h := Game.hero
+	nm = last_nm and int(h.level) >= Journey.NM_MIN_LEVEL
 	region = last_region
-	if region < 0 or not Journey.region_unlocked(h, region):
+	if region < 0 or not _region_ok(h, region):
 		region = 0
 		for r in Journey.REGIONS.size():
-			if Journey.region_unlocked(h, r):
+			if _region_ok(h, r):
 				region = r
 	_init_ui(Journey.REGIONS[region].theme)
 	show.set_focus(0.0)
 	show.cam.position = Vector3(0, 2.4, 8)
 	show.cam.look_at(Vector3(0, 1.5, -6))
 	var dim := ColorRect.new()
-	dim.color = Color(0.03, 0.02, 0.03, 0.55)
+	dim.color = Color(0.03, 0.02, 0.03, 0.55) if not nm else Color(0.06, 0.02, 0.08, 0.66)
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(dim)
@@ -46,8 +51,14 @@ func _ready() -> void:
 	right.offset_top = 92
 	right.offset_bottom = -16
 	ui.add_child(right)
+	var head := UI.hbox(12)
+	right.add_child(head)
 	_title = UI.heading("", 40)
-	right.add_child(_title)
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_title.clip_text = true
+	head.add_child(_title)
+	_mode_row = UI.hbox(6)
+	head.add_child(_mode_row)
 	_intro = UI.label("", 20, Color(0.9, 0.86, 0.78))
 	_intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	right.add_child(_intro)
@@ -60,32 +71,62 @@ func _ready() -> void:
 	sc.add_child(_list)
 	_build()
 
+func _region_ok(h: Dictionary, r: int) -> bool:
+	return Journey.nm_region_open(h, r) if nm else Journey.region_unlocked(h, r)
+
 func _build() -> void:
 	var h := Game.hero
+	for c in _mode_row.get_children():
+		c.queue_free()
+	var nm_open := int(h.level) >= Journey.NM_MIN_LEVEL
+	for m in [[false, "Thường"], [true, "Ác Mộng" if nm_open else "Ác Mộng · Cấp %d" % Journey.NM_MIN_LEVEL]]:
+		var want: bool = m[0]
+		var b := UI.button(m[1], func(): _set_mode(want), 19)
+		b.toggle_mode = true
+		b.button_pressed = want == nm
+		b.custom_minimum_size = Vector2(0, 46)
+		b.disabled = want and not nm_open
+		if want and nm_open:
+			b.add_theme_color_override("font_color", NM_COL)
+		_mode_row.add_child(b)
 	for c in _tabs.get_children():
 		c.queue_free()
 	for r in Journey.REGIONS.size():
 		var reg: Dictionary = Journey.REGIONS[r]
-		var ok := Journey.region_unlocked(h, r)
-		var t := "%d. %s" % [r + 1, reg.name] if ok else "%d. ???" % (r + 1)
+		var ok := _region_ok(h, r)
+		var seen := Journey.region_unlocked(h, r)
+		var t := "%d. %s" % [r + 1, reg.name] if seen else "%d. ???" % (r + 1)
 		var b := UI.button(t, func(): _select(r), 20)
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.disabled = not ok
 		b.toggle_mode = true
 		b.button_pressed = r == region
 		b.custom_minimum_size.y = 58
-		var stars := Journey.region_stars(h, r)
 		if ok:
-			b.text += "\n     ★ %d/18   ·   Cấp %d+" % [stars, reg.lvl]
+			if nm:
+				b.text += "\n     ★ %d/18   ·   Cấp %d+" % [Journey.nm_region_stars(h, r), Journey.nm_level(r, 0)]
+			else:
+				b.text += "\n     ★ %d/18   ·   Cấp %d+" % [Journey.region_stars(h, r), reg.lvl]
 			b.custom_minimum_size.y = 76
 		_tabs.add_child(b)
 	var reg2: Dictionary = Journey.REGIONS[region]
 	_title.text = reg2.name
-	_intro.text = reg2.intro
+	_title.add_theme_color_override("font_color", NM_COL if nm else UI.GOLD)
+	_intro.text = reg2.intro if not nm else "Ác Mộng: đối thủ cấp %d–%d, ra đòn hiểm hơn. Lần đầu thắng mỗi trận nhận Ngọc, Huyền Thiết, Tẩy Luyện Thạch; thủ lĩnh rơi trang bị bậc cao và Thiên Tinh Thạch." % [Journey.nm_level(region, 0), Journey.nm_level(region, 5)]
 	for c in _list.get_children():
 		c.queue_free()
+	if nm and not _region_ok(h, region):
+		_list.add_child(UI.label(Journey.nm_lock(h, region, 0), 22, Color(0.8, 0.75, 0.7)))
+		return
 	for s in 6:
 		_list.add_child(_stage_card(region, s))
+
+func _set_mode(want: bool) -> void:
+	if want == nm:
+		_build()
+		return
+	last_nm = want
+	Game.goto(MapScreen.new())
 
 func _select(r: int) -> void:
 	if r == region:
@@ -98,29 +139,38 @@ func _stage_card(r: int, s: int) -> Control:
 	var h := Game.hero
 	var reg: Dictionary = Journey.REGIONS[r]
 	var foe: Array = reg.foes[s]
-	var ok := Journey.unlocked(h, r, s)
-	var sid := Journey.stage_id(r, s)
-	var stars := int(h.stars.get(sid, 0))
+	var lock := Journey.nm_lock(h, r, s) if nm else ("" if Journey.unlocked(h, r, s) else "Chưa mở")
+	var ok := lock == ""
+	var stars := Journey.nm_stars(h, r, s) if nm else int(h.stars.get(Journey.stage_id(r, s), 0))
 	var boss := s == 5
-	var p := UI.panel(Color(0.12, 0.06, 0.05, 0.9) if boss else Color(0.07, 0.06, 0.07, 0.88), UI.GOLD if boss else UI.GOLD_D)
+	var bg := Color(0.12, 0.06, 0.05, 0.9) if boss else Color(0.07, 0.06, 0.07, 0.88)
+	if nm:
+		bg = Color(0.12, 0.05, 0.14, 0.9) if boss else Color(0.08, 0.05, 0.1, 0.88)
+	var p := UI.panel(bg, (NM_COL if nm else UI.GOLD) if boss else UI.GOLD_D)
 	var row := UI.hbox(14)
 	p.add_child(row)
 	var info := UI.vbox(2)
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(info)
-	var lvl := Journey.stage_level(r, s)
+	var lvl := Journey.nm_level(r, s) if nm else Journey.stage_level(r, s)
 	var sect := Sects.get_sect(foe[2])
-	if ok:
-		var nm := UI.label(("☠ " if boss else "") + "%s  —  %s" % [foe[0], foe[1]], 24, UI.GOLD if boss else UI.PAPER, UI.bold)
-		info.add_child(nm)
+	if ok or (nm and stars > 0):
+		var nm_col := NM_COL if nm else UI.GOLD
+		var nml := UI.label(("☠ " if boss else "") + "%s  —  %s" % [foe[0], foe[1]], 24, nm_col if boss else UI.PAPER, UI.bold)
+		info.add_child(nml)
 		var col := Color(0.6, 1, 0.6) if lvl <= int(h.level) else (Color(1, 0.85, 0.4) if lvl <= int(h.level) + 2 else Color(1, 0.45, 0.4))
 		info.add_child(UI.label("Võ công %s  ·  Cấp %d" % [sect.name, lvl], 19, col))
 	else:
-		info.add_child(UI.label("??? — Chưa mở", 22, Color(0.55, 0.52, 0.5)))
-	var st := UI.label("★".repeat(stars) + "☆".repeat(3 - stars), 30, UI.GOLD if stars > 0 else Color(0.5, 0.48, 0.45))
+		info.add_child(UI.label("??? — " + lock, 22, Color(0.55, 0.52, 0.5)))
+	var st := UI.label("★".repeat(stars) + "☆".repeat(3 - stars), 30, (NM_COL if nm else UI.GOLD) if stars > 0 else Color(0.5, 0.48, 0.45))
 	row.add_child(st)
-	var b := UI.gold_button("Khiêu chiến" if stars == 0 else "Đấu lại", func(): Flow.start_stage(r, s), 22, 170) if ok else UI.button("Khóa", func(): pass, 22, 170)
-	b.disabled = not ok
+	var b: Button
+	if ok:
+		var is_nm := nm
+		b = UI.gold_button("Khiêu chiến" if stars == 0 else "Đấu lại", func(): Flow.start_any(r, s, is_nm), 22, 170)
+	else:
+		b = UI.button("Khóa", func(): pass, 22, 170)
+		b.disabled = true
 	row.add_child(b)
 	return p
 

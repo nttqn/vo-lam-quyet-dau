@@ -117,6 +117,23 @@ const LINES := [
 			["", "Nhưng giang hồ chưa bao giờ ngừng sóng gió. Tháp Thí Luyện và đài Tỉ Võ vẫn đang chờ bạn."],
 		],
 	},
+	{   # 7 Nguyệt Ảnh Cốc (epilogue)
+		"intro": [
+			["", "Ba tháng sau đại hội Thiên Trụ, người các phái lần lượt mất tích trong những đêm trăng tròn."],
+			["", "Dấu vết dẫn tới một thung lũng không có trên bản đồ, nơi ánh trăng bạc phủ kín như sương."],
+			["@", "Hắc Nguyệt đã tan, vậy kẻ nào còn treo ấn trăng khuyết?"],
+		],
+		"boss": [
+			["boss", "Vô Danh tạo loạn để tìm một đối thủ. Ta thì khác: ta muốn giang hồ ngủ yên trong mộng."],
+			["@", "Những người mất tích ở đâu?"],
+			["boss", "Họ đang mơ, và trong mộng không ai phải chém giết. Ngươi cũng nên ngủ đi."],
+		],
+		"after": [
+			["boss", "Ngươi tỉnh táo quá... Mộng của ta vỡ rồi. Những người kia sẽ tỉnh lại lúc trời sáng."],
+			["", "Nhưng những cơn ác mộng Nguyệt Cung gieo xuống vẫn còn ám khắp các vùng bạn từng đi qua."],
+			["", "Từ cấp 30, hãy quay lại từng vùng ở chế độ Ác Mộng: đối thủ mạnh hơn, phần thưởng lớn hơn."],
+		],
+	},
 ]
 
 static func has(r: int, part: String) -> bool:

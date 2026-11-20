@@ -287,6 +287,10 @@ func _actions(m: Dictionary, me: bool) -> Control:
 	var t := UI.label("“%s”" % str(m.get("text", "")), 18, Color(0.85, 0.82, 0.75))
 	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(t)
+	v.add_child(UI.gold_button("Xem thông tin", func():
+		root.queue_free()
+		ui.add_child(ProfilePanel.new({"uid": str(m.get("uid", "")), "name": str(m.get("name", "")),
+			"sect": str(m.get("sect", "")), "level": int(m.get("level", 1))}, func(): Game.goto(ChatScreen.new()))), 22))
 	if me:
 		v.add_child(UI.button("Xóa tin nhắn", func():
 			root.queue_free()

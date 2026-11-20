@@ -135,6 +135,23 @@ func _ready() -> void:
 			Flow.start_duel(Duel.bots(Game.hero, 1)[0])
 		elif tw > 0:
 			Flow.start_tower(tw)
+		elif _arg(args, "--nm=") != "" or _arg(args, "--stage=") != "":
+			# --nm=r,s Ác Mộng duel / --stage=r,s story duel, hero lvl 45 with the story cleared
+			Hero.add_exp(Game.hero, 600000)
+			for r in Journey.REGIONS.size():
+				for s2 in 6:
+					if _arg(args, "--nm=") != "" or r < 7:
+						Game.hero.stars[Journey.stage_id(r, s2)] = 3
+			var nm := _arg(args, "--nm=") != ""
+			var rs := (_arg(args, "--nm=") if nm else _arg(args, "--stage=")).split(",")
+			Flow.start_any(int(rs[0]), int(rs[1]), nm)
+		elif "--spar" in args:
+			Hero.add_exp(Game.hero, 20000)
+			var other := Hero.create("Bóng Thử", "cai_bang")
+			Hero.add_exp(other, 20000)
+			Flow.start_spar(Duel.side(Duel.fields(other)), func():
+				print("SPAR back ok")
+				Game.goto(HubScreen.new()))
 		else:
 			Flow.start_stage(0, 0)
 		return
@@ -235,7 +252,34 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			var hs := HubScreen.new()
 			Game.goto(hs)
 			hs.ui.add_child.call_deferred(SettingsPanel.new())
-		"map": Game.goto(MapScreen.new())
+		"map", "mapnm":
+			# --screen=mapnm: Ác Mộng tab with a lvl-45 hero who cleared the story
+			if screen == "mapnm":
+				Hero.add_exp(Game.hero, 600000)
+				for r in Journey.REGIONS.size():
+					for s2 in 6:
+						Game.hero.stars[Journey.stage_id(r, s2)] = 3
+				Game.hero.nstars = {"0_0": 3, "0_1": 2, "1_0": 1}
+				MapScreen.last_nm = true
+				MapScreen.last_region = int(_arg(args, "--region=", "0"))
+			Game.goto(MapScreen.new())
+		"checkin":
+			Game.hero.checkin = {"day": "", "n": int(_arg(args, "--days=", "3"))}
+			var hc := HubScreen.new()
+			Game.goto(hc)
+			hc._open_checkin.call_deferred()
+		"titles":
+			Game.hero.titles = ["tan_hiep", "giang_ho", "ac_mong", "loi_dai"]
+			Game.hero.title = "giang_ho"
+			var cs2 := CharacterScreen.new()
+			Game.goto(cs2)
+			cs2._title_dialog.call_deferred()
+		"profile":
+			ProfilePanel.fake_duel = Duel.fields(Game.hero)
+			var rs2 := RankScreen.new()
+			rs2.fake_rows.append({"_id": "x_0", "name": "Tiêu Dao Khách", "sect": "nga_mi", "level": 41, "power": 8421, "tower": 37, "stars": 96, "title": "ac_mong"})
+			Game.goto(rs2)
+			(func(): rs2.ui.add_child(ProfilePanel.new(rs2.fake_rows[0], func(): Game.goto(RankScreen.new())))).call_deferred()
 		"char": Game.goto(CharacterScreen.new())
 		"wbossresult":
 			var wr := {"max_combo": 9, "seconds": 90.0}
@@ -449,3 +493,10 @@ func _rank_live_test() -> void:
 	var dn: Array = await Cloud.query(Ranks.COLLECTION, "power", 2, null, v)
 	print("LIVE around v=%d up(asc)=%s down=%s above=%d err=%s" % [v, ids.call(up), ids.call(dn), await Cloud.count_above(Ranks.COLLECTION, "power", v), Cloud.last_error])
 	get_tree().quit()
+
+## Value of a "--key=value" test flag (or `default`).
+func _arg(args: PackedStringArray, key: String, default := "") -> String:
+	for a in args:
+		if a.begins_with(key):
+			return a.substr(key.length())
+	return default

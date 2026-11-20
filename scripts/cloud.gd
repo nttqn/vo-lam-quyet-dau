@@ -581,6 +581,15 @@ func query(collection: String, order_field: String, limit: int, lo = null, hi = 
 			out.append(plain)
 	return out
 
+## Documents whose `field` equals `v` (single-field index, no setup needed).
+func find_eq(collection: String, field: String, v, limit := 10) -> Array:
+	var rows = await run_query({
+		"from": [{"collectionId": collection}],
+		"where": {"fieldFilter": {"field": {"fieldPath": field}, "op": "EQUAL", "value": _fs_value(v)}},
+		"limit": limit,
+	})
+	return rows if rows is Array else []
+
 ## Raw structuredQuery (Kênh Thế Giới). Rows are plain dicts with "_id";
 ## timestamps come back as RFC 3339 strings. null on error (vs [] = none).
 func run_query(sq: Dictionary):

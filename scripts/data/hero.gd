@@ -13,7 +13,7 @@ static func create(name: String, sect_id: String) -> Dictionary:
 		"gold": 150, "jade": 5, "skill_pts": 0,
 		"skill_lv": [1, 0, 0, 0, 0, 0], "equip": [0, -1, -1],
 		"gear": {}, "bag": [], "mats": {}, "insight": {}, "foreign": {},
-		"stars": {}, "region": 0,
+		"stars": {}, "nstars": {}, "region": 0,
 		"arena_best": 0, "wins": 0, "losses": 0, "fights": 0,
 		"color": 0, "rename_at": 0, "created": Time.get_unix_time_from_system(),
 		"appearance": Appearance.default_for(sect_id, sect_id == "nga_mi"),

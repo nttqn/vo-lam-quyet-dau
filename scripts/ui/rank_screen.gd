@@ -127,7 +127,11 @@ func _show(board: String) -> void:
 			return
 		_place = -1 if above < 0 or Ranks.hidden() else above + 1
 		_mine.text = "%s: %s%d%s" % [str(h.name), UNIT[board], my_v, ("  ·  hạng %d" % (above + 1)) if above >= 0 else ""]
-		if Ranks.hidden():
+		if not Ranks.listed(h):
+			_place = -1
+			_mine.text = "%s: đạt cấp %d để lên bảng xếp hạng" % [str(h.name), Ranks.MIN_LEVEL]
+			_mine.add_theme_color_override("font_color", Color(0.8, 0.78, 0.72))
+		elif Ranks.hidden():
 			_mine.text += "  ·  đang ẩn"
 			_mine.add_theme_color_override("font_color", Color(0.8, 0.78, 0.72))
 		else:
@@ -298,8 +302,25 @@ func _row(r: Dictionary, place: int, me: bool) -> Control:
 	nm.clip_text = true
 	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	info.add_child(nm)
-	info.add_child(UI.label("%s  ·  Cấp %d" % [Sects.get_sect(str(r.get("sect", "vo_dang"))).name, int(r.get("level", 1))], 15, Color(0.82, 0.8, 0.74)))
+	var sub := UI.hbox(10)
+	sub.mouse_filter = Control.MOUSE_FILTER_PASS
+	info.add_child(sub)
+	sub.add_child(UI.label("%s  ·  Cấp %d" % [Sects.get_sect(str(r.get("sect", "vo_dang"))).name, int(r.get("level", 1))], 15, Color(0.82, 0.8, 0.74)))
+	var tid := str(r.get("title", ""))
+	if Titles.LIST.has(tid):
+		sub.add_child(UI.label("« %s »" % Titles.name_of(tid), 15, Titles.color(tid), UI.bold))
 	row.add_child(UI.label("%s%d" % [UNIT[_board], int(r.get(_board, 0))], 22, UI.PAPER, UI.bold))
+	# tap a row: the player's card (ProfilePanel); PASS keeps swipes scrolling
+	var b := Button.new()
+	b.flat = true
+	b.mouse_filter = Control.MOUSE_FILTER_PASS
+	var empty := StyleBoxEmpty.new()
+	for k in ["normal", "hover", "pressed", "focus"]:
+		b.add_theme_stylebox_override(k, empty)
+	b.pressed.connect(func():
+		Game.sfx("click")
+		ui.add_child(ProfilePanel.new(r, func(): Game.goto(RankScreen.new()))))
+	p.add_child(b)
 	return p
 
 func back() -> void:

@@ -11,7 +11,7 @@ extends RefCounted
 ## id -> [title, text with %d (or %s for named tiers), tiers]
 const LINES := {
 	"level": ["Danh Chấn Giang Hồ", "Đạt cấp %d", [10, 20, 30, 40, 50, 60]],
-	"region": ["Hành Hiệp Trượng Nghĩa", "Hạ thủ lĩnh %s", [1, 2, 3, 4, 5, 6, 7]],
+	"region": ["Hành Hiệp Trượng Nghĩa", "Hạ thủ lĩnh %s", [1, 2, 3, 4, 5, 6, 7, 8]],
 	"stars3": ["Tuyệt Thế Phong Thái", "Đạt 3 sao ở %d trận Giang Hồ", [5, 15, 30, 42]],
 	"wins": ["Bách Chiến Bách Thắng", "Thắng tổng cộng %d trận", [10, 50, 150, 400, 1000]],
 	"perfect": ["Vô Khuyết", "Thắng tuyệt đối %d trận (không mất hiệp)", [5, 25, 100, 300]],
@@ -26,7 +26,7 @@ const LINES := {
 	"outfit": ["Phong Lưu Hiệp Khách", "Sở hữu %d bộ Y Phục", [1, 3, 5]],
 }
 ## Ngọc for tier k (0-based), gold = 200 × (k + 1) × the hero's region band.
-const JADE := [5, 10, 15, 25, 40, 60, 80]
+const JADE := [5, 10, 15, 25, 40, 60, 80, 100]
 
 static func value(h: Dictionary, id: String) -> int:
 	var c: Dictionary = h.get("ach_c", {})

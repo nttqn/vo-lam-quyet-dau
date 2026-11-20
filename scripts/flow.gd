@@ -6,7 +6,7 @@ static func _launch(cfg: Dictionary, on_done: Callable) -> void:
 	var fs := FightScene.new(cfg)
 	fs.finished.connect(func(res: Dictionary):
 		# ngộ chiêu: techniques read during the fight (win or lose, not training/forfeit)
-		if not cfg.get("training", false) and not res.get("forfeit", false) and Game.hero:
+		if not cfg.get("training", false) and not cfg.get("spar", false) and not res.get("forfeit", false) and Game.hero:
 			res["learned"] = Insight.apply(Game.hero, res.get("insight", {}))
 		on_done.call(res))
 	Game.goto(fs)
@@ -28,6 +28,68 @@ static func start_stage(r: int, s: int) -> void:
 		"theme": Journey.REGIONS[r].theme, "rounds": 2, "seed": randi(),
 	}
 	_launch(cfg, func(res: Dictionary): _stage_done(r, s, res))
+
+## Story or Ác Mộng duel.
+static func start_any(r: int, s: int, nm: bool) -> void:
+	if nm:
+		start_nightmare(r, s)
+	else:
+		start_stage(r, s)
+
+## Ác Mộng: the same duel at level 30-60, no story dialogue.
+static func start_nightmare(r: int, s: int) -> void:
+	var cfg := {
+		"p": Hero.side(Game.hero), "e": Journey.nm_side(r, s),
+		"theme": Journey.REGIONS[r].theme, "rounds": 2, "seed": randi(),
+	}
+	_launch(cfg, func(res: Dictionary): _nightmare_done(r, s, res))
+
+static func _nightmare_done(r: int, s: int, res: Dictionary) -> void:
+	var h := Game.hero
+	h.fights = int(h.fights) + 1
+	var out := {"mode": "stage", "nm": true, "r": r, "s": s, "won": res.won, "res": res}
+	Daily.on_fight(h, "stage", res)
+	if res.won:
+		h.wins = int(h.wins) + 1
+		var stars := 1
+		if res.hp_left >= 0.5:
+			stars = 2
+		if res.perfect and res.hp_left >= 0.5:
+			stars = 3
+		var sid := Journey.stage_id(r, s)
+		var prev := Journey.nm_stars(h, r, s)
+		var first := prev == 0
+		var rw := Journey.nm_rewards(r, s, first, stars)
+		if not (h.get("nstars") is Dictionary):
+			h.nstars = {}
+		h.nstars[sid] = maxi(prev, stars)
+		out.stars = stars
+		out.rewards = rw
+		out.levels = _grant(rw)
+		if first and s == 5:
+			var rng := RandomNumberGenerator.new()
+			rng.randomize()
+			var it := Journey.nm_boss_drop(r, rng)
+			h.bag.append(it)
+			out.drop = it
+			out.book = Books.random_kind(rng)
+			Books.give(h, out.book)
+	else:
+		h.losses = int(h.losses) + 1
+		var rw2 := {"exp": int(Journey.nm_rewards(r, s, false, 1).exp * 0.25), "gold": 0, "jade": 0}
+		out.rewards = rw2
+		out.levels = _grant(rw2)
+	Game.save()
+	Game.goto(ResultScreen.new(out))
+
+## Đấu thử: a friendly duel with another player's shadow (Tỉ Võ snapshot).
+## No rewards, no score; `back` rebuilds the screen to return to.
+static func start_spar(e: Dictionary, back: Callable) -> void:
+	e = e.duplicate(true)
+	e["title"] = "Đấu thử"
+	var themes := ["temple", "bamboo", "river", "peak", "night"]
+	var cfg := {"p": Hero.side(Game.hero), "e": e, "theme": themes[randi() % themes.size()], "rounds": 2, "seed": randi(), "spar": true}
+	_launch(cfg, func(_res: Dictionary): back.call())
 
 static func _stage_done(r: int, s: int, res: Dictionary) -> void:
 	var h := Game.hero

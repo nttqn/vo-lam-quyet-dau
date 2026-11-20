@@ -73,7 +73,95 @@ const REGIONS := [
 			["Tuệ Viễn Đại Sư", "Phương trượng ẩn thế", "thieu_lam"],
 			["Vô Danh Lão Nhân", "Thiên Hạ Đệ Nhất", "vo_dang"],
 		]},
+	{"name": "Nguyệt Ảnh Cốc", "theme": "night", "lvl": 36, "faction": "demon",
+		"intro": "Thung lũng chỉ hiện ra dưới trăng tròn. Tàn dư Hắc Nguyệt tụ về đây quanh một chủ nhân mới.",
+		"foes": [
+			["Dạ Xoa Lục", "Ám vệ Nguyệt Cung", "duong_mon"],
+			["Mộng Điệp", "Nữ sứ mê hồn", "nga_mi"],
+			["Lê Thiết Quyền", "Võ sư phương Nam lạc bước", "vovinam"],
+			["Phá Giới Tăng", "Tăng nhân bị trục xuất", "thieu_lam"],
+			["Nguyệt Ảnh Kiếm", "Tả hộ pháp Nguyệt Cung", "vo_dang"],
+			["Nguyệt Cung Chủ", "Hàn Nguyệt Cơ", "nga_mi"],
+		]},
 ]
+
+# ------------------------------------------------------------- Ác Mộng
+## The story duels replayed at level 30-60 once the region's boss has fallen.
+## Stars in h.nstars (same "r_s" ids as h.stars).
+const NM_MIN_LEVEL := 30
+const NM_TINT := Color(0.82, 0.72, 0.9)
+
+static func nm_level(r: int, s: int) -> int:
+	return mini(Hero.MAX_LEVEL, NM_MIN_LEVEL + r * 4 + int(round(s * 0.6)))
+
+static func nm_ai(r: int, s: int) -> float:
+	# sim (tools/nm_check.gd): +0.2 up to 0.98 made bosses ~0% for an equally geared hero
+	return minf(0.72, 0.5 + r * 0.025 + s * 0.01 + (0.02 if s == 5 else 0.0))
+
+static func nm_stars(h: Dictionary, r: int, s: int) -> int:
+	return int(Dictionary(h.get("nstars", {})).get(stage_id(r, s), 0))
+
+## Why an Ác Mộng duel is closed ("" = open).
+static func nm_lock(h: Dictionary, r: int, s: int) -> String:
+	if int(h.level) < NM_MIN_LEVEL:
+		return "Cấp %d mở Ác Mộng" % NM_MIN_LEVEL
+	if not Dictionary(h.get("stars", {})).has(stage_id(r, 5)):
+		return "Hạ thủ lĩnh vùng này trước"
+	if s > 0 and nm_stars(h, r, s - 1) == 0:
+		return "Thắng trận trước ở Ác Mộng"
+	return ""
+
+static func nm_region_open(h: Dictionary, r: int) -> bool:
+	return nm_lock(h, r, 0) == ""
+
+static func nm_region_stars(h: Dictionary, r: int) -> int:
+	var t := 0
+	for s in 6:
+		t += nm_stars(h, r, s)
+	return t
+
+## Number of Ác Mộng region bosses beaten.
+static func nm_bosses(h: Dictionary) -> int:
+	var n := 0
+	for r in REGIONS.size():
+		if nm_stars(h, r, 5) > 0:
+			n += 1
+	return n
+
+static func nm_side(r: int, s: int) -> Dictionary:
+	var reg: Dictionary = REGIONS[r]
+	var foe: Array = reg.foes[s]
+	var boss := s == 5
+	# regular gear even for the boss (boss gear + ×1.25 HP was unbeatable at 0.85 AI)
+	var side := Npc.side(foe[2], nm_level(r, s), foe[0], nm_ai(r, s), reg.faction, false, 5000 + r * 10 + s, "Ác Mộng · " + str(foe[1]))
+	side.look["tint"] = NM_TINT
+	if boss:
+		side.boss = true
+		side.look["height"] = 1.06
+	return side
+
+static func nm_rewards(r: int, s: int, first: bool, stars: int) -> Dictionary:
+	var lvl := nm_level(r, s)
+	var boss := s == 5
+	var exp := int((30 + 11 * lvl) * (2.0 if boss else 1.3) * (1.0 if first else 0.45))
+	var gold := int((25 + 9 * lvl) * (3.0 if boss else 1.3) * (1.0 if first else 0.5))
+	var jade := (6 if boss else 2) if first else 0
+	if stars == 3 and first:
+		jade += 2
+	var mats := {}
+	if first:
+		mats = {"iron": 6 + r, "wash": 1}
+		if boss:
+			mats["star"] = 2 + r / 3
+			mats["charm"] = 1
+	elif randf() < 0.35:
+		mats = {"iron": 2 + r / 2}
+	return {"exp": exp, "gold": gold, "jade": jade, "mats": mats}
+
+## Ác Mộng boss first-clear gear: higher tier and rarity than the story drop.
+static func nm_boss_drop(r: int, slot_rng: RandomNumberGenerator) -> Dictionary:
+	var slot: String = Items.SLOTS[slot_rng.randi_range(0, Items.SLOTS.size() - 1)]
+	return Items.drop(slot, clampi(r + 4, 1, 7), clampi(2 + r / 3, 1, 4))
 
 static func stage_id(r: int, s: int) -> String:
 	return "%d_%d" % [r, s]

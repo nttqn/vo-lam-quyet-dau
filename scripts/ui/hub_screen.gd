@@ -19,6 +19,8 @@ func _ready() -> void:
 	_right(h)
 	_dock(h, s)
 	Iap.deliver_queue.call_deferred()
+	_new_titles.call_deferred(h)
+	_maybe_checkin.call_deferred(h)
 
 # ------------------------------------------------------------------ header
 func _header(h: Dictionary, s: Dictionary) -> void:
@@ -26,7 +28,12 @@ func _header(h: Dictionary, s: Dictionary) -> void:
 	head.position = Vector2(24, 18)
 	ui.add_child(head)
 	head.add_child(UI.heading(h.name, 46))
-	head.add_child(UI.label("%s  ·  Cấp %d" % [s.name, int(h.level)], 24, UI.PAPER, UI.bold))
+	var lv_row := UI.hbox(12)
+	head.add_child(lv_row)
+	lv_row.add_child(UI.label("%s  ·  Cấp %d" % [s.name, int(h.level)], 24, UI.PAPER, UI.bold))
+	var tid := Titles.worn(h)
+	if tid != "":
+		lv_row.add_child(UI.label("« %s »" % Titles.name_of(tid), 22, Titles.color(tid), UI.bold))
 	var need := Hero.exp_need(int(h.level))
 	var bar := ProgressBar.new()
 	bar.custom_minimum_size = Vector2(300, 14)
@@ -54,7 +61,42 @@ func _header(h: Dictionary, s: Dictionary) -> void:
 		var shop := UI.gold_button("+ Bảo Khố", func(): Game.goto(TopupScreen.new()), 17, 0)
 		shop.custom_minimum_size = Vector2(0, 38)
 		wallet.add_child(shop)
+	var can := Checkin.can_claim(h)
+	var ck := UI.gold_button("Điểm danh !", _open_checkin, 17, 0) if can else UI.button("Điểm danh", _open_checkin, 17, 0)
+	ck.custom_minimum_size = Vector2(0, 38)
+	ck.name = "Checkin"
+	wallet.add_child(ck)
 	Iap.changed.connect(_wallet_refresh)
+
+## Điểm danh panel, opened by its button or once a day on the first hub visit.
+static var _auto_day := ""
+
+func _open_checkin() -> void:
+	ui.add_child(CheckinPanel.new(func():
+		refresh_wallet()
+		_wallet_refresh()
+		var b := ui.find_child("Checkin", true, false) as Button
+		if b:
+			b.text = "Điểm danh")
+	)
+
+func _maybe_checkin(h: Dictionary) -> void:
+	var key := "%d_%s" % [Game.slot, Daily.today()]
+	if not Checkin.can_claim(h) or _auto_day == key or Game.autoplay:
+		return
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--shot") or a.begins_with("--screen"):
+			return
+	_auto_day = key
+	_open_checkin()
+
+## New titles since last time: a toast pointing at the Nhân Vật screen.
+func _new_titles(h: Dictionary) -> void:
+	var fresh := Titles.refresh(h)
+	if fresh.is_empty():
+		return
+	Game.save()
+	toast("Danh hiệu mới: %s · đeo ở Nhân Vật" % ", ".join(fresh.map(func(id): return Titles.name_of(id))))
 
 # ------------------------------------------------------------- right column
 func _right(h: Dictionary) -> void:

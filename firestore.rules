@@ -60,8 +60,10 @@ service cloud.firestore {
         && goodRank(request.resource.data);
     }
     function goodRank(d) {
+      // level >= 2: fresh throwaway heroes stay off the boards (Ranks.MIN_LEVEL)
       return d.name is string && d.name.size() <= 24 && d.sect is string
-        && d.level is int && d.power is int && d.tower is int && d.stars is int;
+        && d.level is int && d.level >= 2 && d.power is int && d.tower is int && d.stars is int
+        && (!('title' in d) || (d.title is string && d.title.size() <= 24));
     }
     // Kênh Thế Giới: chat/{id} readable by everyone signed in; a message is
     // written together with chatlast/{uid} in one commit, and chatlast refuses
