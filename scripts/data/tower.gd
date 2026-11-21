@@ -26,7 +26,7 @@ static func rule(f: int) -> String:
 	return RULE_ORDER[(f / 3) % RULE_ORDER.size()]
 
 static func level(f: int) -> int:
-	return clampi(1 + int(f * 0.85), 1, 75)
+	return clampi(1 + int(f * 0.85), 1, Hero.MAX_LEVEL + 15)
 
 static func side(f: int) -> Dictionary:
 	var rng := RandomNumberGenerator.new()

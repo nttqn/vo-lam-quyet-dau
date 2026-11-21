@@ -3,7 +3,9 @@ extends RefCounted
 ## Player character data helpers (the hero itself is a plain Dictionary so it
 ## serialises straight to JSON).
 
-const MAX_LEVEL := 60
+const MAX_LEVEL := 80
+const OLD_CAP := 60         # the cap before 1.2.3; exp banked there carries over, up to BANK_LEVELS
+const BANK_LEVELS := 5
 const SKILL_MAX := 5
 
 static func create(name: String, sect_id: String) -> Dictionary:
@@ -68,6 +70,7 @@ static func migrate(d: Dictionary) -> Dictionary:
 		if d.equip[i] == ULT:
 			d.equip[i] = -1   # the ultimate has its own slot now
 	_fill_slots(d)
+	carry_bank(d)
 	# bonus lines for gear made before the forge update
 	for slot in d.gear:
 		if d.gear[slot] is Dictionary:
@@ -76,6 +79,18 @@ static func migrate(d: Dictionary) -> Dictionary:
 		if it is Dictionary:
 			Items.ensure_aff(it)
 	return d
+
+## 1.2.3 raised the cap to 80: exp banked at the old cap of 60 carries over,
+## at most BANK_LEVELS levels' worth. Later saves are untouched (exp at 60 is
+## then only what was earned toward 61).
+static func carry_bank(d: Dictionary) -> void:
+	if int(d.level) != OLD_CAP or int(d.exp) < exp_need(OLD_CAP):
+		return
+	var bank := 0
+	for l in range(OLD_CAP, OLD_CAP + BANK_LEVELS):
+		bank += exp_need(l)
+	d.exp = mini(int(d.exp), bank)
+	add_exp(d, 0)
 
 ## Slot index of the ultimate (always the sect's 6th skill). It is never put in
 ## the 3 normal slots: once learned it sits in the fixed "Tuyệt Kỹ" slot (s4).
@@ -95,7 +110,10 @@ static func sect(h: Dictionary) -> Dictionary:
 	return Sects.get_sect(h.sect)
 
 static func exp_need(level: int) -> int:
-	return 45 + 15 * level + int(0.6 * level * level)
+	var n := 45 + 15 * level + int(0.6 * level * level)
+	if level >= OLD_CAP:
+		n = int(n * (1.0 + 0.07 * (level - OLD_CAP + 1)))   # 61-80 is the long road: x1.07 at 60 up to x2.4 at 79
+	return n
 
 ## Returns the number of levels gained.
 static func add_exp(h: Dictionary, amt: int) -> int:

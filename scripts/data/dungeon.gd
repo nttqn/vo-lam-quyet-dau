@@ -28,7 +28,7 @@ const LIST := [
 ]
 
 ## [name, hero level needed]
-const DIFFS := [["Sơ Nhập", 1], ["Tiểu Thành", 10], ["Đại Thành", 20], ["Tinh Thông", 30], ["Đăng Phong", 40], ["Hóa Cảnh", 50]]
+const DIFFS := [["Sơ Nhập", 1], ["Tiểu Thành", 10], ["Đại Thành", 20], ["Tinh Thông", 30], ["Đăng Phong", 40], ["Hóa Cảnh", 50], ["Tông Sư", 60], ["Phản Phác", 70]]
 
 static func ensure(h: Dictionary) -> Dictionary:
 	var d: Dictionary = h.get("dungeon", {})

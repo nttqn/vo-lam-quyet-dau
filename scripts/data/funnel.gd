@@ -14,7 +14,7 @@ extends RefCounted
 ## Rules in firestore.rules (match /funnel/{id}) allow only +1 on "n".
 
 const COLLECTION := "funnel"
-const LEVELS := [2, 3, 5, 8, 10, 15, 20, 25, 30, 35, 40, 50, 60]
+const LEVELS := [2, 3, 5, 8, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80]
 const STAGES := [0, 2, 5]            # per region: first duel, 3rd, boss
 const DAYS := [1, 2, 3, 7, 14, 30]
 

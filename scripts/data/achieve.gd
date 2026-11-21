@@ -10,16 +10,16 @@ extends RefCounted
 
 ## id -> [title, text with %d (or %s for named tiers), tiers]
 const LINES := {
-	"level": ["Danh Chấn Giang Hồ", "Đạt cấp %d", [10, 20, 30, 40, 50, 60]],
+	"level": ["Danh Chấn Giang Hồ", "Đạt cấp %d", [10, 20, 30, 40, 50, 60, 70, 80]],
 	"region": ["Hành Hiệp Trượng Nghĩa", "Hạ thủ lĩnh %s", [1, 2, 3, 4, 5, 6, 7, 8]],
-	"stars3": ["Tuyệt Thế Phong Thái", "Đạt 3 sao ở %d trận Giang Hồ", [5, 15, 30, 42]],
+	"stars3": ["Tuyệt Thế Phong Thái", "Đạt 3 sao ở %d trận Giang Hồ", [5, 15, 30, 42, 48]],
 	"wins": ["Bách Chiến Bách Thắng", "Thắng tổng cộng %d trận", [10, 50, 150, 400, 1000]],
 	"perfect": ["Vô Khuyết", "Thắng tuyệt đối %d trận (không mất hiệp)", [5, 25, 100, 300]],
 	"combo": ["Liên Hoàn Chiêu", "Đạt liên kích %d đòn trong một trận", [8, 12, 16, 20]],
 	"ults": ["Tuyệt Kỹ Kinh Thiên", "Thi triển tuyệt kỹ %d lần", [10, 50, 200, 500]],
 	"arena": ["Lôi Đài Bá Chủ", "Thắng liền %d trận Lôi Đài", [5, 10, 20, 30]],
 	"tower": ["Đăng Phong Tạo Cực", "Vượt tầng %d Tháp Thí Luyện", [10, 20, 30, 50, 75, 100]],
-	"dungeon": ["Phá Trận Phó Bản", "Vượt Phó Bản độ khó %s", [1, 2, 3, 4, 5, 6]],
+	"dungeon": ["Phá Trận Phó Bản", "Vượt Phó Bản độ khó %s", [1, 2, 3, 4, 5, 6, 7, 8]],
 	"duel": ["Luận Kiếm Thiên Hạ", "Thắng %d trận Tỉ Võ", [5, 25, 100, 300]],
 	"forge": ["Thần Binh Lợi Khí", "Cường hóa một món trang bị lên +%d", [5, 10, 13, 15]],
 	"insight": ["Bách Gia Võ Học", "Ngộ được %d chiêu thức của phái khác", [1, 3, 6]],
