@@ -17,6 +17,8 @@ var _hold_mx := 0
 var _hold_down := false
 var _cool := 0
 var _block_t := 0
+var _seen_move: Dictionary = {}  # the attack the last block roll was for
+var _seen_sf := 0
 
 func _init(p_me: Fighter, p_lvl: float, seed_ := 0) -> void:
 	me = p_me
@@ -63,20 +65,32 @@ func decide(sim: FightSim) -> Dictionary:
 		o_reach = float(sm.get("reach", 1.0)) * o.size + o.rad() + me.rad() + float(sm.get("lunge", 0.0)) * 0.25
 		if sm.get("kind", "") in ["proj", "rain"]:
 			o_reach = 99.0
-	if threat and dist < o_reach + 0.5 and _block_t <= 0:
-		if rng.randf() < block_p:
+	# one guess per seen attack: a new swing (chain follow-up included) is a
+	# fresh roll, so mashing is not walled off by a single lucky block
+	var new_swing: bool = threat and (seen.move != _seen_move or int(seen.sf) < _seen_sf)
+	if threat:
+		_seen_move = seen.move
+		_seen_sf = int(seen.sf)
+	else:
+		_seen_move = {}
+		_seen_sf = 0
+	if threat and new_swing and dist < o_reach + 0.5:
+		var p := block_p if _block_t <= 0 else block_p * lerpf(0.5, 1.0, lvl)   # strings are harder to read
+		if rng.randf() < p:
 			_block_t = 20
 			_hold_down = (seen.move as Dictionary).get("h", "mid") == "low"
 			if (seen.move as Dictionary).get("unblockable", false) or rng.randf() < 0.12 * lvl:
 				inp.btn = "d"     # dodge out instead
+				_block_t = 0
 				return inp
 		else:
-			_block_t = -12      # committed to not blocking for a moment
+			# committed to not blocking this swing
+			_block_t = -maxi(12, int(seen.move.st) + int(seen.move.act) - int(seen.sf))
 	if _block_t > 0:
 		_block_t -= 1
 		inp.mx = away
 		inp.down = _hold_down
-		if o.state == Fighter.ATTACK:
+		if o.state == Fighter.ATTACK and not new_swing:
 			_block_t = maxi(_block_t, 4)
 		return inp
 	if _block_t < 0:
