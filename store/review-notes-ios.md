@@ -1,55 +1,67 @@
-# App Review Notes (iOS) — reply to Guideline 2.1 Information Needed
+# App Review Notes (iOS): reply to Guideline 2.1(a) Information Needed
 
-Paste the block below into App Store Connect → the version → App Review Information → Notes.
-Put the screen-recording link (or attach the video) where it says <VIDEO LINK>.
-Written for build 1.0.1 (3): no chat, no in-app purchases on iOS. If a newer build
-(world chat) is submitted, the recording must also show Report / Block on a chat message.
+Second 2.1 reply (2026-11-21). Apple asked for a demo account with access to all features.
+Build 1.0.1 (3): no chat, no in-app purchases on iOS.
+
+Setup, done once:
+1. `godot --headless --path . --script res://tools/review_demo.gd -- <out.json>` makes the demo
+   hero: level 60, all story stages cleared, max skills, +15 gear.
+2. `node tools/review_demo.mjs <email> <password> <out.json>` creates the Firebase email/password
+   account and puts that hero in its cloud slot "Ô lưu 3".
+3. App Store Connect → the version → App Review Information:
+   - tick "Sign-in required";
+   - fill User name and Password with the demo account;
+   - paste the NOTES block below into Notes.
+4. Reply to the App Review message with the REPLY block below.
+
+The password is never stored in this repo (the repo is public).
 
 ---
 
-1. SCREEN RECORDING
-Recorded on a physical iPhone (latest iOS), starting from app launch: <VIDEO LINK>
-It shows: launch → title screen → creating a hero (sect + name) → hub → a story fight →
-rewards → Tower / Arena / Dungeon → leaderboard and Duels (other players' heroes) →
-Account panel (optional email link, sign out, Delete account).
+NOTES (App Review Information → Notes)
 
-2. PURPOSE AND AUDIENCE
-Vo Lam Quyet Dau is a single-player, one-on-one 3D wuxia (martial-arts) fighting game for
-players aged 9+ who enjoy fighting and martial-arts stories, mainly Vietnamese speakers
-(the interface is in Vietnamese). The player picks one of five martial sects, fights through
-a 42-fight story, the Trial Tower, Arena and Dungeons, upgrades weapons and outfits, and can
-challenge AI-controlled copies of other players' heroes in a weekly Duel ranking.
-Fights are stylised martial arts with no blood.
+DEMO ACCOUNT
+The User name and Password above are a demo account. It holds a level-60 hero named "Khach Thu"
+with every story stage cleared and all skills and equipment maxed, so every feature is unlocked.
 
-3. HOW TO ACCESS THE FEATURES
-- No login or demo account is needed. On first launch the game silently creates an
-  anonymous guest account, so every feature is available immediately.
-- Tap an empty slot → choose a sect and a name → Start. The hub opens.
-- Controls in a fight: virtual stick on the left, attack / block / dodge / technique buttons
-  on the right. The pause button is at the top.
-- Story: the gold banner at the top of the hub. Tower, Arena, Dungeon and Duels: the four mode
-  tiles. Leaderboard, character, skills, forge, settings: the bottom icon row.
-- Optional account: title screen → "Tài khoản" (Account). The player may link an email and
-  password only to back up saves to the cloud.
-- Account deletion: title screen → "Tài khoản" → "Xóa tài khoản" (Delete account). It deletes
-  the account, the cloud saves, the leaderboard entries and the Duel entry (tap twice to confirm).
-- Leaderboard privacy: Leaderboard screen → "Ẩn tôi khỏi bảng" hides the player from the
-  leaderboard and from Duels.
-- There are no in-app purchases in this iOS version. Ads are Google AdMob: optional rewarded
-  ads (double rewards, revive), and from hero level 10 an occasional interstitial between
-  screens (never during a fight).
+HOW TO SIGN IN (about 30 seconds)
+1. Launch the app. On the title screen, tap "Tài khoản" (Account), at the bottom.
+2. Enter the demo e-mail and password, then tap "Đăng nhập" (Sign in).
+3. Tap "Đóng" (Close). The demo hero appears in the third save slot ("Ô lưu 3").
+4. Tap "Vào game" (Play) on that slot. The hub opens.
+
+WHERE THE FEATURES ARE
+- Story ("Hành Tẩu Giang Hồ"): the gold banner at the top right of the hub. All regions are open.
+- Trial Tower, Duels (other players' heroes, AI-controlled), Arena, Training: the four tiles.
+- Dungeons ("Phó Bản"): the tile below them.
+- Character, skills, equipment, shop, outfits, missions, leaderboard, settings: the icon row at
+  the bottom of the hub.
+- Fight controls: virtual stick on the left; attack / block / dodge / technique buttons on the
+  right; the pause button is at the top.
+
+OTHER NOTES
+- A demo account is optional for players: without signing in, the game creates an anonymous
+  guest account on first launch, and the player starts a new hero from level 1.
+- Account deletion: title screen → "Tài khoản" → "Xóa tài khoản" (Delete account), tap twice.
+  Please do not delete the demo account itself during the review.
+- There are no in-app purchases in this iOS version. Ads are Google AdMob.
 - There is no chat or other user-generated content in this version; hero names are the only
   text players enter.
+- The interface is in Vietnamese.
 
-4. EXTERNAL SERVICES
-- Google Firebase Authentication (anonymous guest account, optional email/password link).
-- Google Cloud Firestore (cloud saves, leaderboard, weekly Duel ranking).
-- Google AdMob and Google User Messaging Platform (ads and consent).
-No AI services, no payment processors, no other data providers.
+---
 
-5. REGIONAL DIFFERENCES
-None. The app has the same features and content in every region.
+REPLY (Reply to App Review)
 
-6. REGULATED INDUSTRY / THIRD-PARTY MATERIAL
-Not applicable. All characters, story and art are original to the developer. Sound effects
-are CC0 recordings and one free voice pack used under its licence (credited in Settings).
+Hello,
+
+Thank you for the review. We have added a demo account in App Review Information
+(User name and Password, with "Sign-in required" ticked). It holds a level-60 hero with
+every feature unlocked.
+
+To use it: on the title screen tap "Tài khoản" (Account), enter the e-mail and password,
+tap "Đăng nhập" (Sign in), then "Đóng" (Close). The demo hero appears in the third save
+slot; tap "Vào game" (Play). Step-by-step notes, including where each feature is, are in
+the Notes field.
+
+Best regards

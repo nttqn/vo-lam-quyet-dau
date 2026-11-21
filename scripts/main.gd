@@ -98,6 +98,9 @@ func _ready() -> void:
 			for b in args:
 				if b.begins_with("--ehp="): e.stats.hp_max *= float(b.substr(6))   # quick KO for finisher shots
 				if b.begins_with("--rounds="): rounds = int(b.substr(9))
+			if "--nm" in args:   # Ác Mộng look: violet tint + title
+				e.look["tint"] = Journey.NM_TINT
+				e.title = "Ác Mộng · Nguyệt Ảnh Cốc"
 			var fcfg := {"p": p, "e": e, "theme": th, "autoplay": true, "seed": 3, "rounds": rounds}
 			if "--boss" in args:   # Boss Thế Giới giant (pick with --wb=i)
 				var bh := Hero.create("Thử", ps)
@@ -265,6 +268,7 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			Game.goto(MapScreen.new())
 		"checkin":
 			Game.hero.checkin = {"day": "", "n": int(_arg(args, "--days=", "3"))}
+			Titles.refresh(Game.hero)   # no "new title" toast over the panel
 			var hc := HubScreen.new()
 			Game.goto(hc)
 			hc._open_checkin.call_deferred()
@@ -275,9 +279,19 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			Game.goto(cs2)
 			cs2._title_dialog.call_deferred()
 		"profile":
-			ProfilePanel.fake_duel = Duel.fields(Game.hero)
+			# a strong rival: lvl 60, legendary +15 weapon, skills levelled
+			var rv := Hero.create("Tiêu Dao Khách", "thieu_lam")
+			Hero.add_exp(rv, 900000)
+			rv.pts = Build.auto_points(int(rv.level), Sects.get_sect("thieu_lam"), RandomNumberGenerator.new())
+			rv.gear["weapon"] = Items.make("weapon", 7, 4, 15)
+			rv.gear["armor"] = Items.make("armor", 7, 3, 12)
+			for i in rv.skill_lv.size():
+				rv.skill_lv[i] = 5
+			Hero._fill_slots(rv)
+			ProfilePanel.fake_duel = Duel.fields(rv)
+			ProfilePanel.fake_duel.score = 1462
 			var rs2 := RankScreen.new()
-			rs2.fake_rows.append({"_id": "x_0", "name": "Tiêu Dao Khách", "sect": "nga_mi", "level": 41, "power": 8421, "tower": 37, "stars": 96, "title": "ac_mong"})
+			rs2.fake_rows.append({"_id": "x_0", "name": rv.name, "sect": rv.sect, "level": int(rv.level), "power": Hero.power(rv), "tower": 64, "stars": 186, "title": "ac_mong_chu"})
 			Game.goto(rs2)
 			(func(): rs2.ui.add_child(ProfilePanel.new(rs2.fake_rows[0], func(): Game.goto(RankScreen.new())))).call_deferred()
 		"char": Game.goto(CharacterScreen.new())
@@ -287,6 +301,11 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			Game.goto(ResultScreen.new({"mode": "wboss", "won": false, "res": wr, "dmg": 2480, "ratio": 0.31, "boss": WBoss.today_boss().name, "rewards": WBoss.try_rewards(int(Game.hero.level), 0.31, false), "levels": 0}))
 		"wboss", "wbossboard":
 			var wbs := WBossScreen.new()
+			var pool_arg := _arg(args, "--pool=")
+			if pool_arg != "":   # promo: boss pool part-way down, this hero's damage today
+				wbs.fake_pool = int(pool_arg)
+				WBoss.ensure(Game.hero).dmg = 24800
+				WBoss.ensure(Game.hero).best = 24800
 			Game.goto(wbs)
 			if screen == "wbossboard":
 				var names := ["Tiêu Dao Khách", "Nguyệt Ảnh", "Bạch Vân", "Lãng Tử", "Thiết Quyền", "Hàn Băng", "Phi Yến", "Cuồng Đao"]

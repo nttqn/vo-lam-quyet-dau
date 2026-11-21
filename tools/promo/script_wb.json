@@ -1,0 +1,10 @@
+[
+  {"id":"w1","scene":"clip:w","say":"Các cao thủ ơi! Boss Thế Giới đã xuất hiện rồi!","sub":"BOSS THẾ GIỚI\nĐã xuất hiện!","at":2},
+  {"id":"w2","scene":"stills:wboss,wbossboard","say":"Cả server cùng hợp sức, gây sát thương càng nhiều, thưởng càng to!","sub":"Cả server cùng đánh boss\nĐua top sát thương mỗi ngày"},
+  {"id":"w3","scene":"clip:w","say":"Binh khí cộng mười lăm, hào quang rực cháy, chém là sướng tay!","sub":"Cường hóa binh khí +15\nHào quang rực rỡ","at":11.2},
+  {"id":"w4","scene":"clip:n","say":"Vùng đất mới Nguyệt Ảnh Cốc, cùng chế độ Ác Mộng siêu khó!","sub":"Vùng mới: Nguyệt Ảnh Cốc\nChế độ Ác Mộng","at":4},
+  {"id":"w5","scene":"stills:mapnm,titles","say":"Săn mười ba danh hiệu, khoe ngay trên bảng xếp hạng!","sub":"13 danh hiệu\nKhoe trên bảng xếp hạng"},
+  {"id":"w6","scene":"stills:checkin,profile","say":"Điểm danh mỗi ngày nhận quà, xem thông tin và đấu thử với cao thủ khác!","sub":"Điểm danh nhận quà mỗi ngày\nXem thông tin · Đấu thử"},
+  {"id":"w7","scene":"clip:x","say":"Và tung đòn kết liễu thủy mặc, đẹp mãn nhãn!","sub":"Kết liễu thủy mặc","at":2.4,"hold":0.5},
+  {"id":"w8","scene":"end","say":"Tải Võ Lâm Quyết Đấu miễn phí ngay nha!","sub":"Tải miễn phí trên Google Play"}
+]

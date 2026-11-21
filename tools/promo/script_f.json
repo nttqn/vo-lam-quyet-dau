@@ -1,0 +1,11 @@
+[
+  {"id":"f1","scene":"clip:a","say":"Các cao thủ ơi! Võ Lâm Quyết Đấu đã có mặt trên Google Play rồi đây!","sub":"Võ Lâm Quyết Đấu\nGame đối kháng võ lâm 3D","at":2},
+  {"id":"f2","scene":"still:create","say":"Chọn ngay môn phái của bạn: Thiếu Lâm, Võ Đang, Nga Mi, Cái Bang hay Đường Môn?","sub":"Ngũ đại môn phái\nThiếu Lâm · Võ Đang · Nga Mi\nCái Bang · Đường Môn"},
+  {"id":"f3","scene":"clip:b","say":"Sáu võ công mỗi phái! Né đòn, phản đòn, tung tuyệt kỹ cực đã tay!","sub":"6 võ công riêng mỗi phái\nTung tuyệt kỹ đúng thời cơ","at":2.6},
+  {"id":"f4","scene":"clip:c","say":"Điểm huyệt tay, chân, đan điền, khóa chặt mọi đường đánh của đối thủ!","sub":"Điểm huyệt tay · chân · đan điền\nKhóa đòn đối thủ","at":5},
+  {"id":"f5","scene":"clip:k","say":"Và đòn kết liễu thủy mặc, đẹp mãn nhãn luôn!","sub":"Kết liễu thủy mặc","at":4.5},
+  {"id":"f6","scene":"stills:hub,map","say":"Bảy vùng đất, bốn mươi hai trận cốt truyện, Tháp Thí Luyện, Lôi Đài, Phó Bản, chơi hoài không chán!","sub":"7 vùng đất · 42 trận cốt truyện\nTháp Thí Luyện · Lôi Đài\nPhó Bản"},
+  {"id":"f7","scene":"stills:forge,skill","say":"Rèn binh khí lên cộng mười lăm, hào quang rực rỡ cả võ đài!","sub":"Cường hóa binh khí +15\nTỏa hào quang rực rỡ"},
+  {"id":"f8","scene":"clip:d","say":"Tỉ võ với cao thủ khắp nơi, đua top bảng xếp hạng mỗi tuần!","sub":"Tỉ võ cùng người chơi\nLeo bảng xếp hạng mỗi tuần","at":2},
+  {"id":"f9","scene":"end","say":"Tải miễn phí Võ Lâm Quyết Đấu ngay hôm nay nha!","sub":"Tải miễn phí trên Google Play"}
+]

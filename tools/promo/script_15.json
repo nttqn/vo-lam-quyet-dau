@@ -1,0 +1,7 @@
+[
+  {"id":"t1","scene":"clip:a","say":"Các cao thủ ơi! Võ Lâm Quyết Đấu ra mắt rồi!","sub":"Võ Lâm Quyết Đấu\nGame đối kháng võ lâm 3D","at":2.4},
+  {"id":"t2","scene":"clip:b","say":"Năm môn phái, tuyệt kỹ cực đã tay!","sub":"5 môn phái · 30 võ công","at":2.6,"hold":0.5},
+  {"id":"t3","scene":"clip:k","say":"Kết liễu thủy mặc, đẹp mãn nhãn!","sub":"Kết liễu thủy mặc","at":4.6,"hold":0.9},
+  {"id":"t4","scene":"clip:d","say":"Tỉ võ, leo top mỗi tuần!","sub":"Tỉ võ · Leo top mỗi tuần","at":2,"hold":0.4},
+  {"id":"t5","scene":"end","say":"Tải miễn phí trên Google Play nha!","sub":"Tải miễn phí trên Google Play"}
+]

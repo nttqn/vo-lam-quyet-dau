@@ -12,6 +12,7 @@ var _rank_lbl: Label
 var _pool := -2            # -2 loading, -1 offline
 var _rank := -1
 var fake_rows: Array = []  # --screen=wbossboard
+var fake_pool := -1        # --screen=wboss --pool=N: damage already dealt today
 
 func _ready() -> void:
 	boss = WBoss.today_boss()
@@ -113,6 +114,10 @@ static func _short(date: String) -> String:
 	return "%s/%s" % [p[2], p[1]] if p.size() == 3 else date
 
 func _load() -> void:
+	if fake_pool >= 0:   # promo / store shots: a pool already part-way down
+		_pool = fake_pool
+		_show_pool()
+		return
 	if not Cloud.enabled():
 		_pool = -1
 		_show_pool()

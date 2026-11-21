@@ -42,7 +42,7 @@ NGŨ PHÁI TRANH HÙNG
 • Đòn kết liễu chuyển cả màn hình sang tranh thủy mặc.
 
 HÀNH TẨU GIANG HỒ
-• Cốt truyện qua 7 vùng đất và 42 trận, từ Thiếu Thất Sơn, Thiên Sơn Tuyết Lĩnh, Ma Giáo Tổng Đàn tới Thiên Trụ Phong.
+• Cốt truyện qua 8 vùng đất và 48 trận, từ Thiếu Thất Sơn, Thiên Sơn Tuyết Lĩnh, Ma Giáo Tổng Đàn, Thiên Trụ Phong tới Nguyệt Ảnh Cốc; thêm chế độ Ác Mộng cho cao thủ.
 • Tháp Thí Luyện: leo tầng không giới hạn, cứ 3 tầng có một luật đấu lạ, 10 tầng gặp hộ tháp.
 • Lôi Đài: liên thắng càng dài thưởng càng lớn.
 • Phó Bản: săn nguyên liệu rèn đồ.
@@ -91,7 +91,7 @@ DEEP COMBAT
 • The finishing blow turns the screen into an ink-wash painting.
 
 THE MARTIAL WORLD
-• A story across 7 regions and 42 fights.
+• A story across 8 regions and 48 fights, plus a Nightmare mode for veterans.
 • Trial Tower: endless floors, a twist rule every third floor and a guardian every tenth.
 • Arena: the longer your win streak, the bigger the prize.
 • Dungeons: farm materials for your forge.

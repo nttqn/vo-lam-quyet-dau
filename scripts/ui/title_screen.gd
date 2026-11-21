@@ -142,7 +142,7 @@ func _build_slots() -> void:
 			v.add_child(name)
 			v.add_child(UI.label("%s  ·  Cấp %d" % [s.name, int(info.get("level", 1))], 22))
 			var prog: int = (info.get("stars", {}) as Dictionary).size()
-			v.add_child(UI.label("Giang hồ: %d/42 trận" % prog, 18, Color(0.8, 0.78, 0.72)))
+			v.add_child(UI.label("Giang hồ: %d/%d trận" % [prog, Journey.REGIONS.size() * 6], 18, Color(0.8, 0.78, 0.72)))
 			if Cloud.conflicts.has(i):
 				v.add_child(UI.label("Bản trên mây khác bản trong máy", 17, Color(1, 0.7, 0.45)))
 				v.add_child(UI.gold_button("Chọn bản lưu", func(): _resolve(i), 22))

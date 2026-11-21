@@ -29,3 +29,16 @@ tools/sfx/node_modules/
 # Marti Topmade voice pack: free to use with credit, but the raw recordings may not be redistributed
 assets_src/audio/voice_f/topmademarti/
 assets_src/scenery/orig/
+
+# promo video work files and outputs
+tools/promo/node_modules/
+tools/promo/clips/
+tools/promo/frames/
+tools/promo/seg/
+tools/promo/out/
+tools/promo/voice/*.raw.mp3
+store/video/
+*.mobileprovision
+tools/promo/voice/
+tools/promo/txt/
+tools/promo/stills/

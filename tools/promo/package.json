@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "dependencies": {
+    "node-edge-tts": "^1.2.11"
+  }
+}
