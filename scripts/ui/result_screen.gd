@@ -26,6 +26,9 @@ func _ready() -> void:
 		show.hold[0] = {"clip": "b/Idle_No", "frac": -1.0}
 	shade(false, 0.6, 0.9)
 	Game.music("menu")
+	if out.won and out.mode == "stage" and int(h.wins) >= 1:
+		# first won duel: a good moment for the Android 13+ reminder prompt (once)
+		get_tree().create_timer(1.5).timeout.connect(Notify.ask_once)
 	var right := UI.vbox(12)
 	right.anchor_left = 1.0
 	right.anchor_right = 1.0
@@ -116,6 +119,8 @@ func _ready() -> void:
 		var it: Dictionary = out.drop
 		var l := UI.label("Chiến lợi phẩm: %s (%s)" % [Items.item_name(it, s.style), Items.RARITY[int(it.rar)]], 22, Items.RARITY_COL[int(it.rar)], UI.bold)
 		rv.add_child(l)
+		if out.get("worn", false):
+			rv.add_child(UI.label("Đã tự mặc vào — lực chiến tăng!", 19, Color(0.6, 1.0, 0.6)))
 	if out.has("book"):
 		rv.add_child(UI.label("%s: %s" % [Books.name_of(out.book), Books.KINDS[out.book][1]], 21, Books.COLOR[out.book], UI.bold))
 	var gained: Dictionary = res.get("insight", {})
@@ -158,7 +163,13 @@ func _ready() -> void:
 	if out.has("unlock"):
 		body.add_child(UI.label("Mở khóa vùng mới: %s" % out.unlock, 22, UI.GOLD, UI.bold))
 	if not out.won and out.mode == "stage":
-		var tip := UI.label("Mẹo: cộng điểm tiềm năng, nâng võ công, cường hóa trang bị hoặc lên Lôi Đài rèn luyện thêm.", 18, Color(0.85, 0.8, 0.7))
+		var tip_txt := "Mẹo: cộng điểm tiềm năng, nâng võ công, cường hóa trang bị hoặc lên Lôi Đài rèn luyện thêm."
+		if int(out.r) == 0 and not out.get("nm", false):
+			tip_txt = ["Mẹo: thấy đối thủ vung đòn thì kéo cần về phía SAU để đỡ, rồi phản công ngay.",
+				"Mẹo: bấm Quyền liên tục để ra cả chuỗi combo, đừng bấm từng cái một.",
+				"Mẹo: dùng chiêu thức (nút tím) khi Nội Lực đủ — sát thương lớn hơn đòn thường nhiều.",
+				"Mẹo: thua vẫn được kinh nghiệm. Lên cấp rồi đấu lại sẽ dễ hơn."][int(h.losses) % 4]
+		var tip := UI.label(tip_txt, 18, Color(0.85, 0.8, 0.7))
 		tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		body.add_child(tip)
 	for c in body.get_children() + rv.get_children():

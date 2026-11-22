@@ -15,6 +15,8 @@ var _btn_touch := {}     # touch index -> button id
 var _pressed := {}       # button id -> highlight time
 var _keys_prev := {}
 var show_buttons := true
+var hint := ""              # trận nhập môn: "stick", "back" or a button id to point at
+var _hint_t := 0.0
 
 const STICK_R := 95.0
 
@@ -112,6 +114,7 @@ func poll() -> Dictionary:
 	return {"mx": mx, "up": up, "down": down, "btn": pop_btn()}
 
 func _process(delta: float) -> void:
+	_hint_t += delta
 	for k in _pressed.keys():
 		_pressed[k] -= delta
 		if _pressed[k] <= 0:
@@ -129,6 +132,8 @@ func _draw() -> void:
 		var c := Vector2(170, size.y - 160)
 		draw_arc(c, STICK_R, 0, TAU, 48, Color(1, 1, 1, 0.16), 3.0, true)
 		draw_circle(c, 40, Color(1, 1, 1, 0.12))
+	if hint != "":
+		_draw_hint()
 	if not show_buttons:
 		return
 	for b in buttons():
@@ -188,6 +193,33 @@ func _draw() -> void:
 			var cw := UI.bold.get_string_size(cost_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
 			draw_circle(c + Vector2(0, r - 4), 13, Color(0.15, 0.3, 0.7, 0.95))
 			draw_string(UI.bold, c + Vector2(-cw * 0.5, r + 1), cost_txt, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
+
+## Pulsing gold ring (and an arrow for the stick) on what the lesson asks for.
+func _draw_hint() -> void:
+	var pulse := 0.5 + 0.5 * sin(_hint_t * 6.0)
+	var gold := Color(1.0, 0.82, 0.3, 0.55 + 0.45 * pulse)
+	if hint == "stick" or hint == "back":
+		var c := _stick_origin if _stick_id != -1 else Vector2(170, size.y - 160)
+		draw_arc(c, STICK_R + 10 + pulse * 10, 0, TAU, 56, gold, 6.0, true)
+		var face := fighter.facing if fighter else 1
+		var dir := Vector2(float(face if hint == "stick" else -face), 0)
+		# inside the ring: the stick's rest spot is near the screen edge
+		var tip := c + dir * (STICK_R * 0.55 + pulse * 14)
+		var base := c - dir * (STICK_R * 0.45)
+		draw_line(base, tip, gold, 10.0, true)
+		var side := Vector2(-dir.y, dir.x)
+		draw_colored_polygon(PackedVector2Array([tip + dir * 22, tip + side * 22, tip - side * 22]), gold)
+		var lbl := "Tiến" if hint == "stick" else "Lùi = Đỡ"
+		var w := UI.bold.get_string_size(lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x
+		var lp := c + Vector2(-w * 0.5, -STICK_R - 34)
+		draw_string_outline(UI.bold, lp, lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, 26, 6, Color(0, 0, 0, 0.8))
+		draw_string(UI.bold, lp, lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, 26, gold)
+		return
+	for b in buttons():
+		if b.id == hint:
+			var r: float = b.r
+			draw_arc(b.c, r + 10 + pulse * 12, 0, TAU, 56, gold, 7.0, true)
+			draw_arc(b.c, r + 26 + pulse * 18, 0, TAU, 56, Color(gold.r, gold.g, gold.b, gold.a * 0.4), 4.0, true)
 
 static func _short(n: String) -> String:
 	var w := n.split(" ")

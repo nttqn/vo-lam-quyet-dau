@@ -78,6 +78,12 @@ func _ready() -> void:
 	_build_slots()
 	Iap.changed.connect(_build_slots)
 	Funnel.device("f_install")
+	if Game.settings.has("in_fight"):   # the last run ended inside a fight (crash, kill, swipe away)
+		if int(Game.settings.in_fight) == 0:
+			Funnel.device("f_killed1")
+		Funnel.event("fight_killed")
+		Game.settings.erase("in_fight")
+		Game.save_settings()
 	var bottom := UI.hbox(16)
 	bottom.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
 	bottom.offset_top = -86

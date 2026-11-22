@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- VLNotify reminders (Android 13+ asks the player at runtime) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application>
         <meta-data
             android:name="org.godotengine.plugin.v2.VLGoogleAuth"
@@ -7,5 +9,11 @@
         <meta-data
             android:name="org.godotengine.plugin.v2.VLAnalytics"
             android:value="com.trungsmail.vlauth.VLAnalytics" />
+        <meta-data
+            android:name="org.godotengine.plugin.v2.VLNotify"
+            android:value="com.trungsmail.vlauth.VLNotify" />
+        <receiver
+            android:name="com.trungsmail.vlauth.NotifyReceiver"
+            android:exported="false" />
     </application>
 </manifest>

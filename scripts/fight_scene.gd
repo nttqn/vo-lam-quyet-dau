@@ -36,9 +36,17 @@ var _insight := {}            # ngộ chiêu points read by the player this figh
 var _ink_rect: ColorRect      # thủy mặc finisher overlay (hidden until the final blow)
 var _ink_mat: ShaderMaterial
 var _pause_btn: Button
+var tut: Tutorial             # trận nhập môn (cfg.tutorial): the first story duel
+# first-fight diagnostics for the funnel (1.3.0): load time, frame rate, quits
+var _born_ms := 0
+var _first_frame := false
+var _fps_t := 0.0
+var _fps_n := 0
+var _first_fight := false     # the phone's hero has never finished a fight
 
 func _init(p_cfg: Dictionary) -> void:
 	cfg = p_cfg
+	_born_ms = Time.get_ticks_msec()
 
 static func make_fighter(side: Dictionary) -> Fighter:
 	var f := Fighter.new()
@@ -150,6 +158,16 @@ func _ready() -> void:
 					elif k == "fwd": d["mx"] = 1
 					else: d["btn"] = k
 				_script[int(p[0])] = d
+	if cfg.get("tutorial", false):
+		tut = Tutorial.new(self)
+		root.add_child(tut)
+	_first_fight = not Game.hero.is_empty() and int(Game.hero.get("fights", 0)) == 0 and not cfg.get("autoplay", false)
+	if _first_fight:
+		Funnel.device("f_fs1")
+	# marker: still set at the next launch = the app died or was closed mid-fight
+	if not Game.hero.is_empty() and not cfg.get("autoplay", false):
+		Game.settings["in_fight"] = int(Game.hero.get("fights", 0))
+		Game.save_settings()
 	Game.music("fight")
 
 func _shadow(v: FighterView) -> void:
@@ -224,12 +242,17 @@ func _physics_process(_delta: float) -> void:
 	if ai_p:
 		inp = ai_p.decide(sim)
 	var ein := ai.decide(sim)
+	if tut:
+		ein = tut.enemy_input(ein)
+		tut.before_tick()
 	if not _script.is_empty():
 		inp = _script.get(_frames, {})
 		ein = {}
 	if "--fullen" in OS.get_cmdline_user_args():   # test: skills always affordable
 		sim.f[0].en = Fighter.EN_MAX
 	sim.tick(inp, ein)
+	if tut:
+		tut.after_tick(inp)
 	if cfg.get("rule", "") == "regen" and sim.phase == FightSim.FIGHT and not sim.f[1].dead:
 		sim.f[1].hp = minf(sim.f[1].st.hp_max, sim.f[1].hp + sim.f[1].st.hp_max * 0.012 / 60.0)
 	if cfg.get("training", false):
@@ -538,9 +561,28 @@ func _finish(won: bool, forfeit := false) -> void:
 		"insight": _insight, "dmg": fp.stats_dealt,
 	}
 	Engine.time_scale = 1.0
+	if Game.settings.has("in_fight"):
+		Game.settings.erase("in_fight")
+		Game.save_settings()
+	if _first_fight:
+		if forfeit:
+			Funnel.device("f_quit1")
+		if _fps_t > 5.0:
+			var fps := _fps_n / _fps_t
+			Funnel.device("f_fps_lt20" if fps < 20.0 else ("f_fps_lt30" if fps < 30.0 else ("f_fps_lt45" if fps < 45.0 else "f_fps_ok")))
 	finished.emit(res)
 
 func _process(delta: float) -> void:
+	if not _first_frame:
+		_first_frame = true
+		if _first_fight:   # build + first draw (models, shaders) of the first fight
+			var s := (Time.get_ticks_msec() - _born_ms) / 1000.0
+			Funnel.device("f_load_lt3" if s < 3.0 else ("f_load_lt8" if s < 8.0 else ("f_load_lt20" if s < 20.0 else "f_load_gt20")))
+	elif sim.phase == FightSim.FIGHT and not paused and Engine.time_scale == 1.0:
+		_fps_t += delta
+		_fps_n += 1
+		if _first_fight and _fps_n == 1:
+			Funnel.device("f_go1")   # the duel is on screen and playable
 	if _slowmo > 0:
 		_slowmo -= delta / maxf(0.1, Engine.time_scale)
 		Engine.time_scale = 0.3 if _slowmo > 0 else 1.0

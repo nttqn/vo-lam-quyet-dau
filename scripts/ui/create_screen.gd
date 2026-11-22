@@ -136,7 +136,8 @@ func _create() -> void:
 	Game.hero = Hero.create(n, sect_id)
 	Game.save()
 	Game.sfx("gong")
-	Game.goto(HubScreen.new())
+	# straight into the story: intro words, then the first duel with its lessons
+	Flow.start_stage(0, 0)
 
 func back() -> void:
 	Game.goto(TitleScreen.new())

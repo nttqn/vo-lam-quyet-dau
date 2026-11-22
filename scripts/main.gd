@@ -59,6 +59,9 @@ func _ready() -> void:
 		if a == "--wbsim":
 			add_child(load("res://tools/wboss_sim.gd").new())
 			return
+		if a == "--notifycheck":
+			add_child(load("res://tools/notify_check.gd").new())
+			return
 		if a == "--chattest":
 			add_child(load("res://tools/chat_test.gd").new())
 			return
@@ -110,6 +113,9 @@ func _ready() -> void:
 				fcfg.rounds = 1
 				fcfg["time"] = WBoss.FIGHT_SECONDS
 				fcfg["wboss"] = true
+			if "--tutorial" in args:   # trận nhập môn overlay (lessons time out after 2.5 s under autoplay)
+				fcfg["tutorial"] = true
+				fcfg.rounds = 1
 			var fs := FightScene.new(fcfg)
 			Game.goto(fs)
 			return

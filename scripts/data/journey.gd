@@ -8,9 +8,9 @@ const REGIONS := [
 		"foes": [
 			["Lưu Tam", "Sơn tặc lâu la", "cai_bang"],
 			["Mạnh Thiết Ngưu", "Lực sĩ trại Hắc Phong", "thieu_lam"],
-			["Hồ Lão Lục", "Đao phỉ", "duong_mon"],
+			["Hồ Lão Lục", "Đao phỉ", "vo_dang"],
 			["Tiêu Phi Yến", "Nữ tặc khinh công", "nga_mi"],
-			["Đồ Bách Xuyên", "Quân sư sơn trại", "vo_dang"],
+			["Đồ Bách Xuyên", "Quân sư sơn trại", "duong_mon"],
 			["Hắc Phong Trại Chủ", "Lôi Bưu", "cai_bang"],
 		]},
 	{"name": "Trúc Lâm Thâm Xứ", "theme": "bamboo", "lvl": 6, "faction": "wanderer",
@@ -168,14 +168,15 @@ static func stage_id(r: int, s: int) -> String:
 
 static func stage_level(r: int, s: int) -> int:
 	if r == 0:
-		return 1 + int(s * 0.7)   # 1,1,2,3,3,4: tracks a hero levelling from scratch
+		return [1, 1, 2, 2, 2, 3][s]   # tracks a hero levelling from scratch (double exp here)
 	return int(REGIONS[r].lvl) + int(round(s * 0.85))
 
 ## AI skill 0..1 for a stage
 static func stage_ai(r: int, s: int) -> float:
 	if r == 0:
-		# tutorial region: slow, rarely blocks; ramps to the region-2 level
-		return 0.1 + s * 0.035 + (0.05 if s == 5 else 0.0)
+		# tutorial region: slow, rarely blocks; ramps toward the region-2 level
+		# (1.3.0: a touch softer, the funnel lost half the players by the 3rd duel)
+		return 0.08 + s * 0.03 + (0.04 if s == 5 else 0.0)
 	return clampf(0.22 + r * 0.11 + s * 0.025 + (0.08 if s == 5 else 0.0), 0.0, 0.98)
 
 static func stage_side(r: int, s: int) -> Dictionary:
@@ -206,15 +207,26 @@ static func region_stars(h: Dictionary, r: int) -> int:
 		t += int(h.stars.get(stage_id(r, s), 0))
 	return t
 
+## Region 0 pays double experience: one win = level 2, and the hero
+## out-levels the first boss instead of meeting it at level 3.
+const FIRST_REGION_EXP := 2.0
+
 static func rewards(r: int, s: int, first: bool, stars: int) -> Dictionary:
 	var lvl := stage_level(r, s)
 	var boss := s == 5
-	var exp := int((30 + 11 * lvl) * (1.6 if boss else 1.0) * (1.0 if first else 0.45))
+	var exp := int((30 + 11 * lvl) * (1.6 if boss else 1.0) * (1.0 if first else 0.45) * (FIRST_REGION_EXP if r == 0 else 1.0))
 	var gold := int((25 + 9 * lvl) * (2.5 if boss else 1.0) * (1.0 if first else 0.5))
 	var jade := (3 if boss else 1) if first else 0
 	if stars == 3 and first:
 		jade += 1
 	return {"exp": exp, "gold": gold, "jade": jade}
+
+## Starter gear: the first clears of duels 2 and 4 in region 0 hand over the
+## slot a new hero lacks (hat, boots), put on at once. "" = no gift.
+static func starter_gift(r: int, s: int) -> String:
+	if r != 0:
+		return ""
+	return {1: "hat", 3: "boots"}.get(s, "")
 
 ## Boss first-clear gear drop
 static func boss_drop(r: int, slot_rng: RandomNumberGenerator) -> Dictionary:

@@ -29,6 +29,17 @@ func _ready() -> void:
 		Game.settings.vibrate = on
 		Game.save_settings())
 	v.add_child(vib)
+	if OS.get_name() == "Android":
+		var nt := CheckButton.new()
+		nt.text = "Nhắc nhở (Boss Thế Giới, điểm danh)"
+		nt.button_pressed = Notify.enabled()
+		nt.add_theme_font_size_override("font_size", 22)
+		nt.toggled.connect(func(on: bool):
+			Game.settings["notify"] = on
+			Game.save_settings()
+			if on and not Notify.allowed():
+				Notify.ask())
+		v.add_child(nt)
 	v.add_child(_gfx_row())
 	var cr := UI.label("Võ Lâm Quyết Đấu  ·  phiên bản %s\nÂm thanh trận đấu: thư viện CC0 OpenGameArt (artisticdude, StarNinjas,\nrubberduck, Kenney, HaelDB). Giọng nữ: Marti Topmade (topmademarti).\nPhông chữ: Be Vietnam Pro, Playfair Display (SIL OFL)." % ProjectSettings.get_setting("application/config/version", "1.0.0"), 16, Color(0.75, 0.72, 0.66))
 	v.add_child(cr)

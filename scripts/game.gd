@@ -24,6 +24,7 @@ func _ready() -> void:
 	Gfx.set_level(settings.get("gfx", -1))
 	Gfx.apply(get_tree())
 	_load_audio()
+	Notify.on_foreground()
 	if Diag.on("memlog"):
 		var t := Timer.new()
 		t.wait_time = float(Diag.value("memlog_s", 5.0))
@@ -56,6 +57,10 @@ var _back_ms := -10000
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
 		_go_back("wm")
+	elif what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
+		Notify.on_background()
+	elif what == NOTIFICATION_APPLICATION_RESUMED:
+		Notify.on_foreground()
 
 func _input(event: InputEvent) -> void:
 	var k := event as InputEventKey

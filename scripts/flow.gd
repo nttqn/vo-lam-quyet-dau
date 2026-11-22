@@ -27,7 +27,14 @@ static func start_stage(r: int, s: int) -> void:
 		"p": Hero.side(h), "e": foe,
 		"theme": Journey.REGIONS[r].theme, "rounds": 2, "seed": randi(),
 	}
+	if tutorial_due(h, r, s):   # trận nhập môn: one round, lessons, can't be lost
+		cfg["tutorial"] = true
+		cfg.rounds = 1
 	_launch(cfg, func(res: Dictionary): _stage_done(r, s, res))
+
+## The first duel of a hero that has never fought teaches the controls.
+static func tutorial_due(h: Dictionary, r: int, s: int) -> bool:
+	return r == 0 and s == 0 and int(h.get("fights", 0)) == 0 and not Dictionary(h.get("stars", {})).has("0_0")
 
 ## Story or Ác Mộng duel.
 static func start_any(r: int, s: int, nm: bool) -> void:
@@ -124,6 +131,15 @@ static func _stage_done(r: int, s: int, res: Dictionary) -> void:
 					out.unlocked_sect = hid
 		out.rewards = rw
 		out.levels = _grant(rw)
+		var gift := Journey.starter_gift(r, s) if first else ""
+		if gift != "":
+			var git := Items.drop(gift, 1, 1)
+			if Dictionary(h.gear.get(gift, {})).is_empty():
+				h.gear[gift] = git
+				out.worn = true
+			else:
+				h.bag.append(git)
+			out.drop = git
 		if first and s == 5:
 			var rng := RandomNumberGenerator.new()
 			rng.randomize()
@@ -140,7 +156,8 @@ static func _stage_done(r: int, s: int, res: Dictionary) -> void:
 	else:
 		h.losses = int(h.losses) + 1
 		# consolation: a little experience so the player always progresses
-		var rw2 := {"exp": int(Journey.rewards(r, s, false, 1).exp * 0.25), "gold": 0, "jade": 0}
+		# (half a win's worth in region 0, where a loss most often ends the game)
+		var rw2 := {"exp": int(Journey.rewards(r, s, r == 0, 1).exp * (0.5 if r == 0 else 0.25)), "gold": 0, "jade": 0}
 		out.rewards = rw2
 		out.levels = _grant(rw2)
 	Game.save()

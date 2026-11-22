@@ -18,6 +18,9 @@ func _init() -> void:
 			# hero as it would be after first-clearing the previous stages
 			if s > 0:
 				Hero.add_exp(h, Journey.rewards(r, s - 1, true, 2).exp)
+				var gift := Journey.starter_gift(r, s - 1)
+				if gift != "":
+					h.gear[gift] = Items.drop(gift, 1, 1)
 				var rng := RandomNumberGenerator.new()
 				rng.seed = 7
 				h.pts = Build.auto_points(int(h.level), Sects.get_sect(sid), rng)
