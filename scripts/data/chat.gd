@@ -228,6 +228,8 @@ static func send(text: String) -> String:
 	var t := clean(text)
 	if t == "":
 		return "Hãy nhập nội dung."
+	if Ban.active():
+		return Ban.text()
 	var h := Game.hero
 	if h.is_empty() or int(h.level) < MIN_LEVEL:
 		return "Đạt cấp %d để nói chuyện trên Kênh Thế Giới." % MIN_LEVEL

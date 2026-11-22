@@ -166,7 +166,7 @@ static func fields(h: Dictionary) -> Dictionary:
 
 ## Uploads today's damage of this hero (not while hidden from the boards).
 static func publish(h: Dictionary, slot: int) -> bool:
-	if not Cloud.enabled() or Ranks.hidden():
+	if not Cloud.enabled() or Ranks.hidden() or Ban.active():
 		return false
 	return await Cloud.put_doc(collection(), "_%d" % slot, fields(h))
 
@@ -192,7 +192,7 @@ static func board(date := "", n := 30) -> Array:
 
 ## This hero's rank on that day's board (by its damage); -1 unknown.
 static func rank_of(dmg: int, date := "") -> int:
-	if not Cloud.enabled() or Ranks.hidden() or dmg <= 0:
+	if not Cloud.enabled() or Ranks.hidden() or Ban.active() or dmg <= 0:
 		return -1
 	var above := await Cloud.count_above(collection(date), "dmg", dmg)
 	return above + 1 if above >= 0 else -1

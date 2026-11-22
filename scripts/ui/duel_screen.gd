@@ -41,6 +41,8 @@ func _ready() -> void:
 		"\nBạn đang ẩn khỏi bảng xếp hạng: không có tên trên bảng và không làm đối thủ của ai." if Ranks.hidden() else ""], 16, Color(0.8, 0.78, 0.72))
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lv.add_child(info)
+	if Ban.active():
+		lv.add_child(Ban.notice(16))
 	_status = UI.label("Đang tìm đối thủ…", 18, Color(0.85, 0.82, 0.75))
 	lv.add_child(_status)
 	_rivals = UI.vbox(8)

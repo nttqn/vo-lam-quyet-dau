@@ -64,6 +64,8 @@ func _ready() -> void:
 	_unblock.custom_minimum_size.y = 34
 	srow.add_child(_unblock)
 	_refresh_unblock()
+	if Ban.active():   # can still read, can't post (_update_send keeps it so)
+		v.add_child(Ban.notice(16))
 	# message list
 	_sc = ScrollContainer.new()
 	_sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -227,6 +229,11 @@ func _update_send() -> void:
 		_send.disabled = true
 		_edit.editable = false
 		_edit.placeholder_text = "Đạt cấp %d để nói chuyện (vẫn xem được tin nhắn)" % Chat.MIN_LEVEL
+		return
+	if Ban.active():
+		_send.disabled = true
+		_edit.editable = false
+		_edit.placeholder_text = "Tài khoản đã bị khóa chat"
 		return
 	var w := Chat.wait_left()
 	_send.disabled = w > 0.0

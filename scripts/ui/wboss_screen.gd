@@ -158,7 +158,10 @@ func _show_rank() -> void:
 	if not is_instance_valid(_rank_lbl):
 		return
 	var w := WBoss.ensure(Game.hero)
-	if int(w.dmg) <= 0:
+	if Ban.active():
+		_rank_lbl.text = "Tài khoản bị khóa khỏi bảng — chỉ nhận thưởng tham gia."
+		_rank_lbl.add_theme_color_override("font_color", Color(1.0, 0.5, 0.45))
+	elif int(w.dmg) <= 0:
 		_rank_lbl.text = "Chưa đánh hôm nay."
 	elif Ranks.hidden():
 		_rank_lbl.text = "Bạn đang ẩn khỏi bảng xếp hạng — vẫn nhận thưởng tham gia."

@@ -18,6 +18,7 @@ func _ready() -> void:
 	_header(h, s)
 	_right(h)
 	_dock(h, s)
+	Ban.check()   # khóa tài khoản: throttled read of ban/{uid}
 	Iap.deliver_queue.call_deferred()
 	_new_titles.call_deferred(h)
 	_maybe_checkin.call_deferred(h)

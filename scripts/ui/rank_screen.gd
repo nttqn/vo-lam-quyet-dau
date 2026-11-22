@@ -59,6 +59,8 @@ func _ready() -> void:
 	_me_btn.custom_minimum_size = Vector2(0, 40)
 	_me_btn.visible = false
 	mh.add_child(_me_btn)
+	if Ban.active():
+		v.add_child(Ban.notice())
 	var hide_btn := CheckButton.new()
 	hide_btn.text = "Ẩn tôi khỏi bảng"
 	hide_btn.button_pressed = Ranks.hidden()
@@ -70,6 +72,7 @@ func _ready() -> void:
 		if is_inside_tree():
 			hide_btn.disabled = false
 			_show(_board))
+	hide_btn.visible = not Ban.active()   # nothing to hide or show while locked
 	mh.add_child(hide_btn)
 	_sc = ScrollContainer.new()
 	_sc.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -127,7 +130,11 @@ func _show(board: String) -> void:
 			return
 		_place = -1 if above < 0 or Ranks.hidden() else above + 1
 		_mine.text = "%s: %s%d%s" % [str(h.name), UNIT[board], my_v, ("  ·  hạng %d" % (above + 1)) if above >= 0 else ""]
-		if not Ranks.listed(h):
+		if Ban.active():
+			_place = -1
+			_mine.text = "%s: tài khoản bị khóa khỏi bảng" % str(h.name)
+			_mine.add_theme_color_override("font_color", Color(1.0, 0.5, 0.45))
+		elif not Ranks.listed(h):
 			_place = -1
 			_mine.text = "%s: đạt cấp %d để lên bảng xếp hạng" % [str(h.name), Ranks.MIN_LEVEL]
 			_mine.add_theme_color_override("font_color", Color(0.8, 0.78, 0.72))

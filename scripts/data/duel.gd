@@ -185,5 +185,7 @@ static func apply(h: Dictionary, opp_score: int, won: bool) -> int:
 static func publish(h: Dictionary) -> void:
 	if Hero.power(h) > Build.max_power(int(h.level)):
 		return   # an edited save: never shown to other players
+	if Ban.active():
+		return
 	if Cloud.enabled() and not Ranks.hidden():
 		await Cloud.put_my_doc(collection(), fields(h))

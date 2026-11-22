@@ -16,4 +16,15 @@ func _ready() -> void:
 		print("19:00 +%dd in %.1f h" % [d, Notify.seconds_to(19, d) / 3600.0])
 	var gift := Journey.starter_gift(0, 1)
 	print("gift s2: ", gift, " ", Items.item_name(Items.drop(gift, 1, 1), Sects.get_sect("vo_dang").style))
+	# khóa tài khoản: timestamp parsing, expiry, text (settings restored after)
+	var keep = Game.settings.get("ban", null)
+	print("ban unix: ", Ban._unix("2026-12-01T00:00:00Z"), " ", Ban._unix("2026-12-01T07:30:00.123456Z"), " ", Ban._unix(""))
+	Game.settings["ban"] = {"why": "Sửa dữ liệu", "until": int(Time.get_unix_time_from_system()) - 60}
+	print("ban expired active=", Ban.active())
+	Game.settings.ban.until = int(Time.get_unix_time_from_system()) + 3 * 86400
+	print("ban 3d active=", Ban.active(), " | ", Ban.text())
+	Game.settings.ban.until = 0
+	print("ban forever active=", Ban.active(), " listed=", Ranks.listed(Hero.create("X", "vo_dang")))
+	if keep == null: Game.settings.erase("ban")
+	else: Game.settings["ban"] = keep
 	get_tree().quit()

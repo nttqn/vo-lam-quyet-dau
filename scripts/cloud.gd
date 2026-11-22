@@ -516,6 +516,19 @@ func get_doc(path: String) -> Dictionary:
 		out[k] = _fs_plain(fl[k])
 	return out
 
+## Like get_doc, with the HTTP code: {code, fields}. code 404 = no such
+## document, 0 = offline (Ban tells "lifted" from "can't tell").
+func fetch_doc(path: String) -> Dictionary:
+	if not await _ensure_token():
+		return {"code": 0, "fields": {}}
+	var r := await _req(HTTPClient.METHOD_GET, _base_url() + path, "", true)
+	var out := {}
+	if r.code == 200 and r.get("body") is Dictionary:
+		var fl: Dictionary = r.body.get("fields", {})
+		for k in fl:
+			out[k] = _fs_plain(fl[k])
+	return {"code": int(r.code), "fields": out}
+
 ## Sum of a numeric field over a whole collection (Boss Thế Giới pool); -1 on error.
 func sum_field(collection: String, field: String) -> int:
 	if not await _ensure_token():
