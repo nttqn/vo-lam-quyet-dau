@@ -34,21 +34,27 @@ func _initialize() -> void:
 	if JSON.stringify(g) != before:
 		bad += 1
 		print("FAIL honest save changed")
-	# 3. a perfect real hero at every level stays under max_power
-	for lv in [2, 10, 30, 60, 80]:
+	# 3. a perfect real hero at every level stays under max_power: legendary +15
+	# in every slot at the highest tier its story progress allows (boss drops,
+	# shop, tower and dailies all follow it), maxed skills
+	for lv in [1, 2, 5, 8, 10, 12, 15, 20, 25, 28, 30, 40, 60, 80]:
 		for sid in Sects.IDS:
 			for build in ["luc", "the", "noi", "than"]:
 				var p := Hero.create("P", sid)
 				p.level = lv
 				p.pts = {build: (lv - 1) * 4}
 				for slot in Items.SLOTS:
-					var it := Items.make(slot, 7, 4, 15)
+					var it := Items.make(slot, clampi(2 + (lv + 4) / 5, 2, 7), 4, 15)
 					it["aff"] = [{"k": "atk", "q": 1.0}, {"k": "qi", "q": 1.0}, {"k": "def", "q": 1.0}, {"k": "en", "q": 1.0}]
 					p.gear[slot] = it
 				var doc := {"data": JSON.stringify({"level": lv, "stats": Hero.stats(p)}), "power": Hero.power(p)}
 				if Hero.power(p) > Build.max_power(lv) or not Build.shadow_ok(doc):
 					bad += 1
 					print("FAIL perfect L%d %s %s power %d" % [lv, sid, build, Hero.power(p)])
+	# 3b. the lv2 hero at 2,664 power seen on the board (2026-11-22) is refused
+	if 2664 <= Build.max_power(2):
+		bad += 1
+		print("FAIL lv2 2664 still listed (cap %d)" % Build.max_power(2))
 	# 4. real shadows from the boards
 	var args := OS.get_cmdline_user_args()
 	if args.size() > 0:

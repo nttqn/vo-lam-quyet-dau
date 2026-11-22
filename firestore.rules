@@ -26,9 +26,11 @@ service cloud.firestore {
         && d.level is int && d.power is int && okPower(d.level, d.power);
     }
     // Edited saves stay off the boards: power above Build.max_power(level)
-    // (45 × level + 5200, ~15% over a perfect real hero) is refused.
+    // = min(45 × level + 5200, 160 × level + 1900) is refused (the second line
+    // keeps low levels honest: gear tier follows story progress).
     function okPower(level, power) {
-      return level >= 1 && level <= 80 && power >= 0 && power <= 45 * level + 5200;
+      return level >= 1 && level <= 80 && power >= 0 && power <= 45 * level + 5200
+        && power <= 160 * level + 1900;
     }
     // Boss Thế Giới: wb_<yyyymmdd>/{uid}_{slot} = that hero's damage today.
     // At most 4 tries a day (3 + 1 ad) and 50,000 damage a try; tries and

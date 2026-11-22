@@ -31,8 +31,12 @@ static func stats(level: int, pts: Dictionary, sect: Dictionary, gear: Dictionar
 ## ~7,420 at 80. Anything above is an edited save: it is kept off the boards and
 ## Tỉ Võ, and firestore.rules (goodRank, goodDuel) refuses it with the SAME
 ## formula. Raise both together if gear or stats ever grow.
+## Low levels also get 160 × level + 1900 (1.3.0): gear tier follows story
+## progress, and progress forces levels, so a lv2 hero tops out near 1,500 even
+## with legendary +15 tier-3 gear in every slot (tool: cheat_check). A lv2 hero
+## at 2,664 had slipped under the flat cap. The two lines cross near level 28.
 static func max_power(level: int) -> int:
-	return 45 * level + 5200
+	return mini(45 * level + 5200, 160 * level + 1900)
 
 ## False for a shadow from an edited save: its power, recomputed from the
 ## snapshot stats (the rules can only check the plain power field), is above
