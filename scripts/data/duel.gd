@@ -183,5 +183,7 @@ static func apply(h: Dictionary, opp_score: int, won: bool) -> int:
 ## Uploads this hero's shadow + score, unless the player hid from the boards
 ## (Ranks.hidden): then they still fight others but are neither listed nor fought.
 static func publish(h: Dictionary) -> void:
+	if Hero.power(h) > Build.max_power(int(h.level)):
+		return   # an edited save: never shown to other players
 	if Cloud.enabled() and not Ranks.hidden():
 		await Cloud.put_my_doc(collection(), fields(h))

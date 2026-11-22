@@ -147,7 +147,7 @@ func _load() -> void:
 	if not is_inside_tree():
 		return
 	# the account's Tỉ Võ shadow is its last-played hero: only if it is this one
-	if not doc.is_empty() and str(doc.get("name", "")) == str(r.get("name", "")) and str(doc.get("sect", "")) == str(r.get("sect", "")):
+	if not doc.is_empty() and Build.shadow_ok(doc) and str(doc.get("name", "")) == str(r.get("name", "")) and str(doc.get("sect", "")) == str(r.get("sect", "")):
 		_shadow = doc
 	_after_load()
 

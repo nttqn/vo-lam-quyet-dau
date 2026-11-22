@@ -85,7 +85,7 @@ func _load() -> void:
 			docs = await Cloud.query(Duel.collection(), "score", 30)
 		if not is_inside_tree():
 			return
-		docs = docs.filter(func(x): return x._id != Cloud.uid)
+		docs = docs.filter(func(x): return x._id != Cloud.uid and Build.shadow_ok(x))
 		_load_board()
 	docs.shuffle()
 	docs = docs.slice(0, 4)
@@ -118,7 +118,7 @@ func _rival_row(doc: Dictionary) -> Control:
 func _load_board() -> void:
 	for c in _board.get_children():
 		c.queue_free()
-	var top: Array = await Cloud.query(Duel.collection(), "score", 50)
+	var top: Array = (await Cloud.query(Duel.collection(), "score", 50)).filter(func(x): return Build.shadow_ok(x))
 	if not is_inside_tree():
 		return
 	if top.is_empty():

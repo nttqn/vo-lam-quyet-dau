@@ -70,6 +70,7 @@ static func migrate(d: Dictionary) -> Dictionary:
 		if d.equip[i] == ULT:
 			d.equip[i] = -1   # the ultimate has its own slot now
 	_fill_slots(d)
+	sanitize(d)
 	carry_bank(d)
 	# bonus lines for gear made before the forge update
 	for slot in d.gear:
@@ -79,6 +80,35 @@ static func migrate(d: Dictionary) -> Dictionary:
 		if it is Dictionary:
 			Items.ensure_aff(it)
 	return d
+
+## Undoes the usual save edits, on every load. Stat points only come from
+## levels (POINTS_PER_LEVEL each): a save with more gets them all back as free
+## points to spend again, so a real player loses nothing. Gear keeps to the
+## forge limits (+15, 4 distinct bonus lines), skills to SKILL_MAX.
+static func sanitize(d: Dictionary) -> void:
+	d.level = clampi(int(d.level), 1, MAX_LEVEL)
+	var legit := (int(d.level) - 1) * Build.POINTS_PER_LEVEL
+	var used := 0
+	for k in ["luc", "than", "noi", "the"]:
+		var v := maxi(0, int(Dictionary(d.pts).get(k, 0)))
+		d.pts[k] = v
+		used += v
+	for k in Dictionary(d.pts).keys():
+		if not k in ["luc", "than", "noi", "the"]:
+			d.pts.erase(k)
+	if used > legit:
+		for k in d.pts:
+			d.pts[k] = 0
+		used = 0
+	d.free_pts = clampi(int(d.free_pts), 0, legit - used)
+	for i in d.skill_lv.size():
+		d.skill_lv[i] = clampi(int(d.skill_lv[i]), 0, SKILL_MAX)
+	for slot in d.gear:
+		if d.gear[slot] is Dictionary:
+			Items.sanitize(d.gear[slot])
+	for it in d.bag:
+		if it is Dictionary:
+			Items.sanitize(it)
 
 ## 1.2.3 raised the cap to 80: exp banked at the old cap of 60 carries over,
 ## at most BANK_LEVELS levels' worth. Later saves are untouched (exp at 60 is

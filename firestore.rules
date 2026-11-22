@@ -22,7 +22,13 @@ service cloud.firestore {
     }
     function goodDuel(d) {
       return d.data is string && d.data.size() < 20000 && d.score is int
-        && d.name is string && d.name.size() <= 24;
+        && d.name is string && d.name.size() <= 24
+        && d.level is int && d.power is int && okPower(d.level, d.power);
+    }
+    // Edited saves stay off the boards: power above Build.max_power(level)
+    // (45 × level + 5200, ~15% over a perfect real hero) is refused.
+    function okPower(level, power) {
+      return level >= 1 && level <= 80 && power >= 0 && power <= 45 * level + 5200;
     }
     // Boss Thế Giới: wb_<yyyymmdd>/{uid}_{slot} = that hero's damage today.
     // At most 4 tries a day (3 + 1 ad) and 50,000 damage a try; tries and
@@ -63,6 +69,7 @@ service cloud.firestore {
       // level >= 2: fresh throwaway heroes stay off the boards (Ranks.MIN_LEVEL)
       return d.name is string && d.name.size() <= 24 && d.sect is string
         && d.level is int && d.level >= 2 && d.power is int && d.tower is int && d.stars is int
+        && okPower(d.level, d.power)
         && (!('title' in d) || (d.title is string && d.title.size() <= 24));
     }
     // Kênh Thế Giới: chat/{id} readable by everyone signed in; a message is

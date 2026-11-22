@@ -135,6 +135,22 @@ static func roll_aff(n: int, rng: RandomNumberGenerator) -> Array:
 
 ## Gives an item the bonus lines its rarity is owed (old saves, drops, shop,
 ## after a rarity raise). Seeded by uid so it is stable.
+## Keeps an item inside what the forge can make (edited saves).
+static func sanitize(it: Dictionary) -> void:
+	if it.is_empty():
+		return
+	it["tier"] = clampi(int(it.get("tier", 1)), 1, TIER_BASE.size())
+	it["rar"] = clampi(int(it.get("rar", 0)), 0, MAX_RAR)
+	it["plus"] = clampi(int(it.get("plus", 0)), 0, MAX_PLUS)
+	var keep := []
+	var taken := []
+	for a in it.get("aff", []):
+		if a is Dictionary and AFF.has(str(a.get("k", ""))) and not str(a.k) in taken and keep.size() < MAX_RAR:
+			taken.append(str(a.k))
+			keep.append(a)
+	if it.has("aff"):
+		it["aff"] = keep
+
 static func ensure_aff(it: Dictionary) -> void:
 	if it.is_empty():
 		return

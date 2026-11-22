@@ -33,7 +33,7 @@ static func fields(h: Dictionary) -> Dictionary:
 		"title": Titles.worn(h)}
 
 static func listed(h: Dictionary) -> bool:
-	return not h.is_empty() and int(h.get("level", 1)) >= MIN_LEVEL
+	return not h.is_empty() and int(h.get("level", 1)) >= MIN_LEVEL and Hero.power(h) <= Build.max_power(int(h.level))
 
 static func value(h: Dictionary, board: String) -> int:
 	return int(fields(h)[board])
