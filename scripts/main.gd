@@ -195,6 +195,18 @@ func _back_test() -> void:
 	ok = _check("fight resumes", fs != null and not fs.paused) and ok
 	Game._notification(NOTIFICATION_WM_GO_BACK_REQUEST)
 	ok = _check("predictive back pauses", fs != null and fs.paused) and ok
+	# interruptions (call, lock screen): focus loss, or a frozen app with no notification at all
+	fs.toggle_pause()
+	fs.ai_p = null
+	fs._notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	ok = _check("focus loss pauses with the menu", fs.paused and fs._pause_layer != null) and ok
+	fs.toggle_pause()
+	fs._frame_ms -= 3000
+	await get_tree().process_frame
+	await get_tree().process_frame
+	ok = _check("frozen app pauses with the menu", fs.paused and fs._pause_layer != null) and ok
 	await _real_wait(450)
 	# one press delivered twice (key + WM) must act once: hub -> title, not quit
 	Game.goto(HubScreen.new())

@@ -40,6 +40,7 @@ var tut: Tutorial             # trận nhập môn (cfg.tutorial): the first sto
 # first-fight diagnostics for the funnel (1.3.0): load time, frame rate, quits
 var _born_ms := 0
 var _first_frame := false
+var _frame_ms := 0            # last _process tick (ms): a long gap = the app was frozen
 var _fps_t := 0.0
 var _fps_n := 0
 var _first_fight := false     # the phone's hero has never finished a fight
@@ -189,9 +190,25 @@ func toggle_pause() -> void:
 func back() -> void:
 	toggle_pause()
 
+## Interruptions (call, lock screen, notification shade, app switch) pause the
+## fight. Phones differ in what they send: a call or the shade often only takes
+## focus (no APPLICATION_PAUSED), and a pause sent while the screen is off
+## built the overlay at a moment nothing was drawn. So: listen to every focus /
+## pause notification, also treat a long gap between frames as an interruption,
+## and build the overlay on the first frame drawn after it.
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_PAUSED and not paused and not _done:
-		toggle_pause()
+	if what in [NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_WM_WINDOW_FOCUS_OUT]:
+		_interrupt()
+
+func _interrupt() -> void:
+	if paused or _done or ai_p != null or not _script.is_empty() or _shot != "":
+		return   # test / demo runs play on when the window loses focus
+	paused = true
+	pad.release_all()
+	if _pause_layer:
+		_pause_layer.queue_free()
+		_pause_layer = null
+	# overlay: built by _process on the next drawn frame
 
 func _show_pause() -> void:
 	_pause_layer = CanvasLayer.new()
@@ -573,6 +590,12 @@ func _finish(won: bool, forfeit := false) -> void:
 	finished.emit(res)
 
 func _process(delta: float) -> void:
+	var now_ms := Time.get_ticks_msec()
+	if _first_frame and now_ms - _frame_ms > 2000:
+		_interrupt()   # the app was frozen (screen off, call) without telling us
+	_frame_ms = now_ms
+	if paused and _pause_layer == null and not _done:
+		_show_pause()   # never paused without the menu to resume from
 	if not _first_frame:
 		_first_frame = true
 		if _first_fight:   # build + first draw (models, shaders) of the first fight

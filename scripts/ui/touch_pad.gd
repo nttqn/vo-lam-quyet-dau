@@ -41,6 +41,16 @@ func buttons() -> Array:
 	b.append({"id": "s4", "c": Vector2(W - 100, H - 452), "r": 58.0, "t": "", "col": Color(0.75, 0.55, 0.1), "skill": 3, "ult": true})
 	return b
 
+## Forget every touch: after an interruption the finger-up events never arrive,
+## so a held stick would keep walking once the fight resumes.
+func release_all() -> void:
+	_stick_id = -1
+	_btn_touch.clear()
+	_queue.clear()
+	mx = 0
+	up = false
+	down = false
+
 func pop_btn() -> String:
 	if _queue.is_empty():
 		return ""
