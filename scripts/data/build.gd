@@ -38,6 +38,16 @@ static func stats(level: int, pts: Dictionary, sect: Dictionary, gear: Dictionar
 static func max_power(level: int) -> int:
 	return mini(45 * level + 5200, 160 * level + 1900)
 
+## Highest level a hero with this progress can honestly have (1.3.2):
+## 20 × level <= 500 + 12 × stars + 3 × tower, i.e. 25 + 0.6/star + 0.15/floor.
+## Calibrated on the 626 rank rows of 2026-11-23: the thinnest honest heroes
+## were lv19 6★/19 floors, lv40 82★/10, lv64 111★/6 (cap 31, 75, 92); the
+## edited saves were lv80 50★/0 floors (cap 55) and lv60 18★/0 (cap 35).
+## Low levels get slack (dungeons, Tỉ Võ and dailies pay exp without stars).
+## firestore.rules okLevel uses the SAME integer formula on rank rows.
+static func level_ok(level: int, stars: int, tower: int) -> bool:
+	return 20 * level <= 500 + 12 * stars + 3 * tower
+
 ## False for a shadow from an edited save: its power, recomputed from the
 ## snapshot stats (the rules can only check the plain power field), is above
 ## what a real hero of that level can reach. Such shadows are never fought.

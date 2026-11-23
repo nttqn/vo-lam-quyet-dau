@@ -83,6 +83,8 @@ service cloud.firestore {
       return d.name is string && d.name.size() <= 24 && d.sect is string
         && d.level is int && d.level >= 2 && d.power is int && d.tower is int && d.stars is int
         && okPower(d.level, d.power)
+        // level within reach of the progress (Build.level_ok, same formula)
+        && 20 * d.level <= 500 + 12 * d.stars + 3 * d.tower
         && (!('title' in d) || (d.title is string && d.title.size() <= 24));
     }
     // Kênh Thế Giới: chat/{id} readable by everyone signed in; a message is

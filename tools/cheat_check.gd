@@ -62,5 +62,12 @@ func _initialize() -> void:
 		for k in o.duel:
 			var d: Dictionary = o.duel[k]
 			print("shadow %-14s power %5d  legit %s" % [d.name, int(d.power), Build.shadow_ok(d)])
+	# 5. level vs progress (Build.level_ok): [level, stars, tower, ok] from the 2026-11-23 board
+	for c in [[80, 288, 312, true], [75, 288, 125, true], [64, 111, 6, true], [40, 82, 10, true],
+			[19, 6, 19, true], [14, 0, 19, true], [25, 0, 0, true],
+			[80, 50, 0, false], [60, 18, 0, false], [30, 0, 0, false]]:
+		if Build.level_ok(c[0], c[1], c[2]) != c[3]:
+			bad += 1
+			print("FAIL level_ok lv%d %d★ tower %d" % [c[0], c[1], c[2]])
 	print("cheat_check: %s" % ("OK" if bad == 0 else "%d FAIL" % bad))
 	quit()

@@ -136,7 +136,10 @@ func _show(board: String) -> void:
 			_mine.add_theme_color_override("font_color", Color(1.0, 0.5, 0.45))
 		elif not Ranks.listed(h):
 			_place = -1
-			_mine.text = "%s: đạt cấp %d để lên bảng xếp hạng" % [str(h.name), Ranks.MIN_LEVEL]
+			if int(h.level) < Ranks.MIN_LEVEL:
+				_mine.text = "%s: đạt cấp %d để lên bảng xếp hạng" % [str(h.name), Ranks.MIN_LEVEL]
+			else:   # Ranks.honest: level or power ahead of Giang Hồ / Tháp progress
+				_mine.text = "%s: qua thêm ải Giang Hồ hoặc Tháp để lên bảng" % str(h.name)
 			_mine.add_theme_color_override("font_color", Color(0.8, 0.78, 0.72))
 		elif Ranks.hidden():
 			_mine.text += "  ·  đang ẩn"

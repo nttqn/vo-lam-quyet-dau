@@ -32,8 +32,14 @@ static func fields(h: Dictionary) -> Dictionary:
 		"power": Hero.power(h), "tower": Tower.best(h), "stars": stars(h), "outfit": str(h.get("outfit", "")),
 		"title": Titles.worn(h)}
 
+## Power and level both within reach (Build.max_power, Build.level_ok): listed
+## on the boards and in Tỉ Võ. Here, not in Build, because stars() needs Game.
+static func honest(h: Dictionary) -> bool:
+	var lv := int(h.get("level", 1))
+	return Hero.power(h) <= Build.max_power(lv) and Build.level_ok(lv, stars(h), Tower.best(h))
+
 static func listed(h: Dictionary) -> bool:
-	return not h.is_empty() and int(h.get("level", 1)) >= MIN_LEVEL and Hero.power(h) <= Build.max_power(int(h.level)) and not Ban.active()
+	return not h.is_empty() and int(h.get("level", 1)) >= MIN_LEVEL and honest(h) and not Ban.active()
 
 static func value(h: Dictionary, board: String) -> int:
 	return int(fields(h)[board])
@@ -66,7 +72,14 @@ static func set_hidden(on: bool) -> void:
 
 ## Fire-and-forget upload of this hero's row if it changed.
 static func publish(h: Dictionary, slot: int) -> void:
-	if not Cloud.enabled() or slot < 0 or not listed(h) or hidden():
+	if not Cloud.enabled() or slot < 0 or hidden():
+		return
+	if not listed(h):
+		# an edited save (honest) takes its old row down once; the rules
+		# would refuse every update, leaving the stale row up for good
+		if int(h.get("level", 1)) >= MIN_LEVEL and not honest(h) and not _last.get(slot, {}).has("_gone"):
+			_last[slot] = {"_gone": true}
+			Cloud.delete_doc(COLLECTION, "_%d" % slot)
 		return
 	var f := fields(h)
 	if _last.get(slot, {}) == f:
