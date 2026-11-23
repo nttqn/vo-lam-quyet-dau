@@ -29,13 +29,50 @@ static func high() -> bool:
 	return level() >= 2
 
 ## First-run default: desktop Cao, weak phones Thấp, everything else Thường.
+## Weak = little RAM or a weak GPU (1.3.2: Play reviews from PowerVR / low
+## Adreno phones that lagged or lost the 3D on Thường).
 static func auto_level() -> int:
 	if not OS.has_feature("mobile"):
 		return 2
 	var ram := int(OS.get_memory_info().get("physical", 0))
 	if ram > 0 and ram < 3_500_000_000:
 		return 0
+	if weak_gpu():
+		return 0
 	return 1
+
+## GPU name as the driver reports it, e.g. "PowerVR Rogue GE8320", "Adreno (TM) 618".
+static func gpu_name() -> String:
+	return RenderingServer.get_video_adapter_name()
+
+## "powervr" / "mali" / "adreno" / "other": for the funnel.
+static func gpu_family(name := "") -> String:
+	var g := (name if name != "" else gpu_name()).to_lower()
+	if "powervr" in g or g.begins_with("img") or "imagination" in g:
+		return "powervr"
+	for f in ["mali", "adreno"]:
+		if f in g:
+			return f
+	return "other"
+
+static func weak_gpu() -> bool:
+	return weak_gpu_name(gpu_name())
+
+## Entry-level mobile GPUs: every PowerVR (GE8xxx, IMG on Unisoc), Mali-4xx /
+## T-series / G31 / G51 / G52, Adreno 3xx–5xx and 610–619. Test: tools/gpu_check.gd
+static func weak_gpu_name(name: String) -> bool:
+	var g := name.to_lower()
+	if g == "":
+		return false
+	if gpu_family(g) == "powervr":
+		return true
+	if RegEx.create_from_string("mali-(4\\d\\d|t\\d+|g31|g51|g52)\\b").search(g) != null:
+		return true
+	var a := RegEx.create_from_string("adreno[^0-9]*(\\d{3})").search(g)
+	if a != null:
+		var n := int(a.get_string(1))
+		return n < 600 or (n >= 610 and n <= 619)
+	return false
 
 ## Particle-count multiplier for Fx.
 static func particles() -> float:

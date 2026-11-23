@@ -78,9 +78,13 @@ func _ready() -> void:
 	_build_slots()
 	Iap.changed.connect(_build_slots)
 	Funnel.device("f_install")
+	# which GPUs players have (f_gpu_powervr_rogue_ge8320, ...) and the level auto picked
+	Funnel.device(Funnel.clean("f_gpu_" + Gfx.gpu_name()))   # clean: rules need [a-z0-9_]{2,40}
+	Funnel.device("fq_%s_auto_l%d" % [Gfx.gpu_family(), Gfx.auto_level()])
 	if Game.settings.has("in_fight"):   # the last run ended inside a fight (crash, kill, swipe away)
 		if int(Game.settings.in_fight) == 0:
 			Funnel.device("f_killed1")
+			Funnel.device("fq_%s_killed" % Gfx.gpu_family())
 		Funnel.event("fight_killed")
 		Game.settings.erase("in_fight")
 		Game.save_settings()

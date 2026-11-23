@@ -104,10 +104,10 @@ static func device(step: String) -> void:
 static func event(name: String) -> void:
 	if not _on() or not Cloud.enabled():
 		return
-	Analytics.event(_clean(name))
-	Cloud.bump(COLLECTION, [_clean(name)])
+	Analytics.event(clean(name))
+	Cloud.bump(COLLECTION, [clean(name)])
 
-static func _clean(s: String) -> String:
+static func clean(s: String) -> String:
 	var out := ""
 	for c in s.to_lower():
 		out += c if (c >= "a" and c <= "z") or (c >= "0" and c <= "9") or c == "_" else "_"

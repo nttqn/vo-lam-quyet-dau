@@ -582,11 +582,16 @@ func _finish(won: bool, forfeit := false) -> void:
 		Game.settings.erase("in_fight")
 		Game.save_settings()
 	if _first_fight:
+		# fq_<gpu family>_l<gfx level>_...: which GPUs lag / give up on the first fight
+		var fq := "fq_%s_l%d_" % [Gfx.gpu_family(), Gfx.level()]
 		if forfeit:
 			Funnel.device("f_quit1")
+			Funnel.device(fq + "quit")
 		if _fps_t > 5.0:
 			var fps := _fps_n / _fps_t
 			Funnel.device("f_fps_lt20" if fps < 20.0 else ("f_fps_lt30" if fps < 30.0 else ("f_fps_lt45" if fps < 45.0 else "f_fps_ok")))
+			# Thấp is capped at 30 FPS, so these buckets fit every level
+			Funnel.device(fq + ("lt15" if fps < 15.0 else ("lt20" if fps < 20.0 else ("lt27" if fps < 27.0 else "ok"))))
 	finished.emit(res)
 
 func _process(delta: float) -> void:
