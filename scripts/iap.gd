@@ -85,6 +85,10 @@ func _ready() -> void:
 		for id in all_ids():
 			prices[id] = "%s ₫" % UI.fmt(_fake_price(id))
 
+## Apple store wording: on iOS, or with --asios for the App Store review shot.
+static func apple() -> bool:
+	return OS.get_name() == "iOS" or "--asios" in OS.get_cmdline_user_args()
+
 static func all_ids() -> PackedStringArray:
 	var ids := PackedStringArray(PACKS.keys())
 	ids.append_array([STARTER, NO_ADS, SLOTS])

@@ -13,7 +13,7 @@ Product ID giữ **giống hệt Android** (không trùng với Kiếm Hiệp, b
 
 Giới hạn ASC: Reference Name ≤ 64, **Display Name ≤ 30**, **Description ≤ 45** ký tự.
 Ảnh: `store/iap-ios/<id>.png` (1024×1024, không trong suốt, không chữ) — ô "App Store Promotion" (tùy chọn).
-Review Screenshot (bắt buộc, mỗi sản phẩm một ảnh): chụp màn Bảo Khố trên iPhone **sau khi** cửa hàng iOS chạy được.
+Review Screenshot (bắt buộc, mỗi sản phẩm một ảnh): dùng chung `store/iap-ios-review/bao-kho.png` (2622×1206, màn Bảo Khố có đủ 7 gói, chữ "App Store"/"tài khoản Apple"). Vẽ lại: `Godot --path . --resolution 2622x1206 -- --screen=topup --asios --shot=<file> --delay=60`.
 
 ## Bảng sản phẩm
 
