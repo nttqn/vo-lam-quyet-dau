@@ -11,11 +11,11 @@ const HIDDEN := ["vovinam"]
 const TEST_UNLOCK_ALL := false
 ## Passive per sect (shown on the create / skill screens).
 const PASSIVE := {
-	"thieu_lam": ["Kim Chung Tráo", "Khi máu dưới 40%, sát thương phải nhận giảm 15%."],
-	"vo_dang": ["Thái Cực Hóa Kình", "Mỗi lần đỡ được đòn, hồi 2% máu tối đa."],
-	"nga_mi": ["Phổ Độ Từ Hàng", "Liên tục hồi máu chậm; chiêu thức đánh trúng hồi thêm 1,5% máu tối đa."],
+	"thieu_lam": ["Kim Chung Tráo", "Khi máu dưới 40%, sát thương phải nhận giảm 10%."],
+	"vo_dang": ["Thái Cực Hóa Kình", "Mỗi lần đỡ được đòn, hồi 3,5% máu tối đa."],
+	"nga_mi": ["Phổ Độ Từ Hàng", "Liên tục hồi máu chậm; chiêu thức đánh trúng hồi thêm 3% máu tối đa."],
 	"cai_bang": ["Đả Cẩu Liên Hoàn", "Mỗi đòn trúng liên tiếp trong một chuỗi tăng 5% sát thương, tối đa 25%."],
-	"duong_mon": ["Ám Khí Xuyên Giáp", "Ám khí phá được hộ thể (giáp) của đối thủ; chiêu ám khí bị đỡ vẫn gây 20% sát thương."],
+	"duong_mon": ["Ám Khí Xuyên Giáp", "Ám khí phá được hộ thể (giáp) của đối thủ; chiêu ám khí bị đỡ vẫn gây 15% sát thương."],
 	"vovinam": ["Cương Nhu Phối Triển", "Đỡ được đòn thì đòn đánh trúng kế tiếp (trong 1,5 giây) mạnh thêm 35% và hồi nội lực."],
 }
 const UNLOCK_HINT := "Đánh bại trùm Trường Giang Độ Khẩu (vùng 3) bằng bất kỳ nhân vật nào để mở."
