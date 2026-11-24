@@ -9,6 +9,16 @@ const ROUND_FRAMES := 60 * 60
 const INTRO_FRAMES := 100
 const END_FRAMES := 150
 
+## Sect passives (Sects.PASSIVE has the player text; keep the numbers in step).
+const AMKHI_CHIP := 0.15        # Đường Môn: blocked ám khí skill still deals this share (was 0.30)
+const KIMCHUNG_HP := 0.40       # Thiếu Lâm: below this hp share ...
+const KIMCHUNG_CUT := 0.10      # ... damage taken is cut by this
+const THAICUC_HEAL := 0.035     # Võ Đang: hp_max share healed per blocked hit
+const PHODO_REGEN := 0.004      # Nga Mi: hp_max share regained per second
+const PHODO_HIT := 0.03         # Nga Mi: hp_max share healed when a skill lands
+const DACAU_STEP := 0.05        # Cái Bang: damage bonus per hit already in the combo
+const DACAU_MAX := 0.25
+
 var f: Array[Fighter] = []
 var projs: Array = []
 var events: Array = []
@@ -25,6 +35,7 @@ var winner := -1            # match winner
 var round_winner := -1
 var frame := 0
 var _pid := 0
+var _kimchung := [false, false]   # Kim Chung Tráo shown this round
 
 func _init(a: Fighter, b: Fighter, seed_ := 0) -> void:
 	f = [a, b]
@@ -37,6 +48,7 @@ func emit(e: Dictionary) -> void:
 	events.append(e)
 
 func _reset_positions() -> void:
+	_kimchung = [false, false]
 	f[0].reset_round(-1.8, 1)
 	f[1].reset_round(1.8, -1)
 	projs.clear()
@@ -110,6 +122,9 @@ func _physics(in0: Dictionary, in1: Dictionary) -> void:
 		_hits(a, b)
 		_hits(b, a)
 		_step_projs()
+		for ff in f:
+			if ff.sect.get("passive", "") == "pho_do" and not ff.dead and ff.hp > 0.0:
+				ff.hp = minf(ff.st.hp_max, ff.hp + ff.st.hp_max * PHODO_REGEN / 60.0)
 
 func _separate(a: Fighter, b: Fighter) -> void:
 	if a.state in [Fighter.LYING, Fighter.KO] or b.state in [Fighter.LYING, Fighter.KO]:
@@ -234,11 +249,14 @@ func resolve(a: Fighter, d: Fighter, m: Dictionary, last := true) -> void:
 		d.vx = a.facing * absf(m.push) * 0.6
 		var chip := 0.0
 		if a.sect.get("passive", "") == "am_khi" and m.get("skill", false) and kind_of(m) in ["proj", "rain"]:
-			chip = _damage(a, d, m, false) * 0.3
+			chip = _damage(a, d, m, false) * AMKHI_CHIP
 		elif m.get("skill", false):
 			chip = _damage(a, d, m, false) * 0.12
 		if chip > 0.0:
 			d.hp = maxf(1.0, d.hp - chip)
+		if d.sect.get("passive", "") == "thai_cuc" and d.hp > 0.0:
+			d.hp = minf(d.st.hp_max, d.hp + d.st.hp_max * THAICUC_HEAL)
+			emit({"t": "passive", "i": d.idx, "s": "Thái Cực"})
 		if d.sect.get("passive", "") == "cuong_nhu":
 			if d.ripost <= 0:
 				emit({"t": "cuongnhu", "i": d.idx, "on": true})
@@ -267,6 +285,13 @@ func resolve(a: Fighter, d: Fighter, m: Dictionary, last := true) -> void:
 		mm["hs"] = 26
 	d.take_hit(a, mm, dmg, self, crit)
 	a.stats_dealt += dmg
+	if a.sect.get("passive", "") == "pho_do" and m.get("skill", false) and last and not a.dead:
+		var h: float = a.st.hp_max * PHODO_HIT
+		a.hp = minf(a.st.hp_max, a.hp + h)
+		emit({"t": "heal", "i": a.idx, "amt": h, "quiet": true})
+	if d.sect.get("passive", "") == "kim_chung" and not _kimchung[d.idx] and not d.dead and d.hp < d.st.hp_max * KIMCHUNG_HP:
+		_kimchung[d.idx] = true
+		emit({"t": "passive", "i": d.idx, "s": "Kim Chung Tráo"})
 	a.en = minf(Fighter.EN_MAX, a.en + 5.0 * a.st.get("en_gain", 1.0) * a.en_mult())
 	a._combo_run += 1
 	a.max_combo = maxi(a.max_combo, d.combo_taken)
@@ -294,6 +319,10 @@ func _damage(a: Fighter, d: Fighter, m: Dictionary, crit: bool) -> float:
 	dmg *= rng.randf_range(0.93, 1.07)
 	# combo scaling
 	dmg *= maxf(0.45, 1.0 - 0.08 * maxi(0, d.combo_taken - 1))
+	if a.sect.get("passive", "") == "da_cau":
+		dmg *= 1.0 + minf(DACAU_MAX, DACAU_STEP * maxi(0, d.combo_taken))
+	if d.sect.get("passive", "") == "kim_chung" and d.hp < d.st.hp_max * KIMCHUNG_HP:
+		dmg *= 1.0 - KIMCHUNG_CUT
 	if crit:
 		dmg *= 1.6
 	return maxf(1.0, dmg)

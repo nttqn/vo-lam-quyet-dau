@@ -346,7 +346,11 @@ func _events() -> void:
 				var f3: Fighter = sim.f[e.i]
 				fx.ground_ring(f3.x, Color(0.5, 1.0, 0.6))
 				fx.number(Vector3(f3.x, 2.0, 0.3), e.amt, false, Color(0.5, 1.0, 0.5))
-				Game.sfx("heal")
+				if not e.get("quiet", false):
+					Game.sfx("heal")
+			"passive":
+				var fp: Fighter = sim.f[e.i]
+				fx.text(Vector3(fp.x, 2.6, 0.3), str(e.s), fp.sect.elem)
 			"blink":
 				fx.dust(e.from)
 				fx.dust(e.to)

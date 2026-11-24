@@ -11,7 +11,11 @@ const HIDDEN := ["vovinam"]
 const TEST_UNLOCK_ALL := false
 ## Passive per sect (shown on the create / skill screens).
 const PASSIVE := {
-	"duong_mon": ["Ám Khí Xuyên Giáp", "Ám khí phá được hộ thể (giáp) của đối thủ; chiêu ám khí bị đỡ vẫn gây 30% sát thương."],
+	"thieu_lam": ["Kim Chung Tráo", "Khi máu dưới 40%, sát thương phải nhận giảm 15%."],
+	"vo_dang": ["Thái Cực Hóa Kình", "Mỗi lần đỡ được đòn, hồi 2% máu tối đa."],
+	"nga_mi": ["Phổ Độ Từ Hàng", "Liên tục hồi máu chậm; chiêu thức đánh trúng hồi thêm 1,5% máu tối đa."],
+	"cai_bang": ["Đả Cẩu Liên Hoàn", "Mỗi đòn trúng liên tiếp trong một chuỗi tăng 5% sát thương, tối đa 25%."],
+	"duong_mon": ["Ám Khí Xuyên Giáp", "Ám khí phá được hộ thể (giáp) của đối thủ; chiêu ám khí bị đỡ vẫn gây 20% sát thương."],
 	"vovinam": ["Cương Nhu Phối Triển", "Đỡ được đòn thì đòn đánh trúng kế tiếp (trong 1,5 giây) mạnh thêm 35% và hồi nội lực."],
 }
 const UNLOCK_HINT := "Đánh bại trùm Trường Giang Độ Khẩu (vùng 3) bằng bất kỳ nhân vật nào để mở."
@@ -74,7 +78,7 @@ static func _build() -> void:
 		"desc": "Cương mãnh, da đồng xương sắt. Côn dài, đòn nặng, máu trâu nhưng chậm.",
 		"elem": Color(1.0, 0.75, 0.25),
 		"bias": {"luc": 1, "than": -1, "noi": 1, "the": 2},
-		"speed": 0.9,
+		"speed": 0.9, "passive": "kim_chung",
 		"look": {"model": "ThieuLam", "robe": Color(0.92, 0.55, 0.12), "trim": Color(0.62, 0.14, 0.1), "pants": Color(0.82, 0.5, 0.14), "head_style": "bald", "weapon": "staff", "beads": true, "sash": Color(0.62, 0.14, 0.1), "bulk": 1.08},
 		"moves": {
 			"p1": mv("Côn Điểm", "staff_poke_w", "staff_poke", 9, 3, 13, 1.0, 1.1, "mid", {"next": "p2", "fx": "blunt"}),
@@ -100,7 +104,7 @@ static func _build() -> void:
 		"desc": "Lấy nhu chế cương. Kiếm pháp cân bằng, phản đòn và kiếm khí tầm xa.",
 		"elem": Color(0.45, 0.75, 1.0),
 		"bias": {"luc": 0, "than": 1, "noi": 2, "the": 0},
-		"speed": 1.0,
+		"speed": 1.0, "passive": "thai_cuc",
 		"look": {"model": "VoDang", "robe": Color(0.38, 0.5, 0.66), "trim": Color(0.93, 0.93, 0.96), "pants": Color(0.2, 0.22, 0.3), "head_style": "bun", "weapon": "sword", "sash": Color(0.15, 0.15, 0.22)},
 		"moves": {
 			"p1": mv("Thanh Phong Phất Liễu", "slash_h_w", "slash_h", 7, 3, 12, 1.0, 1.15, "mid", {"next": "p2", "fx": "slash"}),
@@ -126,7 +130,7 @@ static func _build() -> void:
 		"desc": "Thân pháp nhanh như gió, song kiếm liên hoàn, biết tự trị thương.",
 		"elem": Color(1.0, 0.6, 0.8),
 		"bias": {"luc": -1, "than": 3, "noi": 2, "the": -1},
-		"speed": 1.12,
+		"speed": 1.12, "passive": "pho_do",
 		"look": {"model": "NgaMi", "robe": Color(0.96, 0.94, 0.96), "trim": Color(0.88, 0.42, 0.58), "pants": Color(0.86, 0.76, 0.84), "head_style": "long", "weapon": "dual", "female": true, "bulk": 0.86, "height": 0.95, "sash": Color(0.88, 0.38, 0.55), "robe_len": 0.58},
 		"moves": {
 			"p1": mv("Phất Vân Thủ", "jab_w", "nm_a", 5, 3, 10, 0.9, 1.1, "mid", {"next": "p2", "tip": "hand_l", "fx": "slash"}),
@@ -152,7 +156,7 @@ static func _build() -> void:
 		"desc": "Chưởng lực hùng hậu, quyền cước mạnh, càng đánh càng hăng.",
 		"elem": Color(1.0, 0.85, 0.3),
 		"bias": {"luc": 2, "than": 0, "noi": 1, "the": 1},
-		"speed": 1.05,
+		"speed": 1.05, "passive": "da_cau",
 		"look": {"model": "CaiBang", "robe": Color(0.46, 0.4, 0.26), "trim": Color(0.32, 0.46, 0.26), "pants": Color(0.36, 0.3, 0.22), "head_style": "headband", "weapon": "none", "bulk": 1.15, "sash": Color(0.56, 0.36, 0.16), "bracers": true, "beard": true},
 		"moves": {
 			"p1": mv("Khai Môn Quyền", "jab_w", "jab", 6, 3, 11, 1.05, 1.05, "mid", {"next": "p2", "tip": "hand_l", "fx": "punch"}),
@@ -184,12 +188,12 @@ static func _build() -> void:
 			"p1": mv("Chủy Thủ Thích", "jab_w", "cross", 5, 3, 11, 1.0, 1.1, "mid", {"next": "p2", "fx": "slash"}),
 			"p2": mv("Hồi Đao Trảm", "slash_h_w", "slash_h", 7, 3, 13, 1.1, 1.1, "high", {"next": "p3", "fx": "slash"}),
 			"p3": mv("Thượng Khiêu Đao", "rising_w", "rising", 10, 4, 20, 1.6, 1.05, "mid", {"launch": 6.5, "fx": "slash"}),
-			"fp": mv("Phi Đao", "toss_w", "toss", 9, 2, 17, 0.8, 0.0, "high", {"kind": "proj", "proj": {"speed": 15.0, "y": 1.3, "n": 1, "vis": "knife"}, "fx": "slash"}),
+			"fp": mv("Phi Đao", "toss_w", "toss", 9, 2, 17, 0.7, 0.0, "high", {"kind": "proj", "proj": {"speed": 15.0, "y": 1.3, "n": 1, "vis": "knife"}, "fx": "slash"}),
 			"dp": mv("Địa Xà Thích", "jab_w", "lowpunch", 6, 3, 12, 0.8, 0.95, "low", {"fx": "slash"}),
 			"jp": mv("Không Trung Phi Đao", "jump", "toss", 6, 2, 12, 0.65, 0.0, "mid", {"air": true, "kind": "proj", "proj": {"speed": 14.0, "y": 0.0, "vy": -6.0, "n": 1, "vis": "knife"}, "fx": "slash"}),
 		},
 		"skills": [
-			sk("Phi Đao Tam Liên", "toss_w", "dm_toss", 9, 3, 18, 0.75, 0.0, "mid", 25, 4.0, {"kind": "proj", "proj": {"speed": 15.0, "y": 1.2, "n": 3, "gap": 5, "vis": "knife"}}),
+			sk("Phi Đao Tam Liên", "toss_w", "dm_toss", 9, 3, 18, 0.68, 0.0, "mid", 25, 4.0, {"kind": "proj", "proj": {"speed": 15.0, "y": 1.2, "n": 3, "gap": 5, "vis": "knife"}}),
 			sk("Đoạt Mệnh Độc Châm", "toss_w", "dm_toss", 9, 2, 16, 0.5, 0.0, "high", 25, 8.0, {"kind": "proj", "proj": {"speed": 18.0, "y": 1.35, "n": 1, "vis": "needle"}, "poison": 0.1, "lvl": 3, "seal": "tay", "seal_amt": 100}),
 			sk("Ảnh Tung Bộ", "dodge", "cross", 10, 4, 22, 0.95, 1.0, "mid", 30, 8.0, {"kind": "blink", "lvl": 6, "fx": "slash"}),
 			sk("Lôi Hỏa Đạn", "toss_w", "dm_grenade", 12, 2, 20, 1.8, 0.0, "mid", 35, 8.0, {"kind": "proj", "proj": {"speed": 6.5, "y": 1.4, "vy": 6.0, "grav": 16.0, "n": 1, "vis": "bomb"}, "kd": true, "launch": 6.0, "unblockable": true, "lvl": 10, "fx": "fire"}),
