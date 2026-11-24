@@ -114,6 +114,7 @@ jobs:
           mkdir -p build/ios
           echo "extension_list.cfg:"; cat .godot/extension_list.cfg || echo "(none)"
           "$GODOT" --headless --path . --export-release "iOS" build/ios/vo-lam-quyet-dau.ipa 2>&1 | tee export.log
+          grep -E "error:|ERROR:|Undefined symbol|ld: " export.log | grep -v "No GDExtension library found" | head -15 | sed 's/^/::warning::/' || true
           ls -la build/ios
           plist=$(ls build/ios/vo-lam-quyet-dau/vo-lam-quyet-dau-Info.plist 2>/dev/null || true)
           [ -n "$plist" ] && plutil -p "$plist" | grep -E "Orientation|FullScreen|Version|Identifier|DisplayName|NonExempt" -A0 || true

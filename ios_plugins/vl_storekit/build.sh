@@ -11,8 +11,12 @@ command -v scons >/dev/null || brew install scons
 [ -d godot-cpp ] || git clone --depth 1 --branch godot-4.5-stable https://github.com/godotengine/godot-cpp
 
 jobs=$(sysctl -n hw.ncpu)
-(cd godot-cpp && scons platform=ios arch=arm64 target=template_release -j"$jobs")
-scons platform=ios arch=arm64 target=template_release -j"$jobs"
+# compiler errors also go out as GitHub annotations (readable without log access)
+annotate() { grep -E "error:|Error " "$1" | head -15 | sed 's/^/::error::/' ; }
+(cd godot-cpp && scons platform=ios arch=arm64 target=template_release -j"$jobs") > cpp.log 2>&1 || { tail -40 cpp.log; annotate cpp.log; exit 1; }
+tail -3 cpp.log
+scons platform=ios arch=arm64 target=template_release -j"$jobs" > sk.log 2>&1 || { cat sk.log | tail -60; annotate sk.log; exit 1; }
+cat sk.log | tail -5
 
 lib_cpp=$(ls godot-cpp/bin/libgodot-cpp.ios.template_release.arm64.a)
 lib_sk=$(ls bin/libvlstorekit*.a | head -1)
