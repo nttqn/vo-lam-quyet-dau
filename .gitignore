@@ -42,3 +42,10 @@ store/video/
 tools/promo/voice/
 tools/promo/txt/
 tools/promo/stills/
+# iOS StoreKit GDExtension: built on the iOS CI runner (ios_plugins/vl_storekit/build.sh)
+/addons/vl_storekit/
+ios_plugins/vl_storekit/godot-cpp/
+ios_plugins/vl_storekit/bin/
+ios_plugins/vl_storekit/build/
+ios_plugins/vl_storekit/.sconsign*
+ios_plugins/vl_storekit/src/*.o

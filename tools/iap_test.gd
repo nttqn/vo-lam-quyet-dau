@@ -21,6 +21,7 @@ func _ready() -> void:
 	Game.slot = -1   # Game.save() writes nothing
 	_sig()
 	_buy()
+	_apple()
 	_ach()
 	_funnel()
 	Game.settings = saved
@@ -99,6 +100,63 @@ func _buy() -> void:
 	Iap.deliver_queue()
 	_ok(int(Game.hero.jade) == j2 + 1400 and Array(Game.settings.iap_queue).is_empty(), "queued pack delivered (first ×2: 1400)")
 
+## Stand-in for the VLStoreKit GDExtension singleton (iOS only).
+class FakeSK:
+	signal event
+	var queue := []
+	var finished := []
+	var bought := []
+	var restores := 0
+	func can_pay() -> bool: return true
+	func request_products(_ids) -> void: pass
+	func purchase(id: String) -> void: bought.append(id)
+	func restore() -> void: restores += 1
+	func finish(tid: String) -> void: finished.append(tid)
+	func take_events() -> Array:
+		var out := queue
+		queue = []
+		return out
+
+## iOS StoreKit path: events from VLStoreKit drive prices, grants, finishing.
+func _apple() -> void:
+	var sk := FakeSK.new()
+	var old_mode: String = Iap._mode
+	var old_sk = Iap._sk
+	var old_prices: Dictionary = Iap.prices.duplicate()
+	Iap._mode = "apple"
+	Iap._sk = sk
+	Iap._ready_store = true
+	Iap.prices.clear()
+	Game.settings.erase("iap_noads")
+	Game.hero = Hero.create("Táo", "duong_mon")
+	var h := Game.hero
+	sk.queue = [{"type": "products", "items": [{"id": "ngoc_60", "price": "25.000 ₫", "title": "x"}, {"id": Iap.NO_ADS, "price": "69.000 ₫", "title": "y"}], "invalid": ["ngoc_330"]}]
+	Iap._on_sk_event()
+	_ok(Iap.price("ngoc_60") == "25.000 ₫" and Iap.missing.get("ngoc_330") == "invalid", "iOS: prices from StoreKit, invalid id noted")
+	Iap.buy("ngoc_330")
+	_ok(sk.bought.is_empty(), "iOS: no purchase for an id without a price")
+	Iap.buy("ngoc_60")
+	_ok(sk.bought == ["ngoc_60"], "iOS: buy goes to StoreKit")
+	var j0 := int(h.jade)
+	sk.queue = [{"type": "purchased", "id": "ngoc_60", "tid": "1000001"}]
+	Iap._on_sk_event()
+	_ok(int(h.jade) == j0 + 120 and sk.finished == ["1000001"], "iOS: purchase granted (first ×2) and finished")
+	sk.queue = [{"type": "purchased", "id": "ngoc_60", "tid": "1000001"}]
+	Iap._on_sk_event()
+	_ok(int(h.jade) == j0 + 120 and sk.finished.size() == 2, "iOS: replayed transaction not granted twice, still finished")
+	sk.queue = [{"type": "failed", "id": "ngoc_60", "code": 2, "cancelled": true}]
+	Iap._on_sk_event()
+	_ok(Iap._busy_sku == "" and int(h.jade) == j0 + 120, "iOS: cancelled purchase frees the shop")
+	Iap.restore()
+	_ok(sk.restores == 1 and Iap._restoring, "iOS: restore asks StoreKit")
+	sk.queue = [{"type": "restored", "id": Iap.NO_ADS, "tid": "2000002"}, {"type": "restore_done"}]
+	Iap._on_sk_event()
+	_ok(Iap.no_ads() and not Iap._restoring and sk.finished.has("2000002"), "iOS: Bỏ QC restored and finished")
+	Iap._mode = old_mode
+	Iap._sk = old_sk
+	Iap.prices = old_prices
+	Iap.missing.clear()
+
 func _ach() -> void:
 	var h := Hero.create("Thành Tựu", "thieu_lam")
 	Hero.add_exp(h, 20000)
@@ -140,4 +198,4 @@ func _funnel() -> void:
 	_ok(r.has("f_fight10") and r.has("f_win1") and r.has("f_r1s1") and r.has("f_r1s6") and not r.has("f_r1s3"), "fight / stage steps")
 	_ok(r.has("f_day3") and not r.has("f_day7"), "day steps (%s)" % str(r.filter(func(s): return s.begins_with("f_day"))))
 	_ok(r.has("f_lv5"), "level steps")
-	_ok(Funnel._clean("p_Ngọc-60") == "p_ng_c_60", "event names cleaned")
+	_ok(Funnel.clean("p_Ngọc-60") == "p_ng_c_60", "event names cleaned")

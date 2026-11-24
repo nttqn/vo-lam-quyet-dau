@@ -84,6 +84,22 @@ jobs:
           p12-file-base64: ${{ secrets.IOS_DIST_P12_BASE64 }}
           p12-password: ${{ secrets.IOS_DIST_P12_PASSWORD }}
 
+      # The Poing AdMob addon's iOS binaries live in addons/admob/ios/bin, which
+      # its own .gitignore hides: without this step the exporter finds no
+      # library and the app ships with no ads (as up to 1.3.2).
+      - name: AdMob iOS library
+        run: |
+          set -e
+          curl -sSL -o admob-ios.zip https://github.com/poingstudios/godot-admob-plugin/releases/download/v5.1.0/ios-template-v${GODOT_VERSION}.zip
+          mkdir -p addons/admob/ios/bin
+          unzip -q -o admob-ios.zip "ads/*" -d addons/admob/ios/bin
+          ls -R addons/admob/ios/bin | head -20
+
+      # In-app purchases: VLStoreKit GDExtension (static lib in an xcframework)
+      # into addons/vl_storekit/ together with its .gdextension file.
+      - name: Build StoreKit extension
+        run: bash ios_plugins/vl_storekit/build.sh
+
       - name: Import project
         run: |
           "$GODOT" --headless --path . --import || true
@@ -96,12 +112,21 @@ jobs:
         run: |
           set -e
           mkdir -p build/ios
+          echo "extension_list.cfg:"; cat .godot/extension_list.cfg || echo "(none)"
           "$GODOT" --headless --path . --export-release "iOS" build/ios/vo-lam-quyet-dau.ipa 2>&1 | tee export.log
           ls -la build/ios
           plist=$(ls build/ios/vo-lam-quyet-dau/vo-lam-quyet-dau-Info.plist 2>/dev/null || true)
           [ -n "$plist" ] && plutil -p "$plist" | grep -E "Orientation|FullScreen|Version|Identifier|DisplayName|NonExempt" -A0 || true
           if [ "${{ steps.signing.outputs.configured }}" = "true" ]; then
             test -f build/ios/vo-lam-quyet-dau.ipa
+            # the shipped binary must carry StoreKit (shop) and the AdMob app id (ads)
+            rm -rf ipa_x && mkdir ipa_x && unzip -q build/ios/vo-lam-quyet-dau.ipa -d ipa_x
+            app=$(ls -d ipa_x/Payload/*.app)
+            exe="$app/$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Info.plist")"
+            otool -L "$exe" | grep -E "StoreKit|GoogleMobileAds" || true
+            otool -L "$exe" | grep -q StoreKit.framework || { echo "::error::StoreKit not linked"; exit 1; }
+            strings "$exe" | grep -q VLSKObserver || { echo "::error::VLStoreKit extension missing from the binary"; exit 1; }
+            /usr/libexec/PlistBuddy -c 'Print :GADApplicationIdentifier' "$app/Info.plist" || echo "::warning::no GADApplicationIdentifier (no ads)"
           fi
 
       - uses: actions/upload-artifact@v4

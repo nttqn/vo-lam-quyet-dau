@@ -1,0 +1,9 @@
+; Copied to addons/vl_storekit/vl_storekit.gdextension by build.sh on the iOS
+; CI runner only, so Android and desktop never try to load it.
+[configuration]
+entry_symbol = "vl_storekit_init"
+compatibility_minimum = "4.5"
+
+[libraries]
+ios.debug = "res://addons/vl_storekit/vlstorekit.xcframework"
+ios.release = "res://addons/vl_storekit/vlstorekit.xcframework"

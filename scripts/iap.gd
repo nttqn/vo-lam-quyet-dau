@@ -1,7 +1,13 @@
 extends Node
-## In-app purchases (autoload "Iap"): Google Play Billing through the
-## GodotGooglePlayBilling plugin (addons/GodotGooglePlayBilling, needs the
-## gradle build). Android only. iOS has no store code yet, so the shop says so there.
+## In-app purchases (autoload "Iap"):
+## - Android: Google Play Billing through the GodotGooglePlayBilling plugin
+##   (addons/GodotGooglePlayBilling, needs the gradle build).
+## - iOS: StoreKit through the VLStoreKit GDExtension singleton
+##   (ios_plugins/vl_storekit, built and added by the iOS CI only). Same product
+##   ids in App Store Connect (store/iap-ios.md). Each transaction is granted
+##   once (settings "iap_done", token "ios_<transaction id>") and then finished.
+##   Non-consumables come back through Khôi phục giao dịch (Apple asks for the
+##   Apple ID, so it is never run by itself on start).
 ## Desktop debug runs grant a purchase straight away, so the flows can be tested.
 ##
 ## Product ids, created in Play Console → Kiếm tiền → Sản phẩm trong ứng dụng:
@@ -42,6 +48,7 @@ const SLOT_IDS := [4, 5]             # Game.SLOT_LEVEL -1 slots this opens
 const NAMES := {STARTER: "Gói Tân Thủ", NO_ADS: "Bỏ Quảng Cáo", SLOTS: "Mở Ô Nhân Vật 5–6"}
 
 const _PLUGIN := "GodotGooglePlayBilling"
+const _SK := "VLStoreKit"
 const _PURCHASED := 1
 const _PENDING := 2
 
@@ -49,7 +56,8 @@ var prices := {}                     # sku -> formatted price from Play ("22.000
 var _bc: BillingClient
 var _ready_store := false
 var _busy_sku := ""
-var _mode := ""                      # "play" | "fake" | ""
+var _mode := ""                      # "play" | "apple" | "fake" | ""
+var _sk: Object                      # VLStoreKit singleton (iOS)
 
 func _ready() -> void:
 	message.connect(_toast)
@@ -65,6 +73,13 @@ func _ready() -> void:
 		_bc.consume_purchase_response.connect(func(r: Dictionary): print("Iap: consume ", r.get("response_code")))
 		_bc.acknowledge_purchase_response.connect(func(r: Dictionary): print("Iap: ack ", r.get("response_code")))
 		_bc.start_connection()
+	elif OS.get_name() == "iOS" and Engine.has_singleton(_SK):
+		_mode = "apple"
+		_sk = Engine.get_singleton(_SK)
+		_sk.connect("event", _on_sk_event)
+		_ready_store = _sk.can_pay()
+		_sk.request_products(all_ids())
+		_on_sk_event()   # transactions StoreKit replayed before we listened
 	elif OS.is_debug_build() and not OS.get_name() in ["Android", "iOS"]:
 		_mode = "fake"
 		for id in all_ids():
@@ -77,12 +92,16 @@ static func all_ids() -> PackedStringArray:
 
 ## Shop can sell (store connected, or the desktop test mode).
 func available() -> bool:
-	return _mode == "fake" or (_mode == "play" and _ready_store)
+	return _mode == "fake" or (_mode in ["play", "apple"] and _ready_store)
 
 ## Why the shop is closed, for the screen ("" when open).
 func closed_reason() -> String:
 	if OS.get_name() == "iOS":
-		return "Cửa hàng trên iPhone/iPad sẽ có trong bản sau."
+		if _mode != "apple":
+			return "Cửa hàng chưa mở trên máy này, hãy cập nhật bản mới nhất."
+		if not _ready_store:
+			return "Máy này đang tắt mua hàng trong ứng dụng (Cài đặt → Thời gian sử dụng → Giới hạn)."
+		return ""
 	if _mode == "play" and not _ready_store:
 		return "Đang kết nối cửa hàng Google Play… Kiểm tra mạng và tài khoản Google."
 	if _mode == "":
@@ -120,9 +139,12 @@ func buy(id: String) -> void:
 		return
 	if not prices.has(id):
 		message.emit("Gói này chưa có trên cửa hàng, hãy thử lại sau.", false)
-		_bc.query_product_details(all_ids(), BillingClient.ProductType.INAPP)
+		refresh_prices()
 		return
 	_busy_sku = id
+	if _mode == "apple":
+		_sk.purchase(id)
+		return
 	var r: Dictionary = _bc.purchase(id)
 	if int(r.get("response_code", -99)) != BillingClient.BillingResponseCode.OK:
 		_busy_sku = ""
@@ -131,6 +153,13 @@ func buy(id: String) -> void:
 ## Settings → Khôi phục giao dịch: asks Play again for everything this
 ## account owns (Bỏ QC, ô nhân vật, or a pack left unfinished).
 func restore() -> void:
+	if _mode == "apple":
+		if _restoring:
+			return
+		_restoring = true
+		_had = [no_ads(), slots_owned()]
+		_sk.restore()
+		return
 	if _mode != "play" or not _ready_store:
 		message.emit(closed_reason() if closed_reason() != "" else "Không khôi phục được lúc này.", false)
 		return
@@ -138,6 +167,7 @@ func restore() -> void:
 	_bc.query_purchases(BillingClient.ProductType.INAPP)
 
 var _restoring := false
+var _had := [false, false]           # iOS restore: [no_ads, slots] before it
 
 ## Gives queued consumables to the hero now playing (HubScreen calls this).
 func deliver_queue() -> void:
@@ -165,11 +195,14 @@ var missing := {}
 
 ## Ask Play again for whatever has no price yet (opening the shop).
 func refresh_prices() -> void:
-	if _mode != "play" or not _ready_store:
+	if not _mode in ["play", "apple"] or not _ready_store:
 		return
 	for id in all_ids():
 		if not prices.has(id):
-			_bc.query_product_details(all_ids(), BillingClient.ProductType.INAPP)
+			if _mode == "apple":
+				_sk.request_products(all_ids())
+			else:
+				_bc.query_product_details(all_ids(), BillingClient.ProductType.INAPP)
 			return
 
 func _on_details(r: Dictionary) -> void:
@@ -248,12 +281,61 @@ func _handle(p: Dictionary) -> void:
 	elif not bool(p.get("is_acknowledged", false)):
 		_bc.acknowledge_purchase(token)
 
+# ------------------------------------------------------------- StoreKit (iOS)
+func _on_sk_event() -> void:
+	if _sk == null:
+		return
+	for e in _sk.take_events():
+		if e is Dictionary:
+			_sk_one(e)
+	changed.emit()
+
+func _sk_one(e: Dictionary) -> void:
+	var id := str(e.get("id", ""))
+	match str(e.get("type", "")):
+		"products":
+			for it in e.get("items", []):
+				prices[str(it.id)] = str(it.price)
+				missing.erase(str(it.id))
+			for bad in e.get("invalid", []):
+				missing[str(bad)] = "invalid"
+			if not missing.is_empty():
+				print("Iap: no price for ", missing)
+		"products_error":
+			print("Iap: products error ", e.get("msg", ""))
+			for i in all_ids():
+				if not prices.has(i):
+					missing[i] = "query"
+		"purchased", "restored":
+			_busy_sku = ""
+			if id in all_ids():
+				# a restore is not a new sale: keep it out of the purchase counters
+				_grant(id, "ios_" + str(e.get("tid", "")), str(e.type) == "purchased")
+			_sk.finish(str(e.get("tid", "")))
+		"failed":
+			_busy_sku = ""
+			if not bool(e.get("cancelled", false)):
+				message.emit("Mua không thành công (mã %d)." % int(e.get("code", -1)), false)
+		"deferred":
+			_busy_sku = ""
+			message.emit("Giao dịch đang chờ phụ huynh duyệt. Quà sẽ vào khi được chấp thuận.", true)
+		"restore_done":
+			if _restoring:
+				_restoring = false
+				var got := []
+				if no_ads() and not _had[0]: got.append(NAMES[NO_ADS])
+				if slots_owned() and not _had[1]: got.append(NAMES[SLOTS])
+				message.emit("Đã khôi phục: " + ", ".join(got) if not got.is_empty() else "Tài khoản Apple này không có gói nào cần khôi phục.", true)
+		"restore_failed":
+			_restoring = false
+			message.emit("Không khôi phục được (mã %d). Thử lại sau." % int(e.get("code", -1)), false)
+
 static func _consumable(id: String) -> bool:
 	return PACKS.has(id) or id == STARTER
 
 ## Grants a purchase once per token. Non-consumables are flags, set again
 ## harmlessly on every restore.
-func _grant(id: String, token: String) -> void:
+func _grant(id: String, token: String, count := true) -> void:
 	if id == NO_ADS:
 		Game.settings["iap_noads"] = true
 	elif id == SLOTS:
@@ -268,7 +350,8 @@ func _grant(id: String, token: String) -> void:
 	if done.size() > 200:
 		done = done.slice(done.size() - 200)
 	Game.settings["iap_done"] = done
-	Funnel.event("p_" + id)
+	if count:
+		Funnel.event("p_" + id)
 	if _consumable(id):
 		if Game.hero.is_empty():
 			var q: Array = Game.settings.get("iap_queue", [])
