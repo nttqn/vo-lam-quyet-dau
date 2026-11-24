@@ -3,6 +3,8 @@
 # into addons/vl_storekit/ (gitignored). macOS + Xcode only: run by
 # .github/workflows/ios.yml before the Godot import/export.
 set -euo pipefail
+# any failing command is reported as a GitHub annotation (logs need auth to read)
+trap 'echo "::error::build.sh line $LINENO failed: $BASH_COMMAND"' ERR
 here="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$here/../.." && pwd)"
 cd "$here"
@@ -22,7 +24,11 @@ lib_cpp=$(ls godot-cpp/bin/libgodot-cpp.ios.template_release.arm64.a)
 lib_sk=$(ls bin/libvlstorekit*.a | head -1)
 rm -rf build && mkdir -p build
 libtool -static -o build/libvlstorekit.a "$lib_sk" "$lib_cpp"
-nm -g build/libvlstorekit.a 2>/dev/null | grep -q " T _vl_storekit_init" || { echo "entry symbol missing"; exit 1; }
+syms=$(nm -g build/libvlstorekit.a 2>/dev/null || true)
+case "$syms" in
+  *"T _vl_storekit_init"*) echo "entry symbol ok" ;;
+  *) echo "::error::entry symbol _vl_storekit_init missing"; echo "$syms" | grep -i storekit | head; exit 1 ;;
+esac
 
 out="$root/addons/vl_storekit"
 rm -rf "$out" && mkdir -p "$out"
