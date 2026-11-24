@@ -119,6 +119,7 @@ func _offer(id: String, title: String, sub: String, body: String, col: Color, ow
 	var b := _buy_button(id, owned)
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(b)
+	_mark(p, id)
 	return p
 
 func _pack(id: String, size_k: int) -> Control:
@@ -155,7 +156,33 @@ func _pack(id: String, size_k: int) -> Control:
 	var b := _buy_button(id, false)
 	b.custom_minimum_size.x = 130
 	v.add_child(b)
+	_mark(p, id)
 	return p
+
+## --focus=<id> (App Store review shot per product): that card outlined, the rest dimmed.
+func _mark(p: Control, id: String) -> void:
+	var f := ""
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--focus="): f = a.substr(8)
+	if f == "":
+		return
+	if f != id:
+		p.modulate = Color(0.55, 0.55, 0.55, 0.6)
+		return
+	var ring := Panel.new()
+	var sb := StyleBoxFlat.new()
+	sb.draw_center = false
+	sb.set_border_width_all(6)
+	sb.border_color = Color(1, 0.86, 0.3)
+	sb.set_corner_radius_all(14)
+	sb.expand_margin_left = 6
+	sb.expand_margin_right = 6
+	sb.expand_margin_top = 6
+	sb.expand_margin_bottom = 6
+	ring.add_theme_stylebox_override("panel", sb)
+	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ring.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	p.add_child(ring)
 
 ## Painted product icon (assets/ui/shop/<id>.png, from assets_src/shop/PROMPT_BAO_KHO.md), or null.
 func _art(id: String, side: float) -> Control:
