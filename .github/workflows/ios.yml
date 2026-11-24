@@ -129,10 +129,8 @@ jobs:
             # diagnostics (annotations: logs need auth to read)
             proj=$(ls -d build/ios/*.xcodeproj 2>/dev/null | head -1)
             echo "::warning::pbxproj vlstorekit refs: $(grep -c vlstorekit "$proj/project.pbxproj" 2>/dev/null || echo none)"
-            echo "::warning::entry code: $(grep -rl vl_storekit_init build/ios --include=*.cpp --include=*.mm 2>/dev/null | head -3 | tr '
-' ' ')"
-            echo "::warning::export.log gdext: $(grep -iE 'gdextension|vl_storekit|xcframework' export.log | grep -v 'dynamic library not found' | head -5 | tr '
-' '|')"
+            echo "::warning::entry code: $(grep -rl vl_storekit_init build/ios --include=*.cpp --include=*.mm 2>/dev/null | head -3 | paste -sd ' ' -)"
+            echo "::warning::export.log gdext: $(grep -iE 'gdextension|vl_storekit|xcframework' export.log | grep -v 'dynamic library not found' | head -5 | paste -sd '|' -)"
             n=$(strings -a "$exe" | grep -c VLSKObserver || true)
             echo "::warning::VLSKObserver strings: $n"
             [ "$n" -gt 0 ] || { echo "::error::VLStoreKit extension missing from the binary"; exit 1; }
