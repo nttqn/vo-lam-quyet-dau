@@ -36,7 +36,7 @@ func _build() -> void:
 	for c in _list.get_children():
 		c.queue_free()
 	var pr := Achieve.progress(h)
-	_head.text = "   %d/%d bậc" % [pr.x, pr.y]
+	_head.text = L.f("   %d/%d bậc", [pr.x, pr.y])
 	var ids: Array = Achieve.LINES.keys()
 	# claimable first, finished lines last
 	var rank := func(id) -> int:
@@ -82,7 +82,7 @@ func _row(h: Dictionary, id: String) -> Control:
 	bar.add_theme_stylebox_override("fill", UI.box(Color(0.45, 0.85, 0.4) if ok else UI.GOLD, Color(0, 0, 0, 0), 0, 4, 0))
 	info.add_child(bar)
 	var rw := Achieve.reward(id, k)
-	info.add_child(UI.label("%d/%d   ·   Ngọc +%d  ·  Vàng +%s" % [mini(v, tg), tg, int(rw.jade), UI.fmt(int(rw.gold))], 15, Color(0.85, 0.82, 0.75)))
+	info.add_child(UI.label(L.f("%d/%d   ·   Ngọc +%d  ·  Vàng +%s", [mini(v, tg), tg, int(rw.jade), UI.fmt(int(rw.gold))]), 15, Color(0.85, 0.82, 0.75)))
 	var b := UI.gold_button("Nhận", func(): _claim(id), 20, 120)
 	b.disabled = not ok
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -94,7 +94,7 @@ func _claim(id: String) -> void:
 	if rw.is_empty():
 		return
 	Game.sfx("levelup")
-	toast("%s: Ngọc +%d · Vàng +%s" % [Achieve.title(id), int(rw.jade), UI.fmt(int(rw.gold))], Color(0.5, 1, 0.8))
+	toast(L.f("%s: Ngọc +%d · Vàng +%s", [Achieve.title(id), int(rw.jade), UI.fmt(int(rw.gold))]), Color(0.5, 1, 0.8))
 	Game.save()
 	refresh_wallet()
 	_build()

@@ -92,9 +92,9 @@ static func ready(h: Dictionary, id: String) -> bool:
 static func text(id: String, k: int) -> String:
 	var t: String = LINES[id][1]
 	match id:
-		"region": return t % Journey.REGIONS[target(id, k) - 1].name
-		"dungeon": return t % Dungeon.DIFFS[target(id, k) - 1][0]
-	return t % target(id, k)
+		"region": return L.f(t, Journey.REGIONS[target(id, k) - 1].name)
+		"dungeon": return L.f(t, Dungeon.DIFFS[target(id, k) - 1][0])
+	return L.f(t, target(id, k))
 
 static func title(id: String) -> String:
 	return LINES[id][0]

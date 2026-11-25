@@ -18,6 +18,7 @@ var ink := false            # thủy mặc finisher: only the banner is drawn
 var dmg_mode := false       # Boss Thế Giới: running damage + the boss's Bá Thể bar
 const SEAL_COL := [Color(1.0, 0.62, 0.3), Color(0.55, 0.85, 0.45), Color(0.45, 0.7, 1.0)]
 const SEAL_TAG := ["T", "C", "Đ"]
+const SEAL_TAGS := {"zh_Hant": ["手", "腿", "丹"], "ko": ["팔", "다", "단"], "en": ["A", "L", "D"]}
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -54,6 +55,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _text(pos: Vector2, s: String, fs: int, col: Color, font: Font = null, align := 0, outline := 5) -> void:
+	s = L.t(s)
 	var fnt := font if font else UI.bold
 	var w := fnt.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 	var p := pos
@@ -76,12 +78,12 @@ func _seal_pips(f: Fighter, x0: float, y: float, dir: int) -> void:
 			var pulse := 0.6 + 0.4 * sin(Time.get_ticks_msec() * 0.012)
 			draw_circle(c, 12, Color(0.85, 0.12, 0.2, pulse))
 			draw_arc(c, 14.5, -PI * 0.5, -PI * 0.5 + TAU * float(f.seal[z]) / Fighter.SEAL_FRAMES, 24, Color.WHITE, 2.0)
-			_text(c + Vector2(0, 5), SEAL_TAG[z], 14, Color.WHITE, null, 1, 3)
+			_text(c + Vector2(0, 5), SEAL_TAGS.get(L.lang, SEAL_TAG)[z], 14, Color.WHITE, null, 1, 3)
 		else:
 			var p: float = clampf(f.press[z] / Fighter.SEAL_AT, 0.0, 1.0)
 			if p > 0.01:
 				draw_arc(c, 11.5, -PI * 0.5, -PI * 0.5 + TAU * p, 24, col, 3.5)
-			_text(c + Vector2(0, 5), SEAL_TAG[z], 14, Color(col.r, col.g, col.b, 0.7 + 0.3 * p), null, 1, 3)
+			_text(c + Vector2(0, 5), SEAL_TAGS.get(L.lang, SEAL_TAG)[z], 14, Color(col.r, col.g, col.b, 0.7 + 0.3 * p), null, 1, 3)
 
 func _draw() -> void:
 	if sim == null:
@@ -135,7 +137,7 @@ func _draw() -> void:
 				draw_rect(Rect2(px0 + (0.0 if left else pw * (1.0 - pr)), py, pw * pr, 8), Color(1.0, 0.8, 0.3))
 			draw_rect(Rect2(px0, py, pw, 8), Color(1.0, 0.85, 0.5, 0.6), false, 1.0)
 		# name + level
-		var nm := "%s  ·  Cấp %d" % [names[i], levels[i]]
+		var nm := L.f("%s  ·  Cấp %d", [names[i], levels[i]])
 		_text(Vector2(x0 if left else x0 + bw, top + 72 + (10.0 if f.poise_max > 0.0 else 0.0)), nm, 20, UI.PAPER, null, 0 if left else 2)
 		# round pips
 		for k in (sim.rounds_to_win if not dmg_mode else 0):

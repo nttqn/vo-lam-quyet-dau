@@ -48,7 +48,7 @@ static func text(rw: Dictionary, sep := "  ·  ") -> String:
 	var parts := []
 	for id in IDS:
 		if int(rw.get(id, 0)) > 0:
-			parts.append("%s +%d" % [name_of(id), int(rw[id])])
+			parts.append(L.f("%s +%d", [name_of(id), int(rw[id])]))
 	return sep.join(parts)
 
 ## Sum of two reward dicts.
@@ -79,7 +79,7 @@ static func chip(h: Dictionary, id: String, need := -1, size := 34) -> Control:
 	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(l)
-	row.tooltip_text = "%s — %s" % [name_of(id), INFO[id][1]]
+	row.tooltip_text = L.f("%s — %s", [name_of(id), INFO[id][1]])
 	return row
 
 static func gem(id: String, size := 34) -> Control:

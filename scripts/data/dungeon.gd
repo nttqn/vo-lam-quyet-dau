@@ -70,14 +70,14 @@ static func side(i: int, diff: int, k: int) -> Dictionary:
 	var lvl := foe_level(diff, k)
 	if k == FIGHTS - 1:
 		var b: Array = dg.boss
-		return Npc.side(b[1], lvl, b[0], ai + 0.05, "elder", true, rng.randi(), "%s · %s" % [b[2], DIFFS[diff][0]])
+		return Npc.side(b[1], lvl, b[0], ai + 0.05, "elder", true, rng.randi(), L.f("%s · %s", [b[2], DIFFS[diff][0]]))
 	var sects := []
 	for id in Sects.IDS:
 		if not id in Sects.HIDDEN:
 			sects.append(id)
 	var sect_id: String = sects[rng.randi_range(0, sects.size() - 1)]
 	var gname: String = dg.guards[k % dg.guards.size()]
-	return Npc.side(sect_id, lvl, gname, ai, dg.faction, false, rng.randi(), "Ải %d/%d" % [k + 1, FIGHTS])
+	return Npc.side(sect_id, lvl, gname, ai, dg.faction, false, rng.randi(), L.f("Ải %d/%d", [k + 1, FIGHTS]))
 
 ## Main material yield of a clear.
 static func main_amount(mat: String, diff: int) -> int:
@@ -116,4 +116,4 @@ static func record_clear(h: Dictionary, i: int, diff: int) -> bool:
 ## What the info panel lists: main material and the extra chances.
 static func loot_text(i: int, diff: int) -> String:
 	var dg: Dictionary = LIST[i]
-	return "%s ×%d  ·  có thể rơi thêm nguyên liệu khác, Hộ Phù" % [Mats.name_of(dg.mat), main_amount(dg.mat, diff)]
+	return L.f("%s ×%d  ·  có thể rơi thêm nguyên liệu khác, Hộ Phù", [Mats.name_of(dg.mat), main_amount(dg.mat, diff)])

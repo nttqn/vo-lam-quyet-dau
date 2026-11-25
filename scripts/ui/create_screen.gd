@@ -30,7 +30,7 @@ func _ready() -> void:
 	ui.add_child(left)
 	for s in Sects.all():
 		var open := Game.sect_unlocked(s.id)
-		var label: String = (s.name + "  ·  " + s.weapon_name) if open else "???  ·  Phái ẩn"
+		var label: String = (L.t(s.name) + "  ·  " + L.t(s.weapon_name)) if open else L.t("???  ·  Phái ẩn")
 		var b := UI.button(label, func(): _pick(s.id), 22)
 		b.custom_minimum_size.y = 56
 		b.toggle_mode = true
@@ -82,21 +82,21 @@ func _build() -> void:
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_panel.add_child(d)
 	var names := {"luc": "Lực", "than": "Thân pháp", "noi": "Nội công", "the": "Thể chất"}
-	var bl := UI.hbox(18)
+	var bl := UI.hbox(18 if L.lang == "vi" else 12)
 	for k in ["luc", "than", "noi", "the"]:
 		var v: int = int(s.bias[k])
 		var col := UI.PAPER if v == 0 else (Color(0.5, 1, 0.5) if v > 0 else Color(1, 0.5, 0.45))
-		bl.add_child(UI.label("%s %s%d" % [names[k], "+" if v >= 0 else "", v], 20, col, UI.bold))
+		bl.add_child(UI.label(L.f("%s %s%d", [names[k], "+" if v >= 0 else "", v]), 20 if L.lang == "vi" else 17, col, UI.bold))
 	_panel.add_child(bl)
 	if Sects.PASSIVE.has(s.id):
-		var pv := UI.label("Nội tại — %s: %s" % Sects.PASSIVE[s.id], 19, Color(0.6, 0.85, 1.0))
+		var pv := UI.label(L.f("Nội tại — %s: %s", Sects.PASSIVE[s.id]), 19, Color(0.6, 0.85, 1.0))
 		pv.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_panel.add_child(pv)
 	_panel.add_child(UI.label("Võ công trấn phái:", 22, UI.GOLD, UI.bold))
 	for m in s.skills:
-		var t := "• %s  (cấp %d)" % [m.name, m.lvl]
+		var t := L.f("• %s  (cấp %d)", [m.name, m.lvl])
 		if m.get("ult", false):
-			t += "  — Tuyệt kỹ"
+			t += L.t("  — Tuyệt kỹ")
 		_panel.add_child(UI.label(t, 19, Color(0.92, 0.88, 0.8)))
 	var sp := Control.new()
 	sp.custom_minimum_size.y = 10
@@ -121,7 +121,12 @@ func _build() -> void:
 
 func _random_name() -> void:
 	var last: Array = LAST_F if _female() else LAST_M
-	_name_edit.text = FIRST[randi() % FIRST.size()] + " " + last[randi() % last.size()]
+	var a: String = FIRST[randi() % FIRST.size()]
+	if L.lang == "ko" and a == "Lam":   # 남색 is the eye colour there
+		a = "Lý"
+	var b: String = last[randi() % last.size()]
+	# Chinese / Korean players get the name in their own script (李天宇); English keeps the Vietnamese
+	_name_edit.text = (L.t(a) + L.t(b)) if L.cjk() else a + " " + b
 	_auto_name = true
 
 func _create() -> void:

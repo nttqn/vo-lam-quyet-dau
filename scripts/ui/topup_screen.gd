@@ -42,9 +42,9 @@ func _build() -> void:
 	row.add_child(left)
 	if not h.get("starter", false):
 		left.add_child(_offer(Iap.STARTER, "Gói Tân Thủ", "Mỗi nhân vật mua một lần",
-			"%d Ngọc · %s Vàng\n%s" % [int(Iap.STARTER_GIFT.jade), UI.fmt(int(Iap.STARTER_GIFT.gold)), Mats.text(Iap.STARTER_GIFT.mats, " · ")],
+			L.f("%d Ngọc · %s Vàng\n%s", [int(Iap.STARTER_GIFT.jade), UI.fmt(int(Iap.STARTER_GIFT.gold)), Mats.text(Iap.STARTER_GIFT.mats, " · ")]),
 			Color(0.8, 0.45, 0.12), false))
-	left.add_child(_offer(Iap.NO_ADS, "Bỏ Quảng Cáo", "Mua một lần, dùng mãi trên tài khoản " + ("Apple" if Iap.apple() else "Google") + " này",
+	left.add_child(_offer(Iap.NO_ADS, "Bỏ Quảng Cáo", L.f("Mua một lần, dùng mãi trên tài khoản %s này", "Apple" if Iap.apple() else "Google"),
 		"Không còn quảng cáo chen ngang.\nQuà xem quảng cáo nhận ngay, không cần xem.",
 		Color(0.55, 0.2, 0.2), Iap.no_ads()))
 	left.add_child(_offer(Iap.SLOTS, "Mở Ô Nhân Vật 5–6", "Mua một lần, mở cho mọi nhân vật",
@@ -85,10 +85,10 @@ func _build() -> void:
 			if not Iap.prices.has(id):
 				parts.append("%s (%s)" % [id, Iap.missing[id]])
 		if not parts.is_empty():
-			var ml := UI.label("Chưa tải được giá: " + ", ".join(parts), 14, Color(1, 0.7, 0.55))
+			var ml := UI.label(L.f("Chưa tải được giá: %s", ", ".join(parts)), 14, Color(1, 0.7, 0.55))
 			ml.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			right.add_child(ml)
-	var fine := UI.label("Thanh toán qua " + ("App Store" if Iap.apple() else "Google Play") + ". Ngọc dùng mua Y Phục, Bí Kíp, Hộ Phù, Tẩy Luyện Thạch và trang bị quý.", 15, Color(0.72, 0.7, 0.64))
+	var fine := UI.label(L.f("Thanh toán qua %s. Ngọc dùng mua Y Phục, Bí Kíp, Hộ Phù, Tẩy Luyện Thạch và trang bị quý.", "App Store" if Iap.apple() else "Google Play"), 15, Color(0.72, 0.7, 0.64))
 	fine.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	right.add_child(fine)
 
@@ -143,12 +143,12 @@ func _pack(id: String, size_k: int) -> Control:
 	row.add_child(v)
 	v.add_child(UI.label(str(pk.name), 21, UI.GOLD, UI.bold))
 	var base := int(pk.jade) + int(pk.bonus)
-	v.add_child(UI.label("%d Ngọc" % Iap.pack_jade(h, id), 26, Color(0.55, 1, 0.8), UI.title))
+	v.add_child(UI.label(L.f("%d Ngọc", Iap.pack_jade(h, id)), 26, Color(0.55, 1, 0.8), UI.title))
 	var extra := []
 	if int(pk.bonus) > 0:
-		extra.append("gồm %d thưởng" % int(pk.bonus))
+		extra.append(L.f("gồm %d thưởng", int(pk.bonus)))
 	if first:
-		extra.append("lần đầu ×2 (thường %d)" % base)
+		extra.append(L.f("lần đầu ×2 (thường %d)", base))
 	if not extra.is_empty():
 		var el := UI.label(" · ".join(extra), 14, Color(0.75, 0.95, 0.8))
 		el.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

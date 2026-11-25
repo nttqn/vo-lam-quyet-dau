@@ -79,7 +79,7 @@ func _build() -> void:
 	for c in _mode_row.get_children():
 		c.queue_free()
 	var nm_open := int(h.level) >= Journey.NM_MIN_LEVEL
-	for m in [[false, "Thường"], [true, "Ác Mộng" if nm_open else "Ác Mộng · Cấp %d" % Journey.NM_MIN_LEVEL]]:
+	for m in [[false, "Thường"], [true, "Ác Mộng" if nm_open else L.f("Ác Mộng · Cấp %d", Journey.NM_MIN_LEVEL)]]:
 		var want: bool = m[0]
 		var b := UI.button(m[1], func(): _set_mode(want), 19)
 		b.toggle_mode = true
@@ -95,7 +95,7 @@ func _build() -> void:
 		var reg: Dictionary = Journey.REGIONS[r]
 		var ok := _region_ok(h, r)
 		var seen := Journey.region_unlocked(h, r)
-		var t := "%d. %s" % [r + 1, reg.name] if seen else "%d. ???" % (r + 1)
+		var t := L.f("%d. %s", [r + 1, reg.name]) if seen else L.f("%d. ???", (r + 1))
 		var b := UI.button(t, func(): _select(r), 20)
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.disabled = not ok
@@ -104,15 +104,15 @@ func _build() -> void:
 		b.custom_minimum_size.y = 58
 		if ok:
 			if nm:
-				b.text += "\n     ★ %d/18   ·   Cấp %d+" % [Journey.nm_region_stars(h, r), Journey.nm_level(r, 0)]
+				b.text += L.f("\n     ★ %d/18   ·   Cấp %d+", [Journey.nm_region_stars(h, r), Journey.nm_level(r, 0)])
 			else:
-				b.text += "\n     ★ %d/18   ·   Cấp %d+" % [Journey.region_stars(h, r), reg.lvl]
+				b.text += L.f("\n     ★ %d/18   ·   Cấp %d+", [Journey.region_stars(h, r), reg.lvl])
 			b.custom_minimum_size.y = 76
 		_tabs.add_child(b)
 	var reg2: Dictionary = Journey.REGIONS[region]
 	_title.text = reg2.name
 	_title.add_theme_color_override("font_color", NM_COL if nm else UI.GOLD)
-	_intro.text = reg2.intro if not nm else "Ác Mộng: đối thủ cấp %d–%d, ra đòn hiểm hơn. Lần đầu thắng mỗi trận nhận Ngọc, Huyền Thiết, Tẩy Luyện Thạch; thủ lĩnh rơi trang bị bậc cao và Thiên Tinh Thạch." % [Journey.nm_level(region, 0), Journey.nm_level(region, 5)]
+	_intro.text = reg2.intro if not nm else L.f("Ác Mộng: đối thủ cấp %d–%d, ra đòn hiểm hơn. Lần đầu thắng mỗi trận nhận Ngọc, Huyền Thiết, Tẩy Luyện Thạch; thủ lĩnh rơi trang bị bậc cao và Thiên Tinh Thạch.", [Journey.nm_level(region, 0), Journey.nm_level(region, 5)])
 	for c in _list.get_children():
 		c.queue_free()
 	if nm and not _region_ok(h, region):
@@ -156,12 +156,12 @@ func _stage_card(r: int, s: int) -> Control:
 	var sect := Sects.get_sect(foe[2])
 	if ok or (nm and stars > 0):
 		var nm_col := NM_COL if nm else UI.GOLD
-		var nml := UI.label(("☠ " if boss else "") + "%s  —  %s" % [foe[0], foe[1]], 24, nm_col if boss else UI.PAPER, UI.bold)
+		var nml := UI.label(("☠ " if boss else "") + L.f("%s  —  %s", [foe[0], foe[1]]), 24, nm_col if boss else UI.PAPER, UI.bold)
 		info.add_child(nml)
 		var col := Color(0.6, 1, 0.6) if lvl <= int(h.level) else (Color(1, 0.85, 0.4) if lvl <= int(h.level) + 2 else Color(1, 0.45, 0.4))
-		info.add_child(UI.label("Võ công %s  ·  Cấp %d" % [sect.name, lvl], 19, col))
+		info.add_child(UI.label(L.f("Võ công %s  ·  Cấp %d", [sect.name, lvl]), 19, col))
 	else:
-		info.add_child(UI.label("??? — " + lock, 22, Color(0.55, 0.52, 0.5)))
+		info.add_child(UI.label("??? — " + L.t(lock), 22, Color(0.55, 0.52, 0.5)))
 	var st := UI.label("★".repeat(stars) + "☆".repeat(3 - stars), 30, (NM_COL if nm else UI.GOLD) if stars > 0 else Color(0.5, 0.48, 0.45))
 	row.add_child(st)
 	var b: Button

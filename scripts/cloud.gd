@@ -205,7 +205,7 @@ func sign_in_google() -> bool:
 		if kind.contains("NO_CREDENTIAL"):
 			last_error = "Không tìm thấy tài khoản Google trên máy này"
 		else:
-			last_error = "Đăng nhập Google không thành công (%s)" % kind.get_slice(".", kind.get_slice_count(".") - 1)
+			last_error = L.f("Đăng nhập Google không thành công (%s)", kind.get_slice(".", kind.get_slice_count(".") - 1))
 		return false
 	return await _google_firebase(str(res[0]))
 
@@ -325,10 +325,10 @@ func _sync_all() -> String:
 			conflicts[i] = c
 	_save_state()
 	var parts := []
-	if pulled > 0: parts.append("tải về %d" % pulled)
-	if pushed > 0: parts.append("lưu lên %d" % pushed)
-	if not conflicts.is_empty(): parts.append("%d ô cần chọn bản" % conflicts.size())
-	return "Đã đồng bộ" + (" (" + ", ".join(parts) + ")" if not parts.is_empty() else "")
+	if pulled > 0: parts.append(L.f("tải về %d", pulled))
+	if pushed > 0: parts.append(L.f("lưu lên %d", pushed))
+	if not conflicts.is_empty(): parts.append(L.f("%d ô cần chọn bản", conflicts.size()))
+	return L.t("Đã đồng bộ") + (" (" + ", ".join(parts) + ")" if not parts.is_empty() else "")
 
 func _flush() -> void:
 	if busy:
@@ -462,7 +462,7 @@ static func _auth_error(body) -> String:
 		"USER_DISABLED": return "Tài khoản đã bị khóa"
 		"CREDENTIAL_TOO_OLD_LOGIN_AGAIN", "TOKEN_EXPIRED": return "Phiên đăng nhập đã cũ, hãy thử lại"
 		"OPERATION_NOT_ALLOWED", "ADMIN_ONLY_OPERATION", "CONFIGURATION_NOT_FOUND": return "Máy chủ chưa bật kiểu đăng nhập này"
-	return "Lỗi máy chủ" + (" (" + m + ")" if m != "" else "")
+	return L.t("Lỗi máy chủ") + (" (" + m + ")" if m != "" else "")
 
 # ------------------------------------------------------------- shared docs (Tỉ Võ)
 ## Writes collection/{uid} with plain fields (String/int/float values).

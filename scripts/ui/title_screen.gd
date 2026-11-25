@@ -126,9 +126,9 @@ func _build_slots() -> void:
 		p.add_child(v)
 		if info.is_empty() and not Game.slot_open(i):
 			p.modulate = Color(0.7, 0.7, 0.7)
-			v.add_child(UI.label("Ô lưu %d — Đang khóa" % (i + 1), 22, Color(0.75, 0.7, 0.65)))
+			v.add_child(UI.label(L.f("Ô lưu %d — Đang khóa", (i + 1)), 22, Color(0.75, 0.7, 0.65)))
 			if int(Game.SLOT_LEVEL[i]) > 0:
-				var lk := UI.label("Mở khi có nhân vật đạt cấp %d" % Game.SLOT_LEVEL[i], 18, Color(0.85, 0.75, 0.5))
+				var lk := UI.label(L.f("Mở khi có nhân vật đạt cấp %d", Game.SLOT_LEVEL[i]), 18, Color(0.85, 0.75, 0.5))
 				lk.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 				v.add_child(lk)
 			var lock := Padlock.new()
@@ -136,11 +136,11 @@ func _build_slots() -> void:
 			v.add_child(lock)
 			if i in Iap.SLOT_IDS and int(Game.SLOT_LEVEL[i]) < 0 and Iap.available():
 				var pr := Iap.price(Iap.SLOTS)
-				var ub := UI.gold_button("Mở ô 5–6" + ("  ·  " + pr if pr != "" else ""), func(): Iap.buy(Iap.SLOTS), 18)
+				var ub := UI.gold_button(L.t("Mở ô 5–6") + ("  ·  " + pr if pr != "" else ""), func(): Iap.buy(Iap.SLOTS), 18)
 				ub.disabled = pr == ""
 				v.add_child(ub)
 		elif info.is_empty():
-			var l := UI.label("Ô lưu %d — Trống" % (i + 1), 22, Color(0.8, 0.75, 0.7))
+			var l := UI.label(L.f("Ô lưu %d — Trống", (i + 1)), 22, Color(0.8, 0.75, 0.7))
 			v.add_child(l)
 			var sp := Control.new()
 			sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -150,9 +150,9 @@ func _build_slots() -> void:
 			var s := Sects.get_sect(info.get("sect", "vo_dang"))
 			var name := UI.label(str(info.get("name", "?")), 25, UI.GOLD, UI.title)
 			v.add_child(name)
-			v.add_child(UI.label("%s  ·  Cấp %d" % [s.name, int(info.get("level", 1))], 22))
+			v.add_child(UI.label(L.f("%s  ·  Cấp %d", [s.name, int(info.get("level", 1))]), 22))
 			var prog: int = (info.get("stars", {}) as Dictionary).size()
-			v.add_child(UI.label("Giang hồ: %d/%d trận" % [prog, Journey.REGIONS.size() * 6], 18, Color(0.8, 0.78, 0.72)))
+			v.add_child(UI.label(L.f("Giang hồ: %d/%d trận", [prog, Journey.REGIONS.size() * 6]), 18, Color(0.8, 0.78, 0.72)))
 			if Cloud.conflicts.has(i):
 				v.add_child(UI.label("Bản trên mây khác bản trong máy", 17, Color(1, 0.7, 0.45)))
 				v.add_child(UI.gold_button("Chọn bản lưu", func(): _resolve(i), 22))
@@ -163,7 +163,7 @@ func _build_slots() -> void:
 			var play := UI.gold_button("Vào game", func(): _play(i), 22)
 			play.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			h.add_child(play)
-			h.add_child(UI.button("Xóa", func(): confirm("Xóa nhân vật %s? Bản lưu trên mây cũng bị xóa." % info.get("name", ""), func():
+			h.add_child(UI.button("Xóa", func(): confirm(L.f("Xóa nhân vật %s? Bản lưu trên mây cũng bị xóa.", info.get("name", "")), func():
 				Game.delete_slot(i)
 				_build_slots(), "Xóa"), 20))
 		_cols[0 if i < 3 else 1].add_child(p)
@@ -189,14 +189,14 @@ func back() -> void:
 
 # ------------------------------------------------------------- cloud
 func _status_text() -> String:
-	return "☁ " + (Cloud.email if Cloud.email != "" else "Khách (chưa liên kết email)")
+	return "☁ " + (Cloud.email if Cloud.email != "" else L.t("Khách (chưa liên kết email)"))
 
 func _sync() -> void:
-	_cloud_lbl.text = _status_text() + "  ·  Đang đồng bộ…"
+	_cloud_lbl.text = _status_text() + "  ·  " + L.t("Đang đồng bộ…")
 	var msg: String = await Cloud.sync_all()
 	if not is_inside_tree():
 		return
-	_cloud_lbl.text = _status_text() + "  ·  " + msg
+	_cloud_lbl.text = _status_text() + "  ·  " + L.t(msg)
 	_build_slots()
 
 func _account() -> void:
@@ -228,7 +228,7 @@ func _resolve(i: int) -> void:
 	var v := UI.vbox(14)
 	v.custom_minimum_size.x = 640
 	p.add_child(v)
-	v.add_child(UI.heading("Ô lưu %d: chọn bản giữ lại" % (i + 1), 34))
+	v.add_child(UI.heading(L.f("Ô lưu %d: chọn bản giữ lại", (i + 1)), 34))
 	var t := UI.label("Bản không chọn sẽ bị thay thế (bản trong máy vẫn được cất dự phòng).", 18, Color(0.85, 0.82, 0.75))
 	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(t)
@@ -243,8 +243,8 @@ func _resolve(i: int) -> void:
 		box.add_child(bv)
 		bv.add_child(UI.label("Trong máy này" if side == "local" else "Trên mây", 20, UI.GOLD, UI.bold))
 		bv.add_child(UI.label(str(info.get("name", "?")), 24, UI.PAPER, UI.title))
-		bv.add_child(UI.label("%s  ·  Cấp %d" % [Sects.get_sect(str(info.get("sect", "vo_dang"))).name, int(info.get("level", 1))], 19))
-		bv.add_child(UI.label("Lưu lúc " + _when(float(info.get("saved_at", 0))), 17, Color(0.8, 0.78, 0.72)))
+		bv.add_child(UI.label(L.f("%s  ·  Cấp %d", [Sects.get_sect(str(info.get("sect", "vo_dang"))).name, int(info.get("level", 1))]), 19))
+		bv.add_child(UI.label(L.f("Lưu lúc %s", _when(float(info.get("saved_at", 0)))), 17, Color(0.8, 0.78, 0.72)))
 		bv.add_child(UI.gold_button("Giữ bản này", func():
 			dim.queue_free()
 			if side == "local":

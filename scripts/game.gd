@@ -21,6 +21,7 @@ func _ready() -> void:
 	get_tree().node_added.connect(_touch_scroll)
 	get_tree().node_added.connect(_lite_node)
 	_load_settings()
+	_init_lang()
 	Gfx.set_level(settings.get("gfx", -1))
 	Gfx.apply(get_tree())
 	_load_audio()
@@ -32,6 +33,9 @@ func _ready() -> void:
 		t.timeout.connect(_memlog)
 		RenderingServer.viewport_set_measure_render_time(get_tree().root.get_viewport_rid(), true)
 		add_child(t)
+
+func _exit_tree() -> void:
+	L.shutdown()
 
 # ------------------------------------------------------------- navigation
 func goto(node: Node) -> void:
@@ -165,6 +169,29 @@ func _load_settings() -> void:
 	if d is Dictionary:
 		for k in d:
 			settings[k] = d[k]
+
+## Language (scripts/i18n.gd): saved choice, else the phone's.
+func _init_lang() -> void:
+	var played := false
+	for i in SLOTS:
+		if FileAccess.file_exists(SAVE_PATH % i):
+			played = true
+	var had := settings.has("lang")
+	L.init_from(settings, played)
+	if settings.has("lang") and not had:
+		save_settings()
+	Analytics.user_property("lang", L.lang)
+
+## Switch language from Cài Đặt: re-open the hub (or title) so every screen
+## rebuilds its text.
+func set_lang(code: String) -> void:
+	if code == L.lang:
+		return
+	L.use(code)
+	settings["lang"] = L.lang
+	save_settings()
+	Analytics.user_property("lang", L.lang)
+	goto(HubScreen.new() if not hero.is_empty() else TitleScreen.new())
 
 func save_settings() -> void:
 	_write_json(SETTINGS_PATH, settings)

@@ -31,10 +31,10 @@ func _header(h: Dictionary, s: Dictionary) -> void:
 	head.add_child(UI.heading(h.name, 46))
 	var lv_row := UI.hbox(12)
 	head.add_child(lv_row)
-	lv_row.add_child(UI.label("%s  ·  Cấp %d" % [s.name, int(h.level)], 24, UI.PAPER, UI.bold))
+	lv_row.add_child(UI.label(L.f("%s  ·  Cấp %d", [s.name, int(h.level)]), 24, UI.PAPER, UI.bold))
 	var tid := Titles.worn(h)
 	if tid != "":
-		lv_row.add_child(UI.label("« %s »" % Titles.name_of(tid), 22, Titles.color(tid), UI.bold))
+		lv_row.add_child(UI.label(L.f("« %s »", Titles.name_of(tid)), 22, Titles.color(tid), UI.bold))
 	var need := Hero.exp_need(int(h.level))
 	var bar := ProgressBar.new()
 	bar.custom_minimum_size = Vector2(300, 14)
@@ -50,11 +50,11 @@ func _header(h: Dictionary, s: Dictionary) -> void:
 	bar.add_theme_stylebox_override("fill", fill)
 	bar.add_theme_stylebox_override("background", bg)
 	head.add_child(bar)
-	head.add_child(UI.label("Kinh nghiệm %d / %d" % [int(h.exp), need], 16, Color(0.8, 0.8, 0.75)))
-	head.add_child(UI.label("Lực chiến %s" % UI.fmt(Hero.power(h)), 26, UI.GOLD, UI.title))
+	head.add_child(UI.label(L.f("Kinh nghiệm %d / %d", [int(h.exp), need]), 16, Color(0.8, 0.8, 0.75)))
+	head.add_child(UI.label(L.f("Lực chiến %s", UI.fmt(Hero.power(h))), 26, UI.GOLD, UI.title))
 	var wallet := UI.hbox(12)
 	head.add_child(wallet)
-	var wl := UI.label("Vàng %s   ·   Ngọc %d" % [UI.fmt(h.gold), int(h.jade)], 20, UI.GOLD, UI.bold)
+	var wl := UI.label(L.f("Vàng %s   ·   Ngọc %d", [UI.fmt(h.gold), int(h.jade)]), 20, UI.GOLD, UI.bold)
 	wl.name = "Wallet"
 	wallet.add_child(wl)
 	# iOS has no store code yet: no shop there (and no store names in iOS UI)
@@ -97,7 +97,7 @@ func _new_titles(h: Dictionary) -> void:
 	if fresh.is_empty():
 		return
 	Game.save()
-	toast("Danh hiệu mới: %s · đeo ở Nhân Vật" % ", ".join(fresh.map(func(id): return Titles.name_of(id))))
+	toast(L.f("Danh hiệu mới: %s · đeo ở Nhân Vật", ", ".join(fresh.map(func(id): return Titles.name_of(id)))))
 
 # ------------------------------------------------------------- right column
 func _right(h: Dictionary) -> void:
@@ -113,7 +113,7 @@ func _right(h: Dictionary) -> void:
 	# story banner
 	var nx := _next_stage(h)
 	var sub := "Toàn bộ giang hồ đã chinh phục" if nx.is_empty() else \
-		"%s  ·  Trận %d/6" % [Journey.REGIONS[nx[0]].name, int(nx[1]) + 1]
+		L.f("%s  ·  Trận %d/6", [Journey.REGIONS[nx[0]].name, int(nx[1]) + 1])
 	var b1 := _tile("Hành Tẩu Giang Hồ", sub, "journey", Color(0.78, 0.5, 0.12), func(): Game.goto(MapScreen.new()), 132, 32)
 	right.add_child(b1)
 	_glow(b1)
@@ -125,9 +125,9 @@ func _right(h: Dictionary) -> void:
 	var dl := Duel.ensure(h)
 	var tb := Tower.best(h)
 	var modes := [
-		["Tỉ Võ", "%s điểm" % UI.fmt(dl.score), "duel", Color(0.72, 0.14, 0.12), func(): Game.goto(DuelScreen.new())],
-		["Tháp Thí Luyện", "Tầng %d" % tb if tb > 0 else "Chưa leo", "tower", Color(0.38, 0.22, 0.62), func(): Game.goto(TowerScreen.new())],
-		["Lôi Đài", "Kỷ lục %d trận" % int(h.arena_best), "arena", Color(0.8, 0.36, 0.1), func(): Flow.start_arena(0)],
+		["Tỉ Võ", L.f("%s điểm", UI.fmt(dl.score)), "duel", Color(0.72, 0.14, 0.12), func(): Game.goto(DuelScreen.new())],
+		["Tháp Thí Luyện", L.f("Tầng %d", tb) if tb > 0 else "Chưa leo", "tower", Color(0.38, 0.22, 0.62), func(): Game.goto(TowerScreen.new())],
+		["Lôi Đài", L.f("Kỷ lục %d trận", int(h.arena_best)), "arena", Color(0.8, 0.36, 0.1), func(): Flow.start_arena(0)],
 		["Luyện Công", "Tập chiêu", "train", Color(0.1, 0.48, 0.45), func(): Flow.start_training()],
 	]
 	for m in modes:
@@ -138,14 +138,14 @@ func _right(h: Dictionary) -> void:
 	var row2 := UI.hbox(12)
 	right.add_child(row2)
 	var dl_left := Dungeon.left(h)
-	var pb := _tile("Phó Bản", "Còn %d lượt hôm nay" % dl_left if dl_left > 0 else "Hết lượt hôm nay",
+	var pb := _tile("Phó Bản", L.f("Còn %d lượt hôm nay", dl_left) if dl_left > 0 else "Hết lượt hôm nay",
 		"dungeon", Color(0.2, 0.42, 0.6), func(): Game.goto(DungeonScreen.new()), 104, 20)
 	pb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(pb)
 	if dl_left > 0:
 		_glow(pb)
 	var wb_left := WBoss.left(h)
-	var wsub: String = ("Cấp %d mở" % WBoss.MIN_LEVEL) if not WBoss.unlocked(h) else 		("Nhận thưởng hôm qua!" if WBoss.claimable(h) else ("Còn %d lượt hôm nay" % wb_left if wb_left > 0 else "Hết lượt hôm nay"))
+	var wsub: String = (L.f("Cấp %d mở", WBoss.MIN_LEVEL)) if not WBoss.unlocked(h) else 		("Nhận thưởng hôm qua!" if WBoss.claimable(h) else (L.f("Còn %d lượt hôm nay", wb_left) if wb_left > 0 else "Hết lượt hôm nay"))
 	var wb := _tile("Boss Thế Giới", wsub, "wboss", Color(0.62, 0.12, 0.2), func(): Game.goto(WBossScreen.new()), 104, 20)
 	wb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row2.add_child(wb)
@@ -253,7 +253,7 @@ func _emblem(key: String, title: String, col: Color, side: float) -> Control:
 	st.shadow_size = 0
 	disc.add_theme_stylebox_override("panel", st)
 	box.add_child(disc)
-	var l := UI.label(title.substr(0, 1), int(side * 0.5), UI.GOLD.lightened(0.15), UI.title)
+	var l := UI.label(L.t(title).substr(0, 1), int(side * 0.5), UI.GOLD.lightened(0.15), UI.title)
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(l)
 	return box
@@ -362,7 +362,7 @@ func _dock_btn(title: String, ic: String, badge: int, col: Color, cb: Callable) 
 func _wallet_refresh() -> void:
 	var w := ui.find_child("Wallet", true, false) as Label
 	if w:
-		w.text = "Vàng %s   ·   Ngọc %d" % [UI.fmt(Game.hero.gold), int(Game.hero.jade)]
+		w.text = L.f("Vàng %s   ·   Ngọc %d", [UI.fmt(Game.hero.gold), int(Game.hero.jade)])
 
 func back() -> void:
 	Game.save()

@@ -190,6 +190,7 @@ func _draw() -> void:
 		var fs := 24 if r > 60 else 18
 		if b.has("skill"):
 			fs = 15
+		txt = L.t(txt)
 		if b.has("skill") and txt != "":
 			txt = _short(txt)
 		var lines := txt.split("\n") if txt != "" else PackedStringArray()
@@ -219,7 +220,7 @@ func _draw_hint() -> void:
 		draw_line(base, tip, gold, 10.0, true)
 		var side := Vector2(-dir.y, dir.x)
 		draw_colored_polygon(PackedVector2Array([tip + dir * 22, tip + side * 22, tip - side * 22]), gold)
-		var lbl := "Tiến" if hint == "stick" else "Lùi = Đỡ"
+		var lbl := L.t("Tiến" if hint == "stick" else "Lùi = Đỡ")
 		var w := UI.bold.get_string_size(lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, 26).x
 		var lp := c + Vector2(-w * 0.5, -STICK_R - 34)
 		draw_string_outline(UI.bold, lp, lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, 26, 6, Color(0, 0, 0, 0.8))

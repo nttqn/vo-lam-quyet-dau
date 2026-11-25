@@ -38,7 +38,7 @@ func _build() -> void:
 	var a := Build.attrs(int(h.level), h.pts, s)
 	var free := int(h.free_pts)
 	_box.add_child(_name_row())
-	_box.add_child(UI.label("Điểm tiềm năng: %d" % free, 26, Color(0.6, 1, 0.6) if free > 0 else UI.PAPER, UI.bold))
+	_box.add_child(UI.label(L.f("Điểm tiềm năng: %d", free), 26, Color(0.6, 1, 0.6) if free > 0 else UI.PAPER, UI.bold))
 	for at in ATTR:
 		var row := UI.hbox(10)
 		var name := UI.label(at[1], 24, UI.GOLD, UI.bold)
@@ -77,12 +77,12 @@ func _build() -> void:
 		g.add_child(UI.label(r[0], 20, Color(0.82, 0.78, 0.7)))
 		g.add_child(UI.label(r[1], 22, UI.PAPER, UI.bold))
 	_box.add_child(p)
-	var stats_l := UI.label("Thắng %d  ·  Thua %d  ·  Lôi đài kỷ lục %d" % [int(h.wins), int(h.losses), int(h.arena_best)], 18, Color(0.8, 0.77, 0.7))
+	var stats_l := UI.label(L.f("Thắng %d  ·  Thua %d  ·  Lôi đài kỷ lục %d", [int(h.wins), int(h.losses), int(h.arena_best)]), 18, Color(0.8, 0.77, 0.7))
 	_box.add_child(stats_l)
 	var sp := Control.new()
 	sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_box.add_child(sp)
-	var rb := UI.button("Tẩy điểm (%d Ngọc)" % RESET_COST, func(): confirm("Hoàn lại toàn bộ điểm tiềm năng với giá %d Ngọc?" % RESET_COST, _reset), 20)
+	var rb := UI.button(L.f("Tẩy điểm (%d Ngọc)", RESET_COST), func(): confirm(L.f("Hoàn lại toàn bộ điểm tiềm năng với giá %d Ngọc?", RESET_COST), _reset), 20)
 	rb.disabled = int(h.jade) < RESET_COST
 	_box.add_child(rb)
 
@@ -186,16 +186,16 @@ func _name_row() -> HBoxContainer:
 	nv.add_child(n)
 	# worn danh hiệu under the name; the button opens the list
 	var tid := Titles.worn(h)
-	var tl := UI.label("« %s »" % Titles.name_of(tid) if tid != "" else "Chưa đeo danh hiệu", 17, Titles.color(tid) if tid != "" else Color(0.7, 0.67, 0.6), UI.bold)
+	var tl := UI.label(L.f("« %s »", Titles.name_of(tid)) if tid != "" else "Chưa đeo danh hiệu", 17, Titles.color(tid) if tid != "" else Color(0.7, 0.67, 0.6), UI.bold)
 	tl.clip_text = true
 	nv.add_child(tl)
-	var tb := UI.button("Danh hiệu %d/%d" % [Titles.owned(h).size(), Titles.LIST.size()], _title_dialog, 18)
+	var tb := UI.button(L.f("Danh hiệu %d/%d", [Titles.owned(h).size(), Titles.LIST.size()]), _title_dialog, 18)
 	tb.custom_minimum_size.y = 50
 	row.add_child(tb)
 	var left := Hero.rename_left(h)
 	var b: Button
 	if left > 0.0:
-		b = UI.button("Đổi tên sau " + _wait_text(left), func(): pass, 18)
+		b = UI.button(L.f("Đổi tên sau %s", _wait_text(left)), func(): pass, 18)
 		b.disabled = true
 	else:
 		b = UI.button("Đổi tên  ▶ QC", _rename_dialog, 20)
@@ -206,10 +206,10 @@ func _name_row() -> HBoxContainer:
 static func _wait_text(sec: float) -> String:
 	var s := int(ceil(sec))
 	if s >= 86400:
-		return "%d ngày %d giờ" % [s / 86400, (s % 86400) / 3600]
+		return L.f("%d ngày %d giờ", [s / 86400, (s % 86400) / 3600])
 	if s >= 3600:
-		return "%d giờ %d phút" % [s / 3600, (s % 3600) / 60]
-	return "%d phút" % maxi(1, s / 60)
+		return L.f("%d giờ %d phút", [s / 3600, (s % 3600) / 60])
+	return L.f("%d phút", maxi(1, s / 60))
 
 ## Top-anchored, so the phone keyboard doesn't cover the field.
 func _rename_dialog() -> void:
@@ -268,7 +268,7 @@ func _renamed(n: String) -> void:
 	h.rename_at = Time.get_unix_time_from_system()
 	Game.save()   # also republishes the Bảng Xếp Hạng row
 	if is_inside_tree():
-		toast("Đã đổi danh xưng: " + n, Color(0.6, 1, 0.7))
+		toast(L.t("Đã đổi danh xưng: ") + n, Color(0.6, 1, 0.7))
 		_build()
 
 func back() -> void:

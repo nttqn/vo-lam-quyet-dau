@@ -17,7 +17,7 @@ const COLOR := {"manh": Color(1, 0.55, 0.35), "toc": Color(0.5, 0.85, 1.0), "tin
 const PRICE := 30   # jade, random book
 
 static func name_of(kind: String) -> String:
-	return "Bí kíp " + String(KINDS[kind][0]) if KINDS.has(kind) else ""
+	return L.f("Bí kíp %s", String(KINDS[kind][0])) if KINDS.has(kind) else ""
 
 static func random_kind(rng: RandomNumberGenerator) -> String:
 	var total := 0

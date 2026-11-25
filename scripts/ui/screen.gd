@@ -132,7 +132,7 @@ func top_bar(title: String, on_back: Callable) -> HBoxContainer:
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.add_child(sp)
 	if not Game.hero.is_empty():
-		var g := UI.label("Vàng %s   ·   Ngọc %d" % [UI.fmt(Game.hero.gold), int(Game.hero.jade)], 22, UI.GOLD, UI.bold)
+		var g := UI.label(L.f("Vàng %s   ·   Ngọc %d", [UI.fmt(Game.hero.gold), int(Game.hero.jade)]), 22, UI.GOLD, UI.bold)
 		g.name = "Wallet"
 		bar.add_child(g)
 	return bar
@@ -140,7 +140,7 @@ func top_bar(title: String, on_back: Callable) -> HBoxContainer:
 func refresh_wallet() -> void:
 	var w := ui.find_child("Wallet", true, false) as Label
 	if w:
-		w.text = "Vàng %s   ·   Ngọc %d" % [UI.fmt(Game.hero.gold), int(Game.hero.jade)]
+		w.text = L.f("Vàng %s   ·   Ngọc %d", [UI.fmt(Game.hero.gold), int(Game.hero.jade)])
 
 ## Cheap static backdrop: the painted bg_<theme>.png instead of the live 3D
 ## arena, for screens whose panels cover most of the view (long lists).

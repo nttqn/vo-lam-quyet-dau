@@ -85,7 +85,8 @@ service cloud.firestore {
         && okPower(d.level, d.power)
         // level within reach of the progress (Build.level_ok, same formula)
         && 20 * d.level <= 500 + 12 * d.stars + 3 * d.tower
-        && (!('title' in d) || (d.title is string && d.title.size() <= 24));
+        && (!('title' in d) || (d.title is string && d.title.size() <= 24))
+        && (!('lang' in d) || (d.lang is string && d.lang.size() <= 8));
     }
     // Kênh Thế Giới: chat/{id} readable by everyone signed in; a message is
     // written together with chatlast/{uid} in one commit, and chatlast refuses
@@ -94,7 +95,17 @@ service cloud.firestore {
     match /chat/{id} {
       allow read: if request.auth != null;
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
-      allow create: if request.auth != null
+      allow create: if chatMessageOk();
+    }
+    // 1.4: one room per language besides Vietnamese (Chat.coll), same rules
+    match /{room}/{id} {
+      allow read: if request.auth != null && room in ['chat_zh_Hant', 'chat_ko', 'chat_en'];
+      allow delete: if request.auth != null && room in ['chat_zh_Hant', 'chat_ko', 'chat_en']
+        && resource.data.uid == request.auth.uid;
+      allow create: if room in ['chat_zh_Hant', 'chat_ko', 'chat_en'] && chatMessageOk();
+    }
+    function chatMessageOk() {
+      return request.auth != null
         && request.resource.data.keys().hasOnly(['uid', 'name', 'sect', 'level', 'text', 'at'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.text is string

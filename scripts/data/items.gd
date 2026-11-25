@@ -48,8 +48,9 @@ static func item_name(it: Dictionary, style := "sword") -> String:
 		base = WEAPON_NAMES.get(style, "Binh Khí")
 	else:
 		base = OTHER_NAMES[it.slot]
-	var n := "%s %s" % [TIER_WORD[t] + (" " if true else ""), base]
-	n = base + " " + TIER_WORD[t]
+	var n: String = base + " " + TIER_WORD[t]
+	if L.lang != "vi":   # other languages put the grade first: 玄劍, Mystic Sword
+		n = L.t(TIER_WORD[t]) + ("" if L.lang == "zh_Hant" else " ") + L.t(base)
 	if int(it.get("plus", 0)) > 0:
 		n += " +%d" % int(it.plus)
 	return n
@@ -92,8 +93,8 @@ static func stat_text(s: Dictionary) -> String:
 
 static func one_stat(k: String, v: float) -> String:
 	if k in AFF_FLAT:
-		return "%s +%.1f%%" % [STAT_NAMES[k], v * 100.0]
-	return "%s +%d" % [STAT_NAMES[k], int(round(v))]
+		return L.f("%s +%.1f%%", [STAT_NAMES[k], v * 100.0])
+	return L.f("%s +%d", [STAT_NAMES[k], int(round(v))])
 
 # ------------------------------------------------------------ bonus lines
 static func aff_value(it: Dictionary, a: Dictionary) -> float:

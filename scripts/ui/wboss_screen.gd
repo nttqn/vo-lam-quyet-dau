@@ -53,7 +53,7 @@ func _build() -> void:
 	for c in _right.get_children():
 		c.queue_free()
 	_right.add_child(UI.heading(boss.name, 42))
-	_right.add_child(UI.label("%s  ·  Võ công %s" % [boss.title, Sects.get_sect(boss.sect).name], 19, boss.aura.lightened(0.3), UI.bold))
+	_right.add_child(UI.label(L.f("%s  ·  Võ công %s", [boss.title, Sects.get_sect(boss.sect).name]), 19, boss.aura.lightened(0.3), UI.bold))
 	var d := UI.label(boss.desc, 17, Color(0.85, 0.82, 0.75))
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_right.add_child(d)
@@ -76,18 +76,18 @@ func _build() -> void:
 	_right.add_child(pp)
 	_show_pool()
 	if not WBoss.unlocked(h):
-		_right.add_child(UI.label("Cần đạt cấp %d để khiêu chiến Boss Thế Giới." % WBoss.MIN_LEVEL, 21, Color(1, 0.65, 0.5), UI.bold))
+		_right.add_child(UI.label(L.f("Cần đạt cấp %d để khiêu chiến Boss Thế Giới.", WBoss.MIN_LEVEL), 21, Color(1, 0.65, 0.5), UI.bold))
 	else:
-		_right.add_child(UI.label("Sát thương hôm nay: %s   ·   Cao nhất 1 lượt: %s" % [UI.fmt(int(w.dmg)), UI.fmt(int(w.best))], 19, UI.PAPER, UI.bold))
+		_right.add_child(UI.label(L.f("Sát thương hôm nay: %s   ·   Cao nhất 1 lượt: %s", [UI.fmt(int(w.dmg)), UI.fmt(int(w.best))]), 19, UI.PAPER, UI.bold))
 		_rank_lbl = UI.label("", 17, Color(0.85, 0.82, 0.75))
 		_right.add_child(_rank_lbl)
 		_show_rank()
 	if WBoss.claimable(h):
 		var p: Dictionary = w.prev
-		var cb := UI.gold_button("Nhận thưởng xếp hạng ngày %s" % _short(str(p.date)), _claim, 21)
+		var cb := UI.gold_button(L.f("Nhận thưởng xếp hạng ngày %s", _short(str(p.date))), _claim, 21)
 		cb.custom_minimum_size.y = 58
 		_right.add_child(cb)
-	var note := UI.label("Mỗi ngày một Boss. Mỗi lượt %d giây: gây càng nhiều sát thương càng nhiều thưởng. Đánh liên tục để Phá Thế (thanh vàng) — Boss sẽ choáng. Boss quá to để Cầm Nã. Hôm sau nhận thưởng theo hạng; nếu cả giang hồ hạ được Boss, ai tham gia cũng được thêm quà." % WBoss.FIGHT_SECONDS, 15, Color(0.75, 0.72, 0.66))
+	var note := UI.label(L.f("Mỗi ngày một Boss. Mỗi lượt %d giây: gây càng nhiều sát thương càng nhiều thưởng. Đánh liên tục để Phá Thế (thanh vàng) — Boss sẽ choáng. Boss quá to để Cầm Nã. Hôm sau nhận thưởng theo hạng; nếu cả giang hồ hạ được Boss, ai tham gia cũng được thêm quà.", WBoss.FIGHT_SECONDS), 15, Color(0.75, 0.72, 0.66))
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_right.add_child(note)
 	var sp := Control.new()
@@ -101,7 +101,7 @@ func _build() -> void:
 		ad.disabled = not Ads.is_ready()
 		row.add_child(ad)
 	var n := WBoss.left(h)
-	var go := UI.gold_button("Khiêu Chiến (%d)" % n, Flow.start_wboss, 24)
+	var go := UI.gold_button(L.f("Khiêu Chiến (%d)", n), Flow.start_wboss, 24)
 	go.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	go.custom_minimum_size.y = 64
 	go.disabled = not WBoss.unlocked(h) or n <= 0
@@ -149,7 +149,7 @@ func _show_pool() -> void:
 	_pool_bar.anchor_right = r
 	_pool_bar.offset_right = 0
 	if left <= 0:
-		_pool_lbl.text = "ĐÃ BỊ HẠ! Mọi người tham gia hôm nay được thêm: %s" % WBoss.rewards_text(WBoss.KILL_BONUS)
+		_pool_lbl.text = L.f("ĐÃ BỊ HẠ! Mọi người tham gia hôm nay được thêm: %s", WBoss.rewards_text(WBoss.KILL_BONUS))
 		_pool_lbl.add_theme_color_override("font_color", Color(0.6, 1, 0.6))
 	else:
 		_pool_lbl.text = "%s / %s  (%d%%)" % [UI.fmt(left), UI.fmt(WBoss.pool()), int(ceil(r * 100))]
@@ -167,7 +167,7 @@ func _show_rank() -> void:
 		_rank_lbl.text = "Bạn đang ẩn khỏi bảng xếp hạng — vẫn nhận thưởng tham gia."
 	elif _rank > 0:
 		var t := WBoss.tier(_rank)
-		_rank_lbl.text = "Hạng hiện tại: %d  →  thưởng ngày mai: %s" % [_rank, WBoss.rewards_text(t[2])]
+		_rank_lbl.text = L.f("Hạng hiện tại: %d  →  thưởng ngày mai: %s", [_rank, WBoss.rewards_text(t[2])])
 	else:
 		_rank_lbl.text = "Thưởng ngày mai: theo hạng sát thương."
 
@@ -178,8 +178,8 @@ func _claim() -> void:
 	Game.save()
 	Game.sfx("coin")
 	var rk := int(r.rank)
-	var head := ("Hạng %d" % rk) if rk > 0 else "Tham gia"
-	toast("%s%s: %s" % [head, " · Boss bị hạ" if r.killed else "", WBoss.rewards_text(r.rewards)], Color(0.6, 1, 0.7))
+	var head := (L.f("Hạng %d", rk)) if rk > 0 else "Tham gia"
+	toast(L.f("%s%s: %s", [head, " · Boss bị hạ" if r.killed else "", WBoss.rewards_text(r.rewards)]), Color(0.6, 1, 0.7))
 	_build()
 
 func _ad_try() -> void:
@@ -207,7 +207,7 @@ func _board() -> void:
 	p.add_child(v)
 	var top := UI.hbox(12)
 	v.add_child(top)
-	var hd := UI.heading("Bảng Sát Thương — %s" % boss.name, 34)
+	var hd := UI.heading(L.f("Bảng Sát Thương — %s", boss.name), 34)
 	hd.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(hd)
 	top.add_child(UI.button("Đóng", func(): dim.queue_free(), 22, 120))
@@ -228,10 +228,10 @@ func _board() -> void:
 	cols.add_child(tv)
 	tv.add_child(UI.label("Thưởng theo hạng (nhận hôm sau)", 18, UI.GOLD, UI.bold))
 	for t in WBoss.TIERS:
-		var l := UI.label("%s: %s" % [t[1], WBoss.rewards_text(t[2])], 16, UI.PAPER)
+		var l := UI.label(L.f("%s: %s", [t[1], WBoss.rewards_text(t[2])]), 16, UI.PAPER)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		tv.add_child(l)
-	var kb := UI.label("Boss bị hạ: mọi người thêm %s" % WBoss.rewards_text(WBoss.KILL_BONUS), 16, Color(0.6, 1, 0.6))
+	var kb := UI.label(L.f("Boss bị hạ: mọi người thêm %s", WBoss.rewards_text(WBoss.KILL_BONUS)), 16, Color(0.6, 1, 0.6))
 	kb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tv.add_child(kb)
 	var wait := UI.label("Đang tải…" if Cloud.enabled() or not fake_rows.is_empty() else "Cần kết nối mạng để xem bảng.", 18, Color(0.8, 0.77, 0.7))
@@ -252,7 +252,7 @@ func _board() -> void:
 		var no := UI.label("%d" % (i + 1), 22, UI.GOLD if i < 3 else UI.PAPER, UI.title)
 		no.custom_minimum_size.x = 44
 		line.add_child(no)
-		var nm := UI.label("%s  ·  %s  ·  Cấp %d" % [Chat.safe_name(r.get("name", "?")), Sects.get_sect(str(r.get("sect", "vo_dang"))).name, int(r.get("level", 1))], 18, UI.PAPER)
+		var nm := UI.label(L.f("%s  ·  %s  ·  Cấp %d", [Chat.safe_name(r.get("name", "?")), Sects.get_sect(str(r.get("sect", "vo_dang"))).name, int(r.get("level", 1))]), 18, UI.PAPER)
 		nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		nm.clip_text = true
 		line.add_child(nm)

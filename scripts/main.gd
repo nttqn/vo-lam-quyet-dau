@@ -29,6 +29,7 @@ func _ready() -> void:
 			Gfx.apply(get_tree())
 		if a.begins_with("--screen="): screen = a.substr(9)
 		if a.begins_with("--wb="): WBoss.test_pick = int(a.substr(5))
+		if a.begins_with("--lang="): L.use(a.substr(7))   # not saved
 	for a in args:
 		if a.begins_with("--facetest"):
 			add_child(load("res://tools/face_test.gd").new())
@@ -361,7 +362,7 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			var rt := "--ranktest" in args
 			var live := "--live" in args   # --ranktest --live: real Firestore rows
 			for n in (0 if live else 140 if rt else 50):
-				rs.fake_rows.append({"_id": "f%d" % n, "name": "Hiệp Khách %d" % (n + 1), "sect": Sects.IDS[n % 6], "level": 60 - n / 3, "power": 9000 - n * (70 if rt else 97), "tower": 80 - n / 2, "stars": 120 - n})
+				rs.fake_rows.append({"_id": "f%d" % n, "name": L.f("Hiệp Khách %d", (n + 1)), "sect": Sects.IDS[n % 6], "level": 60 - n / 3, "power": 9000 - n * (70 if rt else 97), "tower": 80 - n / 2, "stars": 120 - n})
 			if rt and not live and not Game.hero.is_empty():
 				var mine := Ranks.fields(Game.hero)
 				mine["_id"] = "%s_%d" % [Cloud.uid, Game.slot]

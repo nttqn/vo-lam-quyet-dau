@@ -42,7 +42,7 @@ static func tidy_name(raw: String) -> String:
 ## "" when the name is fine, else why not.
 static func name_problem(h: Dictionary, n: String) -> String:
 	if n.length() < NAME_MIN:
-		return "Danh xưng cần ít nhất %d ký tự" % NAME_MIN
+		return L.f("Danh xưng cần ít nhất %d ký tự", NAME_MIN)
 	if n == str(h.get("name", "")):
 		return "Danh xưng mới trùng tên cũ"
 	if Chat.censor(n) != n:

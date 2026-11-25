@@ -104,7 +104,7 @@ static func nm_stars(h: Dictionary, r: int, s: int) -> int:
 ## Why an Ác Mộng duel is closed ("" = open).
 static func nm_lock(h: Dictionary, r: int, s: int) -> String:
 	if int(h.level) < NM_MIN_LEVEL:
-		return "Cấp %d mở Ác Mộng" % NM_MIN_LEVEL
+		return L.f("Cấp %d mở Ác Mộng", NM_MIN_LEVEL)
 	if not Dictionary(h.get("stars", {})).has(stage_id(r, 5)):
 		return "Hạ thủ lĩnh vùng này trước"
 	if s > 0 and nm_stars(h, r, s - 1) == 0:
@@ -133,7 +133,7 @@ static func nm_side(r: int, s: int) -> Dictionary:
 	var foe: Array = reg.foes[s]
 	var boss := s == 5
 	# regular gear even for the boss (boss gear + ×1.25 HP was unbeatable at 0.85 AI)
-	var side := Npc.side(foe[2], nm_level(r, s), foe[0], nm_ai(r, s), reg.faction, false, 5000 + r * 10 + s, "Ác Mộng · " + str(foe[1]))
+	var side := Npc.side(foe[2], nm_level(r, s), foe[0], nm_ai(r, s), reg.faction, false, 5000 + r * 10 + s, L.f("Ác Mộng · %s", str(foe[1])))
 	side.look["tint"] = NM_TINT
 	if boss:
 		side.boss = true
@@ -244,4 +244,4 @@ static func arena_side(hlvl: int, n: int) -> Dictionary:
 	var name: String = first[rng.randi_range(0, first.size() - 1)] + " " + last[rng.randi_range(0, last.size() - 1)]
 	var factions := ["bandit", "wanderer", "official", "snow", "demon", "elder", ""]
 	var boss := (n + 1) % 5 == 0
-	return Npc.side(sect_id, lvl, name, clampf(0.35 + n * 0.04, 0.0, 0.95), factions[rng.randi_range(0, factions.size() - 1)], boss, rng.randi(), "Lôi đài thủ #%d" % (n + 1))
+	return Npc.side(sect_id, lvl, name, clampf(0.35 + n * 0.04, 0.0, 0.95), factions[rng.randi_range(0, factions.size() - 1)], boss, rng.randi(), L.f("Lôi đài thủ #%d", (n + 1)))

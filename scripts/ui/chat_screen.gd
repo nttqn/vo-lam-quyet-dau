@@ -169,12 +169,13 @@ func _msg_row(m: Dictionary) -> Control:
 	var nm := UI.label(Chat.safe_name(m.get("name", "?")), 18, Color(0.6, 1, 0.6) if me else UI.GOLD, UI.bold)
 	head.add_child(nm)
 	var sect := Sects.get_sect(str(m.get("sect", "vo_dang")))
-	head.add_child(UI.label("%s · Cấp %d" % [sect.get("name", ""), int(m.get("level", 1))], 14, Color(0.72, 0.7, 0.64)))
+	head.add_child(UI.label(L.f("%s · Cấp %d", [sect.get("name", ""), int(m.get("level", 1))]), 14, Color(0.72, 0.7, 0.64)))
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(sp)
 	head.add_child(UI.label(Chat.clock(str(m.get("at", ""))), 14, Color(0.6, 0.58, 0.54)))
 	var t := UI.label(str(m.get("text", "")), 19, UI.PAPER)
+	t.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED   # what players wrote stays as written
 	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(t)
 	for c in [nm, t]:
@@ -228,7 +229,7 @@ func _update_send() -> void:
 	if Game.hero.is_empty() or int(Game.hero.level) < Chat.MIN_LEVEL:
 		_send.disabled = true
 		_edit.editable = false
-		_edit.placeholder_text = "Đạt cấp %d để nói chuyện (vẫn xem được tin nhắn)" % Chat.MIN_LEVEL
+		_edit.placeholder_text = L.f("Đạt cấp %d để nói chuyện (vẫn xem được tin nhắn)", Chat.MIN_LEVEL)
 		return
 	if Ban.active():
 		_send.disabled = true
@@ -244,7 +245,7 @@ func _update_send() -> void:
 func _refresh_unblock() -> void:
 	var n := Chat.blocked().size()
 	_unblock.visible = n > 0
-	_unblock.text = "Bỏ chặn (%d)" % n
+	_unblock.text = L.f("Bỏ chặn (%d)", n)
 
 # ---------------------------------------------------------------- modals
 func _modal(title: String, width := 560.0) -> Array:
@@ -292,6 +293,7 @@ func _actions(m: Dictionary, me: bool) -> Control:
 	var root: Control = mv[0]
 	var v: VBoxContainer = mv[1]
 	var t := UI.label("“%s”" % str(m.get("text", "")), 18, Color(0.85, 0.82, 0.75))
+	t.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(t)
 	v.add_child(UI.gold_button("Xem thông tin", func():

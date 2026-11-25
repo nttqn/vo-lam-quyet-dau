@@ -60,7 +60,7 @@ func _row(id: String, nm: String, desc: String, price: int, ready: bool, worn: b
 	var info := UI.vbox(2)
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(info)
-	info.add_child(UI.label(nm + ("  ·  đang mặc" if worn else ""), 22, UI.GOLD, UI.bold))
+	info.add_child(UI.label(L.t(nm) + (L.t("  ·  đang mặc") if worn else ""), 22, UI.GOLD, UI.bold))
 	var d := UI.label(desc, 16, Color(0.85, 0.82, 0.75))
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info.add_child(d)
@@ -75,7 +75,7 @@ func _row(id: String, nm: String, desc: String, price: int, ready: bool, worn: b
 		b.disabled = worn
 		row.add_child(b)
 	else:
-		var b := UI.gold_button("%d Ngọc" % price, func(): _buy(id, price), 18, 120)
+		var b := UI.gold_button(L.f("%d Ngọc", price), func(): _buy(id, price), 18, 120)
 		b.disabled = int(h.jade) < price
 		row.add_child(b)
 	return p
@@ -95,7 +95,7 @@ func _buy(id: String, price: int) -> void:
 	var h := Game.hero
 	if int(h.jade) < price or Outfits.owned(h, id):
 		return
-	confirm("Mua y phục này với %d Ngọc?" % price, func():
+	confirm(L.f("Mua y phục này với %d Ngọc?", price), func():
 		h.jade = int(h.jade) - price
 		var o: Array = h.get("outfits", [])
 		o.append(id)

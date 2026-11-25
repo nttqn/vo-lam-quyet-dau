@@ -291,7 +291,7 @@ func _events() -> void:
 	for e in sim.events:
 		match e.t:
 			"round":
-				hud.banner("Hiệp %d" % e.n, Tower.RULES[cfg.rule][0] if Tower.RULES.has(cfg.get("rule", "")) else "", 1.3)
+				hud.banner(L.f("Hiệp %d", e.n), Tower.RULES[cfg.rule][0] if Tower.RULES.has(cfg.get("rule", "")) else "", 1.3)
 				if cfg.get("rule", "") == "low_hp":
 					sim.f[0].hp = sim.f[0].st.hp_max * 0.6
 				if cfg.has("p_hp"):   # Phó Bản: HP carried from the last fight
@@ -381,7 +381,7 @@ func _events() -> void:
 			"seal":
 				var fs_: Fighter = sim.f[e.i]
 				fx.ring(Vector3(fs_.x, 1.2, 0.2), Color(1.0, 0.35, 0.5), 1.2)
-				fx.text(Vector3(fs_.x, 2.5, 0.3), "Phong Huyệt: " + Fighter.ZONE_NAMES[e.z], Color(1.0, 0.45, 0.6))
+				fx.text(Vector3(fs_.x, 2.5, 0.3), L.f("Phong Huyệt: %s", Fighter.ZONE_NAMES[e.z]), Color(1.0, 0.45, 0.6))
 				views[e.i].body.flash(0.7)
 				Game.sfx("counter", 0.1, 0.8)
 			"break":
@@ -407,7 +407,7 @@ func _events() -> void:
 					var had := int(_insight.get(k, 0))
 					if had < Insight.PER_FIGHT:
 						_insight[k] = mini(Insight.PER_FIGHT, had + int(e.pts))
-						fx.text(Vector3(sim.f[0].x, 2.9, 0.3), "Lĩnh ngộ %s +%d" % [e.name, int(_insight[k]) - had], Color(0.6, 0.85, 1.0))
+						fx.text(Vector3(sim.f[0].x, 2.9, 0.3), L.f("Lĩnh ngộ %s +%d", [e.name, int(_insight[k]) - had]), Color(0.6, 0.85, 1.0))
 			"ko":
 				_slowmo = 1.4
 				if e.get("final", false) and not e.timeup:
@@ -421,7 +421,7 @@ func _events() -> void:
 				_done = true
 				var won: bool = e.winner == 0
 				if cfg.get("wboss", false):
-					hud.banner("Hạ Gục Boss!" if won else "Kết Thúc", "Sát thương: " + UI.fmt(sim.f[0].stats_dealt), 3.0, UI.GOLD)
+					hud.banner("Hạ Gục Boss!" if won else "Kết Thúc", L.f("Sát thương: %s", UI.fmt(sim.f[0].stats_dealt)), 3.0, UI.GOLD)
 				else:
 					hud.banner("Chiến Thắng" if won else "Thất Bại", "", 3.0, UI.GOLD if won else Color(0.7, 0.7, 0.75))
 				Game.sfx("win" if won else "lose")
@@ -473,7 +473,7 @@ func _finisher(e: Dictionary) -> void:
 	nm.offset_top = 70
 	nm.offset_bottom = 190
 	box.add_child(nm)
-	var who := UI.label("—  %s  —" % w.name, 30, ink, UI.bold)
+	var who := UI.label(L.f("—  %s  —", w.name), 30, ink, UI.bold)
 	who.add_theme_color_override("font_outline_color", paper)
 	who.add_theme_constant_override("outline_size", 8)
 	who.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

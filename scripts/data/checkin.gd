@@ -54,10 +54,10 @@ static func claim(h: Dictionary) -> Dictionary:
 static func text(rw: Dictionary) -> String:
 	var parts := []
 	if int(rw.get("gold", 0)) > 0:
-		parts.append("%s Vàng" % UI.fmt(int(rw.gold)))
+		parts.append(L.f("%s Vàng", UI.fmt(int(rw.gold))))
 	if int(rw.get("jade", 0)) > 0:
-		parts.append("%d Ngọc" % int(rw.jade))
+		parts.append(L.f("%d Ngọc", int(rw.jade)))
 	var m: Dictionary = rw.get("mats", {})
 	for id in m:
-		parts.append("%d %s" % [int(m[id]), Mats.name_of(id)])
+		parts.append(L.f("%d %s", [int(m[id]), Mats.name_of(id)]))
 	return " · ".join(parts)

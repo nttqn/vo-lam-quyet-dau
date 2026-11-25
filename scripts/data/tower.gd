@@ -36,7 +36,7 @@ static func side(f: int) -> Dictionary:
 	var first := ["Thạch", "Thiết", "Huyền", "Bạch", "Hắc", "Xích", "Thanh", "Kim", "Ngân", "Ngọc"]
 	var last := ["Vệ", "Tướng", "Sứ", "Lão", "Khách", "Tăng", "Đạo Nhân", "Nữ Hiệp", "Cuồng Đồ", "Ẩn Sĩ"]
 	var name: String = first[rng.randi_range(0, first.size() - 1)] + " " + last[rng.randi_range(0, last.size() - 1)]
-	var title := "Thủ Tháp Tầng %d" % f if boss else "Tầng %d" % f
+	var title := L.f("Thủ Tháp Tầng %d", f) if boss else L.f("Tầng %d", f)
 	var s := Npc.side(sect_id, level(f), name, clampf(0.3 + f * 0.012, 0.3, 0.95), "elder" if boss else "", boss, 9100 + f, title)
 	match rule(f):
 		"giant":

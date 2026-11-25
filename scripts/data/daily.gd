@@ -61,7 +61,7 @@ static func target(id: String) -> int:
 	return int(POOL[id][1])
 
 static func text(id: String) -> String:
-	return String(POOL[id][0]) % target(id)
+	return L.f(String(POOL[id][0]), target(id))
 
 static func progress(h: Dictionary, id: String) -> int:
 	return mini(target(id), int(ensure(h).prog.get(id, 0)))

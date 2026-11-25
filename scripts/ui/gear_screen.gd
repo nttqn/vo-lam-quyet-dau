@@ -74,9 +74,9 @@ func _card(it: Dictionary, buttons: Array, note := "") -> Control:
 	var info := UI.vbox(2)
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(info)
-	info.add_child(UI.label("%s  ·  %s" % [Items.item_name(it, _style()), Items.RARITY[rar]], 21, Items.RARITY_COL[rar], UI.bold))
+	info.add_child(UI.label(L.f("%s  ·  %s", [Items.item_name(it, _style()), Items.RARITY[rar]]), 21, Items.RARITY_COL[rar], UI.bold))
 	# wrapped so long stat lines (bonus lines) never push the column off screen
-	var stl := UI.label("[%s] %s" % [Items.SLOT_NAMES[it.slot], Items.stat_text(Items.stats(it))], 17, Color(0.88, 0.85, 0.78))
+	var stl := UI.label(L.f("[%s] %s", [Items.SLOT_NAMES[it.slot], Items.stat_text(Items.stats(it))]), 17, Color(0.88, 0.85, 0.78))
 	stl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info.add_child(stl)
 	(info.get_child(0) as Label).text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -111,7 +111,7 @@ func _build() -> void:
 			_left.add_child(_card(it, [up]))
 		else:
 			var p := UI.panel(Color(0.07, 0.05, 0.06, 0.7))
-			p.add_child(UI.label("[%s] — trống" % Items.SLOT_NAMES[slot], 20, Color(0.6, 0.58, 0.55)))
+			p.add_child(UI.label(L.f("[%s] — trống", Items.SLOT_NAMES[slot]), 20, Color(0.6, 0.58, 0.55)))
 			_left.add_child(p)
 	if shop:
 		_right.add_child(UI.label("Nguyên liệu rèn", 24, UI.GOLD, UI.bold))
@@ -121,12 +121,12 @@ func _build() -> void:
 		for it in _stock():
 			var price := Items.price(it)
 			var jade_cost := int(it.rar) >= 3
-			var cost_txt := ("%d Ngọc" % _jade_price(it)) if jade_cost else UI.fmt(price)
-			var b := UI.gold_button("Mua\n%s" % cost_txt, func(): _buy(it), 17, 120)
+			var cost_txt := (L.f("%d Ngọc", _jade_price(it))) if jade_cost else UI.fmt(price)
+			var b := UI.gold_button(L.f("Mua\n%s", cost_txt), func(): _buy(it), 17, 120)
 			b.disabled = (int(h.jade) < _jade_price(it)) if jade_cost else (int(h.gold) < price)
 			_right.add_child(_card(it, [b], _compare(it)))
 	else:
-		_right.add_child(UI.label("Hành trang (%d)" % h.bag.size(), 24, UI.GOLD, UI.bold))
+		_right.add_child(UI.label(L.f("Hành trang (%d)", h.bag.size()), 24, UI.GOLD, UI.bold))
 		if h.bag.is_empty():
 			_right.add_child(UI.label("Trống. Mua đồ ở Tiệm Binh Khí hoặc đánh bại trùm vùng.", 18, Color(0.75, 0.72, 0.66)))
 		else:
@@ -137,7 +137,7 @@ func _build() -> void:
 			var idx: int = i
 			var eb := UI.gold_button("Mặc", func(): _equip(idx), 18, 90)
 			var sv := Items.salvage(it)
-			var sb := UI.button("Phân giải\n+%d HT" % int(sv.mats.iron), func(): _salvage(idx), 15, 96)
+			var sb := UI.button(L.f("Phân giải\n+%d HT", int(sv.mats.iron)), func(): _salvage(idx), 15, 96)
 			_right.add_child(_card(it, [eb, sb], _compare(it)))
 
 func _compare(it: Dictionary) -> String:
@@ -187,10 +187,10 @@ func _buy(it: Dictionary) -> void:
 		if cur is Dictionary and not cur.is_empty():
 			h.bag.append(cur)
 		h.gear[it.slot] = n
-		toast("Đã mua và trang bị %s" % Items.item_name(n, _style()))
+		toast(L.f("Đã mua và trang bị %s", Items.item_name(n, _style())))
 	else:
 		h.bag.append(n)
-		toast("Đã mua %s (cất vào hành trang)" % Items.item_name(n, _style()))
+		toast(L.f("Đã mua %s (cất vào hành trang)", Items.item_name(n, _style())))
 	Game.sfx("coin")
 	Game.save()
 	_build()
@@ -216,11 +216,11 @@ func _salvage(i: int) -> void:
 		h.bag.erase(it)
 		Game.sfx("coin")
 		Game.save()
-		toast("+%s vàng  ·  %s" % [UI.fmt(sv.gold), Mats.text(sv.mats)])
+		toast(L.f("+%s vàng  ·  %s", [UI.fmt(sv.gold), Mats.text(sv.mats)]))
 		_build()
 	# ask before breaking anything valuable
 	if int(it.rar) >= 3 or int(it.get("plus", 0)) >= 5:
-		confirm("Phân giải %s?\nNhận %s vàng, %s." % [Items.item_name(it, _style()), UI.fmt(sv.gold), Mats.text(sv.mats, ", ")], go, "Phân giải")
+		confirm(L.f("Phân giải %s?\nNhận %s vàng, %s.", [Items.item_name(it, _style()), UI.fmt(sv.gold), Mats.text(sv.mats, ", ")]), go, "Phân giải")
 	else:
 		go.call()
 
@@ -264,12 +264,12 @@ func _mat_card(m: Dictionary) -> Control:
 	var info := UI.vbox(2)
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(info)
-	info.add_child(UI.label("%s ×%d   (đang có %d)" % [Mats.name_of(id), int(m.n), Mats.count(h, id)], 21, Mats.color(id), UI.bold))
+	info.add_child(UI.label(L.f("%s ×%d   (đang có %d)", [Mats.name_of(id), int(m.n), Mats.count(h, id)]), 21, Mats.color(id), UI.bold))
 	var d := UI.label(Mats.INFO[id][1], 16, Color(0.85, 0.82, 0.75))
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	info.add_child(d)
 	var by_jade := int(m.jade) > 0
-	var b := UI.gold_button("Mua\n%s" % (("%d Ngọc" % int(m.jade)) if by_jade else UI.fmt(int(m.gold))), func(): _buy_mat(m), 17, 120)
+	var b := UI.gold_button("Mua\n%s" % ((L.f("%d Ngọc", int(m.jade))) if by_jade else UI.fmt(int(m.gold))), func(): _buy_mat(m), 17, 120)
 	b.disabled = (int(h.jade) < int(m.jade)) if by_jade else (int(h.gold) < int(m.gold))
 	row.add_child(b)
 	return p
@@ -283,7 +283,7 @@ func _buy_mat(m: Dictionary) -> void:
 	Mats.add(h, str(m.id), int(m.n))
 	Game.sfx("coin")
 	Game.save()
-	toast("Đã mua %s ×%d" % [Mats.name_of(str(m.id)), int(m.n)])
+	toast(L.f("Đã mua %s ×%d", [Mats.name_of(str(m.id)), int(m.n)]))
 	_build()
 
 func back() -> void:

@@ -30,7 +30,7 @@ static func stars(h: Dictionary) -> int:
 static func fields(h: Dictionary) -> Dictionary:
 	return {"name": str(h.name).substr(0, 24), "sect": str(h.sect), "level": int(h.level),
 		"power": Hero.power(h), "tower": Tower.best(h), "stars": stars(h), "outfit": str(h.get("outfit", "")),
-		"title": Titles.worn(h)}
+		"title": Titles.worn(h), "lang": L.lang}
 
 ## Power and level both within reach (Build.max_power, Build.level_ok): listed
 ## on the boards and in Tỉ Võ. Here, not in Build, because stars() needs Game.

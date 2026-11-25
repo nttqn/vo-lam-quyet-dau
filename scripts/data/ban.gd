@@ -35,15 +35,15 @@ static func active() -> bool:
 static func text() -> String:
 	var why := str(state().get("why", "")).strip_edges()
 	var u := until()
-	var t := "Tài khoản này đã bị khóa khỏi Bảng xếp hạng, Tỉ Võ, Boss Thế Giới và Kênh Thế Giới"
+	var t := L.t("Tài khoản này đã bị khóa khỏi Bảng xếp hạng, Tỉ Võ, Boss Thế Giới và Kênh Thế Giới")
 	if u > 0:
 		var d := Time.get_date_dict_from_unix_time(u + int(Time.get_time_zone_from_system().get("bias", 0)) * 60)
-		t += " đến %02d/%02d/%d." % [int(d.day), int(d.month), int(d.year)]
+		t += L.f(" đến %02d/%02d/%d.", [int(d.day), int(d.month), int(d.year)])
 	else:
-		t += " vĩnh viễn."
+		t += L.t(" vĩnh viễn.")
 	if why != "":
-		t += " Lý do: %s." % why.trim_suffix(".")
-	return t + " Bạn vẫn chơi cốt truyện và các chế độ khác bình thường."
+		t += L.f(" Lý do: %s.", why.trim_suffix("."))
+	return t + L.t(" Bạn vẫn chơi cốt truyện và các chế độ khác bình thường.")
 
 ## Red notice for the board screens.
 static func notice(size := 17) -> Label:

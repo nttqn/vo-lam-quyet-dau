@@ -14,6 +14,12 @@ extends RefCounted
 ## idle poll costs one document read.
 
 const COLLECTION := "chat"
+
+## One room per language (1.4): Vietnamese keeps `chat` (older app versions
+## read it), the others talk in chat_zh_Hant / chat_ko / chat_en.
+static func coll(lang := "") -> String:
+	var l := lang if lang != "" else L.lang
+	return COLLECTION if l == "vi" else COLLECTION + "_" + l
 const MAX_LEN := 120
 const SHOWN := 60           # newest messages loaded on open / kept in the list
 const COOLDOWN := 20.0      # seconds between two messages of one player (rules: 20 s)
@@ -192,7 +198,7 @@ static func _row(m: Dictionary) -> Dictionary:
 ## Newest SHOWN messages, oldest first; null on error.
 static func load_latest():
 	var rows = await Cloud.run_query({
-		"from": [{"collectionId": COLLECTION}],
+		"from": [{"collectionId": coll()}],
 		"orderBy": [{"field": {"fieldPath": "at"}, "direction": "DESCENDING"}],
 		"limit": SHOWN,
 	})
@@ -206,7 +212,7 @@ static func load_latest():
 ## Messages after server time `after` (RFC 3339), oldest first; null on error.
 static func load_after(after: String):
 	var rows = await Cloud.run_query({
-		"from": [{"collectionId": COLLECTION}],
+		"from": [{"collectionId": coll()}],
 		"where": {"fieldFilter": {"field": {"fieldPath": "at"}, "op": "GREATER_THAN", "value": {"timestampValue": after}}},
 		"orderBy": [{"field": {"fieldPath": "at"}, "direction": "ASCENDING"}],
 		"limit": SHOWN,
@@ -232,14 +238,14 @@ static func send(text: String) -> String:
 		return Ban.text()
 	var h := Game.hero
 	if h.is_empty() or int(h.level) < MIN_LEVEL:
-		return "Đạt cấp %d để nói chuyện trên Kênh Thế Giới." % MIN_LEVEL
+		return L.f("Đạt cấp %d để nói chuyện trên Kênh Thế Giới.", MIN_LEVEL)
 	if wait_left() > 0.0:
-		return "Đợi %d giây nữa để gửi tiếp." % ceili(wait_left())
+		return L.f("Đợi %d giây nữa để gửi tiếp.", ceili(wait_left()))
 	if not await Cloud._ensure_token():
 		return "Không kết nối được máy chủ."
 	var code: int = await Cloud.commit([
 		{"path": "chatlast/" + Cloud.uid, "fields": {}, "server_time": ["at"]},
-		{"path": "%s/%s" % [COLLECTION, _new_id()], "create": true, "server_time": ["at"],
+		{"path": "%s/%s" % [coll(), _new_id()], "create": true, "server_time": ["at"],
 			"fields": {"uid": Cloud.uid, "name": str(h.name).substr(0, 24), "sect": str(h.sect), "level": int(h.level), "text": t}},
 	])
 	if code == 200:
@@ -252,10 +258,10 @@ static func send(text: String) -> String:
 		# phone clock off, another phone of this account, or muted
 		Game.settings["chat_last"] = Time.get_unix_time_from_system()
 		return "Gửi quá nhanh hoặc tài khoản đang bị cấm chat."
-	return "Không gửi được (lỗi %d)." % code
+	return L.f("Không gửi được (lỗi %d).", code)
 
-static func delete_msg(id: String) -> bool:
-	return await Cloud.delete_path("%s/%s" % [COLLECTION, id])
+static func delete_msg(id: String, room := "") -> bool:
+	return await Cloud.delete_path("%s/%s" % [room if room != "" else coll(), id])
 
 ## Report: stored for review in the console, hidden on this phone at once.
 static func report(m: Dictionary) -> void:
@@ -272,13 +278,17 @@ static func report(m: Dictionary) -> void:
 
 ## Account deletion: removes every message this account sent.
 static func delete_mine() -> void:
+	for code in L.LANGS:
+		await _delete_mine_in(coll(code))
+
+static func _delete_mine_in(room: String) -> void:
 	for _round in 10:
 		var rows = await Cloud.run_query({
-			"from": [{"collectionId": COLLECTION}],
+			"from": [{"collectionId": room}],
 			"where": {"fieldFilter": {"field": {"fieldPath": "uid"}, "op": "EQUAL", "value": {"stringValue": Cloud.uid}}},
 			"limit": 100,
 		})
 		if rows == null or rows.is_empty():
 			return
 		for m in rows:
-			await delete_msg(str(m._id))
+			await delete_msg(str(m._id), room)

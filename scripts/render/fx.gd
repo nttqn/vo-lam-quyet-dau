@@ -281,7 +281,7 @@ func number(pos: Vector3, amount: float, crit: bool, col := Color(1, 0.95, 0.8))
 
 func text(pos: Vector3, s: String, col: Color) -> void:
 	var l := Label3D.new()
-	l.text = s
+	l.text = L.t(s)
 	l.font = _num_font
 	l.font_size = 44
 	l.outline_size = 12

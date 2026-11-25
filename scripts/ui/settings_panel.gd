@@ -41,7 +41,9 @@ func _ready() -> void:
 				Notify.ask())
 		v.add_child(nt)
 	v.add_child(_gfx_row())
-	var cr := UI.label("Võ Lâm Quyết Đấu  ·  phiên bản %s\nÂm thanh trận đấu: thư viện CC0 OpenGameArt (artisticdude, StarNinjas,\nrubberduck, Kenney, HaelDB). Giọng nữ: Marti Topmade (topmademarti).\nPhông chữ: Be Vietnam Pro, Playfair Display (SIL OFL)." % ProjectSettings.get_setting("application/config/version", "1.0.0"), 16, Color(0.75, 0.72, 0.66))
+	if not Game._current is FightScene:
+		v.add_child(_lang_row())
+	var cr := UI.label(L.f("Võ Lâm Quyết Đấu  ·  phiên bản %s\nÂm thanh trận đấu: thư viện CC0 OpenGameArt (artisticdude, StarNinjas,\nrubberduck, Kenney, HaelDB). Giọng nữ: Marti Topmade (topmademarti).\nPhông chữ: Be Vietnam Pro, Playfair Display (SIL OFL).", ProjectSettings.get_setting("application/config/version", "1.0.0")), 16, Color(0.75, 0.72, 0.66))
 	v.add_child(cr)
 	if OS.get_name() in ["Android", "iOS"]:
 		v.add_child(UI.button("Khôi phục giao dịch", Iap.restore, 20))
@@ -79,6 +81,23 @@ func _gfx_row() -> Control:
 	box.add_child(h)
 	box.add_child(hint)
 	return box
+
+## Ngôn ngữ: one button per language, each label in its own language.
+func _lang_row() -> Control:
+	var h := UI.hbox(8)
+	var l := UI.label("Ngôn ngữ", 22)
+	l.custom_minimum_size.x = 140
+	h.add_child(l)
+	for code in L.LANGS:
+		var b := UI.button(L.LABELS[code], func():
+			Game.sfx("click")
+			queue_free()
+			Game.set_lang(code), 18, 100)
+		b.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+		b.custom_minimum_size.y = 44
+		b.modulate = Color.WHITE if L.lang == code else Color(0.55, 0.55, 0.55)
+		h.add_child(b)
+	return h
 
 func _slider(label: String, key: String) -> Control:
 	var h := UI.hbox(12)

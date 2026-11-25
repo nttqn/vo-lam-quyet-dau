@@ -73,18 +73,18 @@ static func message(h: Dictionary, i: int) -> Dictionary:
 		if WBoss.unlocked(h):
 			var tomorrow := Time.get_date_string_from_unix_time(int(Time.get_unix_time_from_system()) + 86400 + int(Time.get_time_zone_from_system().get("bias", 0)) * 60)
 			var b := WBoss.today_boss(tomorrow)
-			return {"title": "Boss Thế Giới: %s" % b.name,
-				"body": "%s đã xuất hiện! Cùng cả giang hồ dồn sát thương, chia thưởng theo hạng. Đừng quên điểm danh nhận quà." % b.name}
+			return {"title": L.f("Boss Thế Giới: %s", b.name),
+				"body": L.f("%s đã xuất hiện! Cùng cả giang hồ dồn sát thương, chia thưởng theo hạng. Đừng quên điểm danh nhận quà.", b.name)}
 		var nx := next_stage(h)
 		if not nx.is_empty():
-			return {"title": "%s đang chờ %s" % [nx.foe, name],
-				"body": "Trận kế ở %s: %s — %s. Thắng để lên cấp và nhận trang bị mới!" % [nx.region, nx.foe, nx.title]}
-		return {"title": "Quà điểm danh đang chờ", "body": "%s, quà điểm danh hôm nay đã sẵn sàng." % name}
+			return {"title": L.f("%s đang chờ %s", [nx.foe, name]),
+				"body": L.f("Trận kế ở %s: %s — %s. Thắng để lên cấp và nhận trang bị mới!", [nx.region, nx.foe, nx.title])}
+		return {"title": "Quà điểm danh đang chờ", "body": L.f("%s, quà điểm danh hôm nay đã sẵn sàng.", name)}
 	if i == 1:
-		return {"title": "Giang hồ nhắc tên %s" % name,
+		return {"title": L.f("Giang hồ nhắc tên %s", name),
 			"body": "Đã ba ngày vắng bóng. Quà điểm danh, Lôi Đài và Tháp Thí Luyện vẫn đang chờ."}
 	return {"title": "Võ lâm chưa có hồi kết",
-		"body": "%s ơi, cao thủ khắp nơi đã mạnh lên nhiều. Quay lại luyện công kẻo tụt hạng!" % name}
+		"body": L.f("%s ơi, cao thủ khắp nơi đã mạnh lên nhiều. Quay lại luyện công kẻo tụt hạng!", name)}
 
 ## The next story duel the hero has not won ({} when the story is done).
 static func next_stage(h: Dictionary) -> Dictionary:

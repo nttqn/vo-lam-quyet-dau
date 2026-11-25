@@ -129,20 +129,20 @@ func _show(board: String) -> void:
 		if not is_inside_tree() or req != _req:
 			return
 		_place = -1 if above < 0 or Ranks.hidden() else above + 1
-		_mine.text = "%s: %s%d%s" % [str(h.name), UNIT[board], my_v, ("  ·  hạng %d" % (above + 1)) if above >= 0 else ""]
+		_mine.text = L.f("%s: %s%d%s", [str(h.name), UNIT[board], my_v, (L.f("  ·  hạng %d", (above + 1))) if above >= 0 else ""])
 		if Ban.active():
 			_place = -1
-			_mine.text = "%s: tài khoản bị khóa khỏi bảng" % str(h.name)
+			_mine.text = L.f("%s: tài khoản bị khóa khỏi bảng", str(h.name))
 			_mine.add_theme_color_override("font_color", Color(1.0, 0.5, 0.45))
 		elif not Ranks.listed(h):
 			_place = -1
 			if int(h.level) < Ranks.MIN_LEVEL:
-				_mine.text = "%s: đạt cấp %d để lên bảng xếp hạng" % [str(h.name), Ranks.MIN_LEVEL]
+				_mine.text = L.f("%s: đạt cấp %d để lên bảng xếp hạng", [str(h.name), Ranks.MIN_LEVEL])
 			else:   # Ranks.honest: level or power ahead of Giang Hồ / Tháp progress
-				_mine.text = "%s: qua thêm ải Giang Hồ hoặc Tháp để lên bảng" % str(h.name)
+				_mine.text = L.f("%s: qua thêm ải Giang Hồ hoặc Tháp để lên bảng", str(h.name))
 			_mine.add_theme_color_override("font_color", Color(0.8, 0.78, 0.72))
 		elif Ranks.hidden():
-			_mine.text += "  ·  đang ẩn"
+			_mine.text += L.t("  ·  đang ẩn")
 			_mine.add_theme_color_override("font_color", Color(0.8, 0.78, 0.72))
 		else:
 			_mine.add_theme_color_override("font_color", Color(0.6, 1, 0.6))
@@ -199,7 +199,7 @@ func _show_me() -> void:
 	_add_rows(above + rest)
 	var me_row := _mine_row()
 	if me_row == null:
-		_mine.text += "  ·  chưa lên bảng, mở lại sau ít phút"
+		_mine.text += L.t("  ·  chưa lên bảng, mở lại sau ít phút")
 		me_row = _list.get_child(mini(above.size(), _list.get_child_count() - 1)) as Control
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -286,7 +286,7 @@ func _set_footer() -> void:
 		b.custom_minimum_size = Vector2(200, 44)
 		_footer.add_child(b)
 	elif not _next.is_empty():
-		var b := UI.gold_button("Xem thêm %d" % PAGE, _load_more, 18)
+		var b := UI.gold_button(L.f("Xem thêm %d", PAGE), _load_more, 18)
 		b.custom_minimum_size = Vector2(240, 44)
 		_footer.add_child(b)
 
@@ -315,11 +315,16 @@ func _row(r: Dictionary, place: int, me: bool) -> Control:
 	var sub := UI.hbox(10)
 	sub.mouse_filter = Control.MOUSE_FILTER_PASS
 	info.add_child(sub)
-	sub.add_child(UI.label("%s  ·  Cấp %d" % [Sects.get_sect(str(r.get("sect", "vo_dang"))).name, int(r.get("level", 1))], 15, Color(0.82, 0.8, 0.74)))
+	sub.add_child(UI.label(L.f("%s  ·  Cấp %d", [Sects.get_sect(str(r.get("sect", "vo_dang"))).name, int(r.get("level", 1))]), 15, Color(0.82, 0.8, 0.74)))
 	var tid := str(r.get("title", ""))
 	if Titles.LIST.has(tid):
-		sub.add_child(UI.label("« %s »" % Titles.name_of(tid), 15, Titles.color(tid), UI.bold))
-	row.add_child(UI.label("%s%d" % [UNIT[_board], int(r.get(_board, 0))], 22, UI.PAPER, UI.bold))
+		sub.add_child(UI.label(L.f("« %s »", Titles.name_of(tid)), 15, Titles.color(tid), UI.bold))
+	var rl := str(r.get("lang", "vi"))
+	if rl != L.lang and L.TAGS.has(rl):   # a player from another language
+		var tg := UI.label(L.TAGS[rl], 13, Color(0.7, 0.85, 1.0), UI.bold)
+		tg.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+		sub.add_child(tg)
+	row.add_child(UI.label(L.f("%s%d", [UNIT[_board], int(r.get(_board, 0))]), 22, UI.PAPER, UI.bold))
 	# tap a row: the player's card (ProfilePanel); PASS keeps swipes scrolling
 	var b := Button.new()
 	b.flat = true

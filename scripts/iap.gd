@@ -228,7 +228,7 @@ func _on_details(r: Dictionary) -> void:
 			missing[id] = "no-offer"
 	for u in r.get("unfetched_products", []):
 		if u is Dictionary:
-			missing[str(u.get("product_id", "?"))] = "mã %d" % int(u.get("status_code", -1))
+			missing[str(u.get("product_id", "?"))] = L.f("mã %d", int(u.get("status_code", -1)))
 	if not missing.is_empty():
 		print("Iap: no price for ", missing)
 	changed.emit()
@@ -238,7 +238,7 @@ func _on_owned(r: Dictionary) -> void:
 	_restoring = false
 	if int(r.get("response_code", -1)) != 0:
 		if restoring:
-			message.emit("Không khôi phục được (mã %d). Thử lại sau." % int(r.get("response_code", -1)), false)
+			message.emit(L.f("Không khôi phục được (mã %d). Thử lại sau.", int(r.get("response_code", -1))), false)
 		return
 	var had_noads := no_ads()
 	var had_slots := slots_owned()
@@ -248,7 +248,7 @@ func _on_owned(r: Dictionary) -> void:
 		var got := []
 		if no_ads() and not had_noads: got.append(NAMES[NO_ADS])
 		if slots_owned() and not had_slots: got.append(NAMES[SLOTS])
-		message.emit("Đã khôi phục: " + ", ".join(got) if not got.is_empty() else "Tài khoản Google Play này không có gói nào cần khôi phục.", true)
+		message.emit(L.f("Đã khôi phục: %s", ", ".join(got.map(func(x): return L.t(x)))) if not got.is_empty() else L.t("Tài khoản Google Play này không có gói nào cần khôi phục."), true)
 	changed.emit()
 
 func _on_updated(r: Dictionary) -> void:
@@ -319,7 +319,7 @@ func _sk_one(e: Dictionary) -> void:
 		"failed":
 			_busy_sku = ""
 			if not bool(e.get("cancelled", false)):
-				message.emit("Mua không thành công (mã %d)." % int(e.get("code", -1)), false)
+				message.emit(L.f("Mua không thành công (mã %d).", int(e.get("code", -1))), false)
 		"deferred":
 			_busy_sku = ""
 			message.emit("Giao dịch đang chờ phụ huynh duyệt. Quà sẽ vào khi được chấp thuận.", true)
@@ -329,10 +329,10 @@ func _sk_one(e: Dictionary) -> void:
 				var got := []
 				if no_ads() and not _had[0]: got.append(NAMES[NO_ADS])
 				if slots_owned() and not _had[1]: got.append(NAMES[SLOTS])
-				message.emit("Đã khôi phục: " + ", ".join(got) if not got.is_empty() else "Tài khoản Apple này không có gói nào cần khôi phục.", true)
+				message.emit(L.f("Đã khôi phục: %s", ", ".join(got.map(func(x): return L.t(x)))) if not got.is_empty() else L.t("Tài khoản Apple này không có gói nào cần khôi phục."), true)
 		"restore_failed":
 			_restoring = false
-			message.emit("Không khôi phục được (mã %d). Thử lại sau." % int(e.get("code", -1)), false)
+			message.emit(L.f("Không khôi phục được (mã %d). Thử lại sau.", int(e.get("code", -1))), false)
 
 static func _consumable(id: String) -> bool:
 	return PACKS.has(id) or id == STARTER
@@ -362,13 +362,13 @@ func _grant(id: String, token: String, count := true) -> void:
 			q.append(id)
 			Game.settings["iap_queue"] = q
 			Game.save_settings()
-			message.emit("Đã mua %s. Quà sẽ vào nhân vật bạn chọn tiếp theo." % _name(id), true)
+			message.emit(L.f("Đã mua %s. Quà sẽ vào nhân vật bạn chọn tiếp theo.", _name(id)), true)
 			return
 		Game.save_settings()
 		_give_hero(id)
 		return
 	Game.save_settings()
-	message.emit("Đã mở " + _name(id) + "!", true)
+	message.emit(L.f("Đã mở %s!", _name(id)), true)
 	changed.emit()
 
 func _give_hero(id: String) -> void:
@@ -380,7 +380,7 @@ func _give_hero(id: String) -> void:
 			tu.append(id)
 		h["topup"] = tu
 		h.jade = int(h.jade) + n
-		message.emit("Nhận %d Ngọc!" % n, true)
+		message.emit(L.f("Nhận %d Ngọc!", n), true)
 	elif id == STARTER:
 		h["starter"] = true
 		h.jade = int(h.jade) + int(STARTER_GIFT.jade)
@@ -430,7 +430,7 @@ static func _err_text(code: int) -> String:
 		3: return "Google Play trên máy này chưa sẵn sàng thanh toán."
 		4: return "Gói này hiện không bán."
 		7: return "Bạn đã sở hữu gói này. Đang khôi phục…"
-	return "Mua không thành công (mã %d)." % code
+	return L.f("Mua không thành công (mã %d).", code)
 
 static func _fake_price(id: String) -> int:
 	return {"ngoc_60": 22000, "ngoc_330": 109000, "ngoc_700": 219000, "ngoc_1500": 449000,

@@ -74,9 +74,9 @@ func _render() -> void:
 	head.add_child(nm)
 	var tid := str(r.get("title", ""))
 	if Titles.LIST.has(tid):
-		head.add_child(UI.label("« %s »" % Titles.name_of(tid), 22, Titles.color(tid), UI.bold))
+		head.add_child(UI.label(L.f("« %s »", Titles.name_of(tid)), 22, Titles.color(tid), UI.bold))
 	var sect := Sects.get_sect(str(r.get("sect", "vo_dang")))
-	_body.add_child(UI.label("%s  ·  Cấp %d" % [sect.name, int(r.get("level", 1))], 22, UI.PAPER, UI.bold))
+	_body.add_child(UI.label(L.f("%s  ·  Cấp %d", [sect.name, int(r.get("level", 1))]), 22, UI.PAPER, UI.bold))
 	var g := GridContainer.new()
 	g.columns = 4
 	g.add_theme_constant_override("h_separation", 28)
@@ -84,10 +84,10 @@ func _render() -> void:
 	var cells := []
 	if r.has("power"):
 		cells.append(["Lực chiến", UI.fmt(int(r.power))])
-		cells.append(["Tháp", "Tầng %d" % int(r.get("tower", 0))])
+		cells.append(["Tháp", L.f("Tầng %d", int(r.get("tower", 0)))])
 		cells.append(["Giang Hồ", "★ %d" % int(r.get("stars", 0))])
 	if not _shadow.is_empty():
-		cells.append(["Tỉ Võ", "%d (%s)" % [int(_shadow.get("score", Duel.START)), Duel.tier(int(_shadow.get("score", Duel.START)))[0]]])
+		cells.append(["Tỉ Võ", L.f("%d (%s)", [int(_shadow.get("score", Duel.START)), Duel.tier(int(_shadow.get("score", Duel.START)))[0]])])
 	for cl in cells:
 		g.add_child(UI.label(cl[0], 18, Color(0.8, 0.77, 0.7)))
 		g.add_child(UI.label(cl[1], 20, UI.GOLD, UI.bold))
@@ -112,16 +112,16 @@ func _render() -> void:
 	for e in snap.get("skills", []):
 		var i := int(e[0])
 		if i >= 0 and i < skills.size():
-			sk_names.append("%s (tầng %d)" % [skills[i].name, int(e[1])])
+			sk_names.append(L.f("%s (tầng %d)", [skills[i].name, int(e[1])]))
 	var ult: Array = snap.get("ult", [])
 	if ult.size() > 0:
-		sk_names.append("Tuyệt kỹ %s (tầng %d)" % [skills[Hero.ULT].name, int(ult[0])])
+		sk_names.append(L.f("Tuyệt kỹ %s (tầng %d)", [skills[Hero.ULT].name, int(ult[0])]))
 	if not sk_names.is_empty():
-		var l := UI.label("Võ công: " + ", ".join(sk_names), 17, Color(0.88, 0.85, 0.78))
+		var l := UI.label(L.f("Võ công: %s", ", ".join(sk_names)), 17, Color(0.88, 0.85, 0.78))
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_body.add_child(l)
 	var wr := int(snap.get("wrar", 0))
-	_body.add_child(UI.label("Binh khí: bậc %d · %s · +%d" % [int(snap.get("wtier", 1)), Items.RARITY[clampi(wr, 0, Items.RARITY.size() - 1)], int(snap.get("wplus", 0))], 17, Items.RARITY_COL[clampi(wr, 0, Items.RARITY_COL.size() - 1)]))
+	_body.add_child(UI.label(L.f("Binh khí: bậc %d · %s · +%d", [int(snap.get("wtier", 1)), Items.RARITY[clampi(wr, 0, Items.RARITY.size() - 1)], int(snap.get("wplus", 0))]), 17, Items.RARITY_COL[clampi(wr, 0, Items.RARITY_COL.size() - 1)]))
 
 func _load() -> void:
 	var uid := _uid()

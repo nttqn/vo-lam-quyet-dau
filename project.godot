@@ -16,7 +16,13 @@ general/ios/app_id="ca-app-pub-9078637596840810~7011363884"
 [application]
 
 config/name="Võ Lâm Quyết Đấu"
-config/version="1.3.3"
+config/name_localized={
+"ko": "무림결투",
+"zh_HK": "武林決鬥",
+"zh_Hant": "武林決鬥",
+"zh_TW": "武林決鬥"
+}
+config/version="1.4.0"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://assets/icon/icon.png"

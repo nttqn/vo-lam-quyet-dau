@@ -146,7 +146,7 @@ static func fmt(n: float) -> String:
 		out = s[i] + out
 		c += 1
 		if c % 3 == 0 and i > 0 and s[i - 1] != "-":
-			out = "." + out
+			out = ("." if L.lang == "vi" else ",") + out
 	return out
 
 ## Soft dark vignette over the 3D view (put it under the HUD).

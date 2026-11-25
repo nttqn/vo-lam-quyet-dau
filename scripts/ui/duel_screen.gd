@@ -32,13 +32,13 @@ func _ready() -> void:
 	var tr: Array = Duel.tier(int(d.score))
 	var head := UI.hbox(14)
 	lv.add_child(head)
-	head.add_child(UI.label("%s  ·  %d điểm" % [tr[0], int(d.score)], 28, tr[1], UI.title))
+	head.add_child(UI.label(L.f("%s  ·  %d điểm", [tr[0], int(d.score)]), 28, tr[1], UI.title))
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(sp)
-	head.add_child(UI.label("Lượt hôm nay: %d/%d" % [int(d.tickets), Duel.TICKETS], 20, UI.PAPER, UI.bold))
-	var info := UI.label("Mùa %s · còn %d ngày · thắng %d, thua %d. Đối thủ là bóng của người chơi khác, do máy điều khiển.%s" % [d.season, Duel.days_left(), int(d.wins), int(d.losses),
-		"\nBạn đang ẩn khỏi bảng xếp hạng: không có tên trên bảng và không làm đối thủ của ai." if Ranks.hidden() else ""], 16, Color(0.8, 0.78, 0.72))
+	head.add_child(UI.label(L.f("Lượt hôm nay: %d/%d", [int(d.tickets), Duel.TICKETS]), 20, UI.PAPER, UI.bold))
+	var info := UI.label(L.f("Mùa %s · còn %d ngày · thắng %d, thua %d. Đối thủ là bóng của người chơi khác, do máy điều khiển.%s", [d.season, Duel.days_left(), int(d.wins), int(d.losses),
+		"\nBạn đang ẩn khỏi bảng xếp hạng: không có tên trên bảng và không làm đối thủ của ai." if Ranks.hidden() else ""]), 16, Color(0.8, 0.78, 0.72))
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lv.add_child(info)
 	if Ban.active():
@@ -69,7 +69,7 @@ func _ready() -> void:
 	var j := Duel.claim_season_reward(h)
 	if j > 0:
 		Game.save()
-		toast("Thưởng mùa %s: Ngọc +%d" % [d.last_season, j], Color(0.5, 1, 0.8))
+		toast(L.f("Thưởng mùa %s: Ngọc +%d", [d.last_season, j]), Color(0.5, 1, 0.8))
 	_load()
 
 func _load() -> void:
@@ -109,9 +109,9 @@ func _rival_row(doc: Dictionary) -> Control:
 	var sc := int(doc.get("score", Duel.START))
 	var tr: Array = Duel.tier(sc)
 	info.add_child(UI.label(Chat.safe_name(doc.get("name", "?")), 22, UI.GOLD, UI.bold))
-	info.add_child(UI.label("%s  ·  Cấp %d  ·  Lực chiến %d  ·  %s %d" % [Sects.get_sect(str(doc.get("sect", "vo_dang"))).name, int(doc.get("level", 1)), int(doc.get("power", 0)), tr[0], sc], 16, Color(0.85, 0.82, 0.75)))
+	info.add_child(UI.label(L.f("%s  ·  Cấp %d  ·  Lực chiến %d  ·  %s %d", [Sects.get_sect(str(doc.get("sect", "vo_dang"))).name, int(doc.get("level", 1)), int(doc.get("power", 0)), tr[0], sc]), 16, Color(0.85, 0.82, 0.75)))
 	var win := int(round(Duel.K * (1.0 - Duel.expected(int(d.score), sc))))
-	info.add_child(UI.label("Thắng +%d điểm" % maxi(4, win), 15, Color(0.6, 1, 0.6)))
+	info.add_child(UI.label(L.f("Thắng +%d điểm", maxi(4, win)), 15, Color(0.6, 1, 0.6)))
 	var b := UI.gold_button("Khiêu chiến", func(): Flow.start_duel(doc), 20, 150)
 	b.disabled = int(d.tickets) <= 0
 	row.add_child(b)
@@ -134,7 +134,7 @@ func _load_board() -> void:
 		var rk := UI.label("%d" % (i + 1), 18, UI.GOLD if i < 3 else UI.PAPER, UI.bold)
 		rk.custom_minimum_size.x = 34
 		row.add_child(rk)
-		var nm := UI.label("%s · %s" % [Chat.safe_name(t.get("name", "?")), Sects.get_sect(str(t.get("sect", "vo_dang"))).name], 17, Color(0.6, 1, 0.6) if me else UI.PAPER)
+		var nm := UI.label(L.f("%s · %s", [Chat.safe_name(t.get("name", "?")), Sects.get_sect(str(t.get("sect", "vo_dang"))).name]), 17, Color(0.6, 1, 0.6) if me else UI.PAPER)
 		nm.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		nm.clip_text = true
 		nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS

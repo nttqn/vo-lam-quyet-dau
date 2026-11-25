@@ -71,7 +71,7 @@ func _speaker(who: String) -> String:
 	match who:
 		"": return ""
 		"@": return str(Game.hero.name)
-		"boss": return "%s — %s" % [foe.get("name", "?"), foe.get("title", "")] if not foe.is_empty() else "?"
+		"boss": return L.f("%s — %s", [foe.get("name", "?"), foe.get("title", "")]) if not foe.is_empty() else "?"
 	return who
 
 func _next() -> void:

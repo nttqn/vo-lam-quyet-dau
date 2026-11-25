@@ -81,7 +81,7 @@ func _begin(i: int) -> void:
 		Funnel.device("f_tut_done")
 		return
 	var l: Dictionary = LESSONS[i]
-	_num.text = "Nhập môn  %d / %d" % [i + 1, LESSONS.size()]
+	_num.text = L.f("Nhập môn  %d / %d", [i + 1, LESSONS.size()])
 	_text.text = l.t
 	_box.visible = true
 	_box.modulate.a = 0.0

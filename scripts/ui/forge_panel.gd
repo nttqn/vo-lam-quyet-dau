@@ -93,7 +93,7 @@ func _build() -> void:
 		return
 	Items.ensure_aff(it)
 	_clear(_wallet)
-	var gl := UI.label("Vàng %s  ·  Ngọc %d" % [UI.fmt(h.gold), int(h.jade)], 20, UI.GOLD, UI.bold)
+	var gl := UI.label(L.f("Vàng %s  ·  Ngọc %d", [UI.fmt(h.gold), int(h.jade)]), 20, UI.GOLD, UI.bold)
 	gl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_wallet.add_child(gl)
 	for id in Mats.IDS:
@@ -152,7 +152,7 @@ func _build_left(it: Dictionary) -> void:
 	var nl := UI.label(Items.item_name(it, _style()), 26, rc, UI.bold)
 	nl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hv.add_child(nl)
-	hv.add_child(UI.label("%s  ·  %s" % [Items.SLOT_NAMES[it.slot], Items.RARITY[rar]], 19, Color(0.85, 0.82, 0.75)))
+	hv.add_child(UI.label(L.f("%s  ·  %s", [Items.SLOT_NAMES[it.slot], Items.RARITY[rar]]), 19, Color(0.85, 0.82, 0.75)))
 	var gl := Items.glow_level(int(it.get("plus", 0)))
 	if it.slot == "weapon" and gl > 0:
 		hv.add_child(UI.label(["", "Linh quang", "Tử quang", "Kim quang", "Thần quang"][gl], 18, _glow_col(gl), UI.bold))
@@ -169,7 +169,7 @@ func _build_left(it: Dictionary) -> void:
 		_left.add_child(_aff_row(it, a))
 	var lk := float(it.get("luck", 0.0))
 	if lk > 0.0:
-		_left.add_child(UI.label("Phúc khí: +%d%% tỉ lệ cường hóa lần tới" % int(round(lk * 100)), 18, Color(0.6, 0.9, 1.0), UI.bold))
+		_left.add_child(UI.label(L.f("Phúc khí: +%d%% tỉ lệ cường hóa lần tới", int(round(lk * 100))), 18, Color(0.6, 0.9, 1.0), UI.bold))
 
 func _aff_row(it: Dictionary, a: Dictionary) -> Control:
 	var row := UI.hbox(8)
@@ -208,7 +208,7 @@ func _cost_row(parts: Array) -> HBoxContainer:
 
 func _gold_chip(need: int) -> Label:
 	var ok := int(Game.hero.gold) >= need
-	return UI.label("Vàng %s" % UI.fmt(need), 20, UI.GOLD if ok else Color(1, 0.45, 0.4), UI.bold)
+	return UI.label(L.f("Vàng %s", UI.fmt(need)), 20, UI.GOLD if ok else Color(1, 0.45, 0.4), UI.bold)
 
 func _wrap(t: String, size := 18, col := Color(0.8, 0.77, 0.7)) -> Label:
 	var l := UI.label(t, size, col)
@@ -220,7 +220,7 @@ func _tab_enhance(it: Dictionary) -> void:
 	var h := Game.hero
 	var p := int(it.get("plus", 0))
 	if p >= Items.MAX_PLUS:
-		_right.add_child(UI.heading("+%d — Tối đa" % p, 44))
+		_right.add_child(UI.heading(L.f("+%d — Tối đa", p), 44))
 		_right.add_child(_wrap("Trang bị đã đạt cảnh giới cao nhất. Vũ khí +15 tỏa Thần quang trong trận."))
 		return
 	_right.add_child(UI.heading("+%d  →  +%d" % [p, p + 1], 48))
@@ -231,18 +231,18 @@ func _tab_enhance(it: Dictionary) -> void:
 	var b := Items.base_stats(nx)
 	for k in a:
 		if float(a[k]) != 0.0:
-			var t := "%s  →  %s" % [Items.one_stat(k, float(a[k])), Items.one_stat(k, float(b[k])).split(" +")[1]]
+			var t := L.f("%s  →  %s", [Items.one_stat(k, float(a[k])), Items.one_stat(k, float(b[k])).split(" +")[1]])
 			_right.add_child(UI.label(t, 21, Color(0.7, 1.0, 0.7)))
 	var r := Items.rate(it)
-	var rl := UI.label("Tỉ lệ thành công: %d%%" % int(round(r * 100)), 30, _rate_col(r), UI.title)
+	var rl := UI.label(L.f("Tỉ lệ thành công: %d%%", int(round(r * 100))), 30, _rate_col(r), UI.title)
 	_right.add_child(rl)
 	if float(it.get("luck", 0.0)) > 0.0:
-		_right.add_child(UI.label("(gồm +%d%% phúc khí từ các lần thất bại trước)" % int(round(float(it.luck) * 100)), 17, Color(0.6, 0.9, 1.0)))
+		_right.add_child(UI.label(L.f("(gồm +%d%% phúc khí từ các lần thất bại trước)", int(round(float(it.luck) * 100))), 17, Color(0.6, 0.9, 1.0)))
 	var gold := Items.upgrade_cost(it)
 	var iron := Items.iron_cost(it)
 	_right.add_child(_cost_row([_gold_chip(gold), Mats.chip(h, "iron", iron, 34)]))
 	if p >= Items.DROP_FROM:
-		_right.add_child(_wrap("Thất bại sẽ tụt về +%d. Mỗi lần thất bại cộng %d%% phúc khí." % [p - 1, int(Items.LUCK_STEP * 100)], 18, Color(1, 0.65, 0.5)))
+		_right.add_child(_wrap(L.f("Thất bại sẽ tụt về +%d. Mỗi lần thất bại cộng %d%% phúc khí.", [p - 1, int(Items.LUCK_STEP * 100)]), 18, Color(1, 0.65, 0.5)))
 		var cb := CheckBox.new()
 		cb.text = "Dùng 1 Hộ Phù (giữ cấp nếu thất bại)"
 		cb.add_theme_font_size_override("font_size", 20)
@@ -254,7 +254,7 @@ func _tab_enhance(it: Dictionary) -> void:
 		crow.add_child(Mats.chip(h, "charm", -1, 30))
 		_right.add_child(crow)
 	elif p >= 5:
-		_right.add_child(_wrap("Thất bại giữ nguyên cấp, cộng %d%% phúc khí. Từ +%d trở lên thất bại sẽ tụt cấp." % [int(Items.LUCK_STEP * 100), Items.DROP_FROM], 18))
+		_right.add_child(_wrap(L.f("Thất bại giữ nguyên cấp, cộng %d%% phúc khí. Từ +%d trở lên thất bại sẽ tụt cấp.", [int(Items.LUCK_STEP * 100), Items.DROP_FROM]), 18))
 	else:
 		_right.add_child(_wrap("+1 đến +5 luôn thành công. Vũ khí +7 trở lên phát sáng trong trận.", 18))
 	var go := UI.gold_button("Cường Hóa", _do_enhance, 30, 260)
@@ -262,7 +262,7 @@ func _tab_enhance(it: Dictionary) -> void:
 	go.disabled = int(h.gold) < gold or Mats.count(h, "iron") < iron
 	_right.add_child(go)
 	if Mats.count(h, "iron") < iron:
-		_right.add_child(_wrap("Thiếu Huyền Thiết: " + Mats.INFO.iron[3] + ".", 17, Color(1, 0.7, 0.55)))
+		_right.add_child(_wrap(L.f("Thiếu Huyền Thiết: %s.", Mats.INFO.iron[3]), 17, Color(1, 0.7, 0.55)))
 
 static func _rate_col(r: float) -> Color:
 	if r >= 0.99: return Color(0.6, 1.0, 0.6)
@@ -288,14 +288,14 @@ func _do_enhance() -> void:
 	_build()
 	if res.ok:
 		Game.sfx("levelup")
-		_burst("Thành công!  +%d" % int(res.to), Color(1, 0.85, 0.35))
+		_burst(L.f("Thành công!  +%d", int(res.to)), Color(1, 0.85, 0.35))
 	else:
 		Game.sfx("lose", 0.05, 0.8)
-		var msg := "Thất bại"
+		var msg := L.t("Thất bại")
 		if int(res.to) < int(res.from):
-			msg += " — tụt về +%d" % int(res.to)
+			msg += L.f(" — tụt về +%d", int(res.to))
 		elif charm:
-			msg += " — Hộ Phù giữ cấp"
+			msg += L.t(" — Hộ Phù giữ cấp")
 		_burst(msg, Color(1, 0.45, 0.4), true)
 
 ## Big pop-up text over the item tile, plus a flash (success) or shake (failure).
@@ -348,8 +348,8 @@ func _tab_ascend(it: Dictionary) -> void:
 	var b := Items.base_stats(nx)
 	for k in a:
 		if float(a[k]) != 0.0:
-			_right.add_child(UI.label("%s  →  %s" % [Items.one_stat(k, float(a[k])), Items.one_stat(k, float(b[k])).split(" +")[1]], 21, Color(0.7, 1.0, 0.7)))
-	_right.add_child(_wrap("Giữ nguyên cấp cường hóa +%d. Mở thêm 1 dòng thuộc tính phụ (ngẫu nhiên)." % int(it.get("plus", 0)), 19, Color(0.85, 0.82, 0.75)))
+			_right.add_child(UI.label(L.f("%s  →  %s", [Items.one_stat(k, float(a[k])), Items.one_stat(k, float(b[k])).split(" +")[1]]), 21, Color(0.7, 1.0, 0.7)))
+	_right.add_child(_wrap(L.f("Giữ nguyên cấp cường hóa +%d. Mở thêm 1 dòng thuộc tính phụ (ngẫu nhiên).", int(it.get("plus", 0))), 19, Color(0.85, 0.82, 0.75)))
 	var c := Items.ascend_cost(it)
 	_right.add_child(_cost_row([_gold_chip(int(c.gold)), Mats.chip(h, "star", int(c.star), 34)]))
 	var go := UI.gold_button("Thăng Phẩm", _do_ascend, 30, 260)
@@ -357,7 +357,7 @@ func _tab_ascend(it: Dictionary) -> void:
 	go.disabled = int(h.gold) < int(c.gold) or Mats.count(h, "star") < int(c.star)
 	_right.add_child(go)
 	if Mats.count(h, "star") < int(c.star):
-		_right.add_child(_wrap("Thiếu Thiên Tinh Thạch: " + Mats.INFO.star[3] + ".", 17, Color(1, 0.7, 0.55)))
+		_right.add_child(_wrap(L.f("Thiếu Thiên Tinh Thạch: %s.", Mats.INFO.star[3]), 17, Color(1, 0.7, 0.55)))
 
 func _do_ascend() -> void:
 	var h := Game.hero
@@ -372,7 +372,7 @@ func _do_ascend() -> void:
 	Game.save()
 	_build()
 	Game.sfx("levelup")
-	_burst("Thăng phẩm: %s!" % Items.RARITY[int(it.rar)], Items.RARITY_COL[int(it.rar)])
+	_burst(L.f("Thăng phẩm: %s!", Items.RARITY[int(it.rar)]), Items.RARITY_COL[int(it.rar)])
 
 # ------------------------------------------------------------- Tẩy Luyện
 func _tab_wash(it: Dictionary) -> void:
@@ -391,13 +391,13 @@ func _tab_wash(it: Dictionary) -> void:
 			v.add_child(UI.label("Hiện tại" if side == 0 else "Kết quả mới", 22, UI.GOLD, UI.bold))
 			for a in (aff if side == 0 else _pending):
 				v.add_child(_aff_row(it, a))
-			v.add_child(UI.label("Điểm: %d" % _aff_score(aff if side == 0 else _pending), 18, Color(0.8, 0.78, 0.7)))
+			v.add_child(UI.label(L.f("Điểm: %d", _aff_score(aff if side == 0 else _pending)), 18, Color(0.8, 0.78, 0.7)))
 		var br := UI.hbox(14)
 		_right.add_child(br)
 		br.add_child(UI.button("Giữ cũ", _keep_old, 24, 200))
 		br.add_child(UI.gold_button("Nhận mới", _keep_new, 24, 220))
 		return
-	_right.add_child(_wrap("Tẩy luyện ngẫu nhiên lại toàn bộ %d dòng thuộc tính phụ (loại và độ tốt). Sau khi tẩy được chọn giữ dòng cũ hoặc nhận dòng mới." % aff.size(), 19, Color(0.85, 0.82, 0.75)))
+	_right.add_child(_wrap(L.f("Tẩy luyện ngẫu nhiên lại toàn bộ %d dòng thuộc tính phụ (loại và độ tốt). Sau khi tẩy được chọn giữ dòng cũ hoặc nhận dòng mới.", aff.size()), 19, Color(0.85, 0.82, 0.75)))
 	_right.add_child(UI.label("Màu dòng: xám < lục < lam < tím < vàng (càng gần tối đa càng quý).", 17, Color(0.7, 0.68, 0.62)))
 	var c := Items.wash_cost(it)
 	_right.add_child(_cost_row([_gold_chip(int(c.gold)), Mats.chip(h, "wash", int(c.wash), 34)]))
@@ -406,7 +406,7 @@ func _tab_wash(it: Dictionary) -> void:
 	go.disabled = int(h.gold) < int(c.gold) or Mats.count(h, "wash") < int(c.wash)
 	_right.add_child(go)
 	if Mats.count(h, "wash") < int(c.wash):
-		_right.add_child(_wrap("Thiếu Tẩy Luyện Thạch: " + Mats.INFO.wash[3] + ".", 17, Color(1, 0.7, 0.55)))
+		_right.add_child(_wrap(L.f("Thiếu Tẩy Luyện Thạch: %s.", Mats.INFO.wash[3]), 17, Color(1, 0.7, 0.55)))
 
 static func _aff_score(lines: Array) -> int:
 	var s := 0.0

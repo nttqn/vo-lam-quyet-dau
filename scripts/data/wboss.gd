@@ -151,11 +151,11 @@ static func day_rewards(rank: int, killed: bool) -> Dictionary:
 static func rewards_text(rw: Dictionary) -> String:
 	var parts := []
 	if int(rw.get("jade", 0)) > 0:
-		parts.append("Ngọc %d" % int(rw.jade))
+		parts.append(L.f("Ngọc %d", int(rw.jade)))
 	var m: Dictionary = rw.get("mats", {})
 	for id in Mats.IDS:
 		if int(m.get(id, 0)) > 0:
-			parts.append("%s %d" % [Mats.name_of(id), int(m[id])])
+			parts.append(L.f("%s %d", [Mats.name_of(id), int(m[id])]))
 	return ", ".join(parts)
 
 # ------------------------------------------------------------- cloud

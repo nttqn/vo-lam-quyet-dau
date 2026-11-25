@@ -14,7 +14,7 @@ func _ready() -> void:
 	ui.add_child(dim)
 	var bar := top_bar("Nhiệm Vụ", back)
 	var na := Achieve.pending(Game.hero)
-	var ab := UI.gold_button("Thành Tựu" + (" (%d)" % na if na > 0 else ""), func(): Game.goto(AchieveScreen.new()), 20, 170)
+	var ab := UI.gold_button(L.t("Thành Tựu") + (" (%d)" % na if na > 0 else ""), func(): Game.goto(AchieveScreen.new()), 20, 170)
 	ab.custom_minimum_size.y = 52
 	bar.add_child(ab)
 	bar.move_child(ab, 2)
@@ -39,10 +39,10 @@ func _ready() -> void:
 
 static func _rw_text(rw: Dictionary) -> String:
 	var p := []
-	if int(rw.get("gold", 0)) > 0: p.append("Vàng +%s" % UI.fmt(int(rw.gold)))
-	if int(rw.get("exp", 0)) > 0: p.append("KN +%d" % int(rw.exp))
-	if int(rw.get("jade", 0)) > 0: p.append("Ngọc +%d" % int(rw.jade))
-	if int(rw.get("item", -1)) >= 0: p.append("Trang bị %s" % Items.RARITY[int(rw.item)])
+	if int(rw.get("gold", 0)) > 0: p.append(L.f("Vàng +%s", UI.fmt(int(rw.gold))))
+	if int(rw.get("exp", 0)) > 0: p.append(L.f("KN +%d", int(rw.exp)))
+	if int(rw.get("jade", 0)) > 0: p.append(L.f("Ngọc +%d", int(rw.jade)))
+	if int(rw.get("item", -1)) >= 0: p.append(L.f("Trang bị %s", Items.RARITY[int(rw.item)]))
 	return "  ·  ".join(p)
 
 func _build() -> void:
@@ -74,7 +74,7 @@ func _build() -> void:
 		cell.custom_minimum_size = Vector2(102, 104)
 		var cv := UI.vbox(2)
 		cell.add_child(cv)
-		cv.add_child(UI.label("Ngày %d" % (d + 1), 17, UI.GOLD if is_next else UI.PAPER, UI.bold))
+		cv.add_child(UI.label(L.f("Ngày %d", (d + 1)), 17, UI.GOLD if is_next else UI.PAPER, UI.bold))
 		var rl := UI.label(_rw_text(rw).replace("  ·  ", "\n"), 15, Color(0.6, 1, 0.6) if got else Color(0.9, 0.87, 0.8))
 		rl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(rl)
@@ -116,7 +116,7 @@ func _build() -> void:
 	var sp := Control.new()
 	sp.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_right.add_child(sp)
-	var chest := UI.gold_button("Hoàn thành cả %d nhiệm vụ: Rương +%d Ngọc" % [d2.ids.size(), Daily.CHEST_JADE] if not d2.chest else "Đã mở rương hôm nay", _chest, 20)
+	var chest := UI.gold_button(L.f("Hoàn thành cả %d nhiệm vụ: Rương +%d Ngọc", [d2.ids.size(), Daily.CHEST_JADE]) if not d2.chest else "Đã mở rương hôm nay", _chest, 20)
 	chest.disabled = not Daily.chest_ready(h)
 	_right.add_child(chest)
 	_right.add_child(UI.label("Nhiệm vụ mới mỗi ngày lúc 0 giờ.", 15, Color(0.7, 0.68, 0.62)))
@@ -128,8 +128,8 @@ func _checkin() -> void:
 	Game.sfx("coin")
 	var t := _rw_text(rw)
 	if rw.has("drop"):
-		t = t.replace("Trang bị %s" % Items.RARITY[int(rw.item)], Items.item_name(rw.drop, Hero.sect(Game.hero).style) + " (%s)" % Items.RARITY[int(rw.item)])
-	toast("Điểm danh: " + t)
+		t = t.replace(L.f("Trang bị %s", Items.RARITY[int(rw.item)]), Items.item_name(rw.drop, Hero.sect(Game.hero).style) + " (%s)" % Items.RARITY[int(rw.item)])
+	toast(L.f("Điểm danh: %s", t))
 	Game.save()
 	refresh_wallet()
 	_build()
@@ -147,7 +147,7 @@ func _claim(id: String) -> void:
 func _chest() -> void:
 	if Daily.claim_chest(Game.hero):
 		Game.sfx("levelup")
-		toast("Rương nhiệm vụ: Ngọc +%d" % Daily.CHEST_JADE, Color(0.5, 1, 0.8))
+		toast(L.f("Rương nhiệm vụ: Ngọc +%d", Daily.CHEST_JADE), Color(0.5, 1, 0.8))
 		Game.save()
 		refresh_wallet()
 		_build()

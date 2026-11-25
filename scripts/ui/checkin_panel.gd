@@ -48,7 +48,7 @@ func _build() -> void:
 	var can := Checkin.can_claim(h)
 	var done_upto := n % 7 if can else ((n - 1) % 7) + 1   # cards 0..done_upto-1 claimed
 	var today := n % 7 if can else -1
-	_info.text = "Đã điểm danh %d ngày · lỡ một ngày không mất chuỗi" % n + ("" if Checkin.days(h) >= 30 else "  ·  đủ 30 ngày nhận danh hiệu Chuyên Cần")
+	_info.text = L.f("Đã điểm danh %d ngày · lỡ một ngày không mất chuỗi", n) + ("" if Checkin.days(h) >= 30 else "  ·  đủ 30 ngày nhận danh hiệu Chuyên Cần")
 	for i in 7:
 		var claimed := i < done_upto
 		var is_today := i == today
@@ -57,7 +57,7 @@ func _build() -> void:
 		card.custom_minimum_size = Vector2(150, 190)
 		var cv := UI.vbox(6)
 		card.add_child(cv)
-		var d := UI.label("Ngày %d" % (i + 1), 22, UI.GOLD if is_today else UI.PAPER, UI.bold)
+		var d := UI.label(L.f("Ngày %d", (i + 1)), 22, UI.GOLD if is_today else UI.PAPER, UI.bold)
 		d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cv.add_child(d)
 		var rw := Checkin.reward(h, i)
@@ -84,7 +84,7 @@ func _claim() -> void:
 	Titles.refresh(Game.hero)
 	Game.save()
 	_build()
-	_info.text = "Đã nhận: " + Checkin.text(rw)
+	_info.text = L.f("Đã nhận: %s", Checkin.text(rw))
 	_info.add_theme_color_override("font_color", Color(0.6, 1, 0.6))
 	if on_claim.is_valid():
 		on_claim.call()

@@ -32,8 +32,8 @@ func _build() -> void:
 	_v.add_child(UI.heading("Tài Khoản", 46))
 	if Cloud.email != "":
 		var google := Cloud.provider == "google"
-		_v.add_child(UI.label(("Đã liên kết Google: " if google else "Đã liên kết: ") + Cloud.email, 22, UI.GOLD, UI.bold))
-		var t := UI.label("Nhân vật được tự động lưu lên mây. Trên máy khác, %s để chơi tiếp." % ("chọn \"Đăng nhập bằng Google\" với tài khoản này" if google else "chọn \"Đăng nhập\" bằng email này"), 19)
+		_v.add_child(UI.label(L.t("Đã liên kết Google: " if google else "Đã liên kết: ") + Cloud.email, 22, UI.GOLD, UI.bold))
+		var t := UI.label(L.f("Nhân vật được tự động lưu lên mây. Trên máy khác, %s để chơi tiếp.", ("chọn \"Đăng nhập bằng Google\" với tài khoản này" if google else "chọn \"Đăng nhập\" bằng email này")), 19)
 		t.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_v.add_child(t)
 		_msg = UI.label("", 19, Color(1, 0.75, 0.6))

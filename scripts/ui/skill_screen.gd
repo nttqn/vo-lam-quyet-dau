@@ -77,6 +77,8 @@ static func icon(sect: Dictionary, i: int, side: float, dim := false) -> Control
 	var ini := ""
 	for wd in words.slice(0, 2):
 		ini += wd.substr(0, 1)
+	if L.cjk():
+		ini = L.t(sect.skills[i].name).substr(0, 2)
 	var l := UI.label(ini, int(side * 0.36), col.lightened(0.3) if not dim else Color(0.55, 0.53, 0.5), UI.title)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -90,29 +92,29 @@ static func describe(m: Dictionary) -> String:
 	match kind:
 		"strike", "rush":
 			var hits: int = m.get("hits", 1)
-			parts.append("Cận chiến%s, uy lực %d%%" % [" %d đòn" % hits if hits > 1 else "", int(m.dmg * hits * 100)])
+			parts.append(L.f("Cận chiến%s, uy lực %d%%", [L.f(" %d đòn", hits) if hits > 1 else "", int(m.dmg * hits * 100)]))
 		"proj":
 			var n: int = m.proj.get("n", 1)
-			parts.append("Đánh xa%s, uy lực %d%%" % [" %d phát" % n if n > 1 else "", int(m.dmg * n * 100)])
+			parts.append(L.f("Đánh xa%s, uy lực %d%%", [L.f(" %d phát", n) if n > 1 else "", int(m.dmg * n * 100)]))
 		"rain":
-			parts.append("Mưa ám khí %d phát, uy lực %d%%" % [int(m.proj.n), int(m.dmg * m.proj.n * 100)])
+			parts.append(L.f("Mưa ám khí %d phát, uy lực %d%%", [int(m.proj.n), int(m.dmg * m.proj.n * 100)]))
 		"buff":
 			var bf: Dictionary = m.buff
 			var b := []
-			if bf.has("atk"): b.append("Công +%d%%" % int((bf.atk - 1.0) * 100))
-			if bf.has("def"): b.append("Thủ +%d%%" % int((bf.def - 1.0) * 100))
-			if bf.has("spd"): b.append("Tốc +%d%%" % int((bf.spd - 1.0) * 100))
+			if bf.has("atk"): b.append(L.f("Công +%d%%", int((bf.atk - 1.0) * 100)))
+			if bf.has("def"): b.append(L.f("Thủ +%d%%", int((bf.def - 1.0) * 100)))
+			if bf.has("spd"): b.append(L.f("Tốc +%d%%", int((bf.spd - 1.0) * 100)))
 			if bf.has("armor"): b.append("Bá thể (không bị khựng)")
 			if bf.has("regen_en"): b.append("Hồi nội lực nhanh")
 			parts.append(", ".join(b) + " trong %ds" % int(bf.t / 60))
 		"heal":
-			parts.append("Hồi %d%% sinh lực" % int(m.heal * 100))
+			parts.append(L.f("Hồi %d%% sinh lực", int(m.heal * 100)))
 		"counter":
-			parts.append("Thế thủ: đỡ đòn kế tiếp rồi phản kích %d%%" % int(m.dmg * 100))
+			parts.append(L.f("Thế thủ: đỡ đòn kế tiếp rồi phản kích %d%%", int(m.dmg * 100)))
 		"blink":
-			parts.append("Thuấn di ra sau lưng đối thủ rồi đánh %d%%" % int(m.dmg * m.get("hits", 1) * 100))
+			parts.append(L.f("Thuấn di ra sau lưng đối thủ rồi đánh %d%%", int(m.dmg * m.get("hits", 1) * 100)))
 		"leap":
-			parts.append("Tung người lên không rồi bổ xuống, uy lực %d%%" % int(m.dmg * 100))
+			parts.append(L.f("Tung người lên không rồi bổ xuống, uy lực %d%%", int(m.dmg * 100)))
 	if m.get("kd", false) or m.get("launch", 0.0) > 0.0:
 		parts.append("hất ngã")
 	if m.get("unblockable", false):
@@ -122,10 +124,10 @@ static func describe(m: Dictionary) -> String:
 	if m.get("poison", 0.0) > 0.0:
 		parts.append("gây độc")
 	if str(m.get("seal", "")) != "":
-		parts.append("điểm huyệt %s" % Fighter.ZONE_NAMES[Fighter.zone_of(m)])
+		parts.append(L.f("điểm huyệt %s", Fighter.ZONE_NAMES[Fighter.zone_of(m)]))
 	if m.get("heal", 0.0) > 0.0 and kind != "heal":
-		parts.append("hồi %d%% sinh lực" % int(m.heal * 100))
-	return "; ".join(parts) + ".  Nội lực %d · Hồi chiêu %ds" % [int(m.cost), int(m.cd / 60)]
+		parts.append(L.f("hồi %d%% sinh lực", int(m.heal * 100)))
+	return "; ".join(parts) + L.f(".  Nội lực %d · Hồi chiêu %ds", [int(m.cost), int(m.cd / 60)])
 
 static func up_cost(lv: int) -> int:
 	return 120 * lv * lv
@@ -166,13 +168,13 @@ func _build() -> void:
 	us.add_child(uh)
 	uh.add_child(UI.label("TK", 22, Color(1.0, 0.8, 0.3), UI.title))
 	uh.add_child(icon(s, Hero.ULT, 44, not ul))
-	uh.add_child(_slot_name(s.skills[Hero.ULT].name if ul else "Cấp %d" % int(s.skills[Hero.ULT].lvl), UI.PAPER if ul else Color(0.6, 0.58, 0.55)))
+	uh.add_child(_slot_name(s.skills[Hero.ULT].name if ul else L.f("Cấp %d", int(s.skills[Hero.ULT].lvl)), UI.PAPER if ul else Color(0.6, 0.58, 0.55)))
 	_slots.add_child(us)
 	var sp := Control.new()
 	sp.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_slots.add_child(sp)
-	_slots.add_child(UI.button("Ngộ Chiêu (%d)" % Insight.learned(h).size(), _foreign, 18))
-	_slots.add_child(UI.label("%d điểm" % int(h.skill_pts), 22, Color(0.6, 1, 0.6) if int(h.skill_pts) > 0 else UI.PAPER, UI.bold))
+	_slots.add_child(UI.button(L.f("Ngộ Chiêu (%d)", Insight.learned(h).size()), _foreign, 18))
+	_slots.add_child(UI.label(L.f("%d điểm", int(h.skill_pts)), 22, Color(0.6, 1, 0.6) if int(h.skill_pts) > 0 else UI.PAPER, UI.bold))
 	# --- skill cards
 	for c in _grid.get_children():
 		c.queue_free()
@@ -220,7 +222,7 @@ func _card(s: Dictionary, i: int) -> Control:
 		badge.position = Vector2(176, 4)
 		img.add_child(badge)
 	if lv == 0:
-		var lock := UI.label("Cấp %d" % int(m.lvl), 22, UI.PAPER, UI.bold)
+		var lock := UI.label(L.f("Cấp %d", int(m.lvl)), 22, UI.PAPER, UI.bold)
 		lock.add_theme_color_override("font_outline_color", Color.BLACK)
 		lock.add_theme_constant_override("outline_size", 6)
 		lock.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
@@ -271,10 +273,10 @@ func _build_detail(s: Dictionary) -> void:
 	if m.get("ult", false):
 		row.add_child(UI.label("Tuyệt kỹ", 18, Color(1, 0.6, 0.3), UI.bold))
 	if lv > 0:
-		row.add_child(UI.label("Tầng %d/%d" % [lv, Hero.SKILL_MAX], 18, UI.PAPER, UI.bold))
+		row.add_child(UI.label(L.f("Tầng %d/%d", [lv, Hero.SKILL_MAX]), 18, UI.PAPER, UI.bold))
 		row.add_child(_pips(lv, 10))
 	else:
-		row.add_child(UI.label("Mở khi đạt cấp %d" % int(m.lvl), 18, Color(1, 0.7, 0.5), UI.bold))
+		row.add_child(UI.label(L.f("Mở khi đạt cấp %d", int(m.lvl)), 18, Color(1, 0.7, 0.5), UI.bold))
 	var d := UI.label(describe(Hero.skill_scaled(m, maxi(1, lv), Books.mod_of(h, i))), 18, Color(0.9, 0.87, 0.8))
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	d.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -298,7 +300,7 @@ func _build_detail(s: Dictionary) -> void:
 	var cost := up_cost(lv)
 	var ub: Button
 	if lv < Hero.SKILL_MAX:
-		ub = UI.gold_button("Nâng tầng  ·  1 điểm + %s vàng" % UI.fmt(cost), func(): _up(i), 18)
+		ub = UI.gold_button(L.f("Nâng tầng  ·  1 điểm + %s vàng", UI.fmt(cost)), func(): _up(i), 18)
 		ub.disabled = int(h.skill_pts) < 1 or int(h.gold) < cost
 	else:
 		ub = UI.button("Đã đạt tầng tối đa", func(): pass, 18)
@@ -308,7 +310,7 @@ func _build_detail(s: Dictionary) -> void:
 	var bk := Books.mod_of(h, i)
 	var br := UI.hbox(8)
 	_detail.add_child(br)
-	var bl := UI.label((Books.name_of(bk) + ": " + Books.KINDS[bk][1]) if bk != "" else "Chưa gắn bí kíp", 17, Books.COLOR.get(bk, Color(0.7, 0.68, 0.62)), UI.bold)
+	var bl := UI.label(L.f("%s: %s", [Books.name_of(bk), Books.KINDS[bk][1]]) if bk != "" else "Chưa gắn bí kíp", 17, Books.COLOR.get(bk, Color(0.7, 0.68, 0.62)), UI.bold)
 	bl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	br.add_child(bl)
@@ -329,16 +331,16 @@ func _books(i: int) -> void:
 	v.custom_minimum_size.x = 620
 	p.add_child(v)
 	v.add_child(UI.heading("Tàng Kinh Các", 36))
-	var note := UI.label("Gắn một bí kíp vào %s. Bí kíp đang gắn (nếu có) sẽ mất." % Hero.sect(h).skills[i].name, 17, Color(0.85, 0.82, 0.75))
+	var note := UI.label(L.f("Gắn một bí kíp vào %s. Bí kíp đang gắn (nếu có) sẽ mất.", Hero.sect(h).skills[i].name), 17, Color(0.85, 0.82, 0.75))
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(note)
 	for k in Books.KINDS:
 		var row := UI.hbox(10)
 		v.add_child(row)
-		var l := UI.label("%s  ·  %s" % [Books.KINDS[k][0], Books.KINDS[k][1]], 18, Books.COLOR[k], UI.bold)
+		var l := UI.label(L.f("%s  ·  %s", [Books.KINDS[k][0], Books.KINDS[k][1]]), 18, Books.COLOR[k], UI.bold)
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(l)
-		row.add_child(UI.label("có %d" % Books.count(h, k), 17, UI.PAPER))
+		row.add_child(UI.label(L.f("có %d", Books.count(h, k)), 17, UI.PAPER))
 		var kk: String = k
 		var b := UI.gold_button("Gắn", func():
 			if Books.bind(h, i, kk):
@@ -350,7 +352,7 @@ func _books(i: int) -> void:
 		row.add_child(b)
 	var hb := UI.hbox(10)
 	v.add_child(hb)
-	var buy := UI.gold_button("Mua bí kíp ngẫu nhiên (%d Ngọc)" % Books.PRICE, func():
+	var buy := UI.gold_button(L.f("Mua bí kíp ngẫu nhiên (%d Ngọc)", Books.PRICE), func():
 		if int(h.jade) < Books.PRICE:
 			return
 		h.jade = int(h.jade) - Books.PRICE
@@ -362,7 +364,7 @@ func _books(i: int) -> void:
 		Game.save()
 		refresh_wallet()
 		dim.queue_free()
-		toast("Nhận " + Books.name_of(got), Books.COLOR[got])
+		toast(L.f("Nhận %s", Books.name_of(got)), Books.COLOR[got])
 		_books(i), 18)
 	buy.disabled = int(h.jade) < Books.PRICE
 	buy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -405,7 +407,7 @@ func _foreign() -> void:
 	tl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hd.add_child(tl)
 	hd.add_child(UI.button("Đóng", dim.queue_free, 18, 110))
-	var note := UI.label("Đỡ (+1), né hoặc phản (+2) tuyệt chiêu của phái khác để lĩnh ngộ, tối đa +%d mỗi chiêu mỗi trận. Đủ %d điểm ngộ ra chiêu (tầng 2: %d, tầng 3: %d). Chỉ lắp được 1 chiêu ngoại môn, uy lực %d%%; Tuyệt Kỹ không thể học lén." % [Insight.PER_FIGHT, Insight.TIERS[0], Insight.TIERS[1], Insight.TIERS[2], int(Insight.POWER * 100)], 16, Color(0.85, 0.82, 0.75))
+	var note := UI.label(L.f("Đỡ (+1), né hoặc phản (+2) tuyệt chiêu của phái khác để lĩnh ngộ, tối đa +%d mỗi chiêu mỗi trận. Đủ %d điểm ngộ ra chiêu (tầng 2: %d, tầng 3: %d). Chỉ lắp được 1 chiêu ngoại môn, uy lực %d%%; Tuyệt Kỹ không thể học lén.", [Insight.PER_FIGHT, Insight.TIERS[0], Insight.TIERS[1], Insight.TIERS[2], int(Insight.POWER * 100)]), 16, Color(0.85, 0.82, 0.75))
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(note)
 	var sc := ScrollContainer.new()
@@ -435,9 +437,9 @@ func _foreign() -> void:
 		var info := UI.vbox(2)
 		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		rh.add_child(info)
-		info.add_child(UI.label("%s  ·  %s" % [Insight.skill_of(k).name, fsect.name], 20, UI.GOLD if t > 0 else Color(0.7, 0.68, 0.62), UI.bold))
+		info.add_child(UI.label(L.f("%s  ·  %s", [Insight.skill_of(k).name, fsect.name]), 20, UI.GOLD if t > 0 else Color(0.7, 0.68, 0.62), UI.bold))
 		var nxt := Insight.next_need(pts)
-		var prog := ("Tầng %d" % t if t > 0 else "Chưa ngộ") + ("  ·  %d/%d điểm" % [pts, nxt] if nxt > 0 else "  ·  viên mãn")
+		var prog := (L.f("Tầng %d", t) if t > 0 else "Chưa ngộ") + (L.f("  ·  %d/%d điểm", [pts, nxt]) if nxt > 0 else "  ·  viên mãn")
 		info.add_child(UI.label(prog, 16, Color(0.75, 0.85, 1.0)))
 		if t > 0:
 			var d := UI.label(describe(Insight.scaled(k, t)), 15, Color(0.85, 0.82, 0.75))

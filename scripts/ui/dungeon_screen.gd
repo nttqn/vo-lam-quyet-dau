@@ -53,7 +53,7 @@ func _build() -> void:
 		c.queue_free()
 	for c in _right.get_children():
 		c.queue_free()
-	var lb := UI.label("Lượt hôm nay: %d/%d" % [Dungeon.left(h), Dungeon.PER_DAY + int(Dungeon.ensure(h).ads)], 22, UI.GOLD, UI.bold)
+	var lb := UI.label(L.f("Lượt hôm nay: %d/%d", [Dungeon.left(h), Dungeon.PER_DAY + int(Dungeon.ensure(h).ads)]), 22, UI.GOLD, UI.bold)
 	_list.add_child(lb)
 	for i in Dungeon.LIST.size():
 		_list.add_child(_dg_button(i))
@@ -101,7 +101,7 @@ func _dg_button(i: int) -> Button:
 	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(t)
 	var best := Dungeon.best(Game.hero, i)
-	var s := UI.label("Rơi: %s  ·  %s" % [Mats.name_of(dg.mat), ("Đã vượt " + Dungeon.DIFFS[best][0]) if best >= 0 else "Chưa vượt"], 16, UI.GOLD.lightened(0.2))
+	var s := UI.label(L.f("Rơi: %s  ·  %s", [Mats.name_of(dg.mat), L.f("Đã vượt %s", Dungeon.DIFFS[best][0]) if best >= 0 else "Chưa vượt"]), 16, UI.GOLD.lightened(0.2))
 	s.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	v.add_child(s)
 	return b
@@ -122,9 +122,9 @@ func _build_right(h: Dictionary) -> void:
 		var kk := k
 		var ok := Dungeon.unlocked(h, sel, k)
 		var cleared := Dungeon.best(h, sel) >= k
-		var txt: String = Dungeon.DIFFS[k][0] + (" ✓" if cleared else "")
+		var txt: String = L.t(Dungeon.DIFFS[k][0]) + (" ✓" if cleared else "")
 		if not ok:
-			txt = "🔒 Cấp %d" % int(Dungeon.DIFFS[k][1]) if int(h.level) < int(Dungeon.DIFFS[k][1]) else "🔒 " + Dungeon.DIFFS[k][0]
+			txt = L.f("🔒 Cấp %d", int(Dungeon.DIFFS[k][1])) if int(h.level) < int(Dungeon.DIFFS[k][1]) else "🔒 " + L.t(Dungeon.DIFFS[k][0])
 		var b := UI.gold_button(txt, func(): _pick(kk), 19, 170) if k == diff else UI.button(txt, func(): _pick(kk), 19, 170)
 		b.disabled = not ok
 		grid.add_child(b)
@@ -134,8 +134,8 @@ func _build_right(h: Dictionary) -> void:
 		show.clear()
 		show.add_body(boss.look, Sects.get_sect(boss.sect).style, -0.2, -0.6)
 		show.set_focus(0.2)
-	_right.add_child(UI.label("Chủ ải: %s  ·  %s  ·  Cấp %d" % [boss.name, Sects.get_sect(boss.sect).name, int(boss.level)], 20, UI.PAPER, UI.bold))
-	_right.add_child(UI.label("Lực chiến của bạn: %s   ·   Chủ ải: %s" % [UI.fmt(Hero.power(h)), UI.fmt(Build.power(boss.stats))], 18, Color(0.85, 0.82, 0.75)))
+	_right.add_child(UI.label(L.f("Chủ ải: %s  ·  %s  ·  Cấp %d", [boss.name, Sects.get_sect(boss.sect).name, int(boss.level)]), 20, UI.PAPER, UI.bold))
+	_right.add_child(UI.label(L.f("Lực chiến của bạn: %s   ·   Chủ ải: %s", [UI.fmt(Hero.power(h)), UI.fmt(Build.power(boss.stats))]), 18, Color(0.85, 0.82, 0.75)))
 	# loot
 	var lp := UI.panel(Color(0.1, 0.07, 0.05, 0.9), Mats.color(dg.mat).darkened(0.3))
 	var lv := UI.vbox(6)
@@ -143,12 +143,12 @@ func _build_right(h: Dictionary) -> void:
 	lv.add_child(UI.label("Phần thưởng mỗi lượt", 20, UI.GOLD, UI.bold))
 	var mrow := UI.hbox(10)
 	mrow.add_child(Mats.gem(dg.mat, 40))
-	mrow.add_child(UI.label("%s ×%d" % [Mats.name_of(dg.mat), Dungeon.main_amount(dg.mat, diff)], 24, Mats.color(dg.mat), UI.bold))
+	mrow.add_child(UI.label(L.f("%s ×%d", [Mats.name_of(dg.mat), Dungeon.main_amount(dg.mat, diff)]), 24, Mats.color(dg.mat), UI.bold))
 	lv.add_child(mrow)
 	var rw := Dungeon.rewards(h, sel, diff, false, RandomNumberGenerator.new())
-	var extra := "Vàng +%d  ·  KN +%d  ·  có cơ hội rơi thêm nguyên liệu khác hoặc Hộ Phù" % [int(rw.gold), int(rw.exp)]
+	var extra := L.f("Vàng +%d  ·  KN +%d  ·  có cơ hội rơi thêm nguyên liệu khác hoặc Hộ Phù", [int(rw.gold), int(rw.exp)])
 	if Dungeon.best(h, sel) < diff:
-		extra += "  ·  Lần đầu: Ngọc +%d" % (5 + 2 * diff)
+		extra += L.f("  ·  Lần đầu: Ngọc +%d", (5 + 2 * diff))
 	var el := UI.label(extra, 17, Color(0.85, 0.82, 0.75))
 	el.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lv.add_child(el)
@@ -180,9 +180,9 @@ func _sweep() -> void:
 	if rw.is_empty():
 		return
 	Game.sfx("coin")
-	var msg := Mats.text(rw.mats) + "  ·  Vàng +%d" % int(rw.gold)
+	var msg := Mats.text(rw.mats) + L.f("  ·  Vàng +%d", int(rw.gold))
 	_build()
-	toast("Quét xong: " + msg, Color(0.6, 1, 0.7))
+	toast(L.f("Quét xong: %s", msg), Color(0.6, 1, 0.7))
 	if int(rw.get("levels", 0)) > 0:
 		Game.sfx("levelup")
 
