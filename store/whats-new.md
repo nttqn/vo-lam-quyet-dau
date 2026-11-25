@@ -33,7 +33,7 @@ Play: ≤ 500 ký tự mỗi ngôn ngữ. App Store: ô "What's New in This Vers
 **English (U.S.)**
 • Now in English, 繁體中文 and 한국어 (plus Vietnamese). Change the language in Settings.
 • World Chat has a room for each language; leaderboards show other players' language tag.
-• The Treasury shop is now open on iPhone and iPad: tap "+ Treasury" in the hub.
+• The Vault shop is now open on iPhone and iPad: tap "+ Vault" in the hub.
 • Sect passive descriptions now match their real numbers.
 
 **Chinese (Traditional)**
