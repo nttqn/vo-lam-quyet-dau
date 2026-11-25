@@ -94,6 +94,12 @@ static func all_ids() -> PackedStringArray:
 	ids.append_array([STARTER, NO_ADS, SLOTS])
 	return ids
 
+## Bảo Khố is offered: everywhere but on an iPhone build without StoreKit
+## (there it can only say "cập nhật"). The shop screen itself explains a
+## closed store (no network, purchases restricted…).
+func has_store() -> bool:
+	return OS.get_name() != "iOS" or _mode == "apple"
+
 ## Shop can sell (store connected, or the desktop test mode).
 func available() -> bool:
 	return _mode == "fake" or (_mode in ["play", "apple"] and _ready_store)

@@ -57,8 +57,8 @@ func _header(h: Dictionary, s: Dictionary) -> void:
 	var wl := UI.label(L.f("Vàng %s   ·   Ngọc %d", [UI.fmt(h.gold), int(h.jade)]), 20, UI.GOLD, UI.bold)
 	wl.name = "Wallet"
 	wallet.add_child(wl)
-	# iOS has no store code yet: no shop there (and no store names in iOS UI)
-	if OS.get_name() != "iOS":
+	# iOS: only when the StoreKit extension is in the build (1.3.3+)
+	if Iap.has_store():
 		var shop := UI.gold_button("+ Bảo Khố", func(): Game.goto(TopupScreen.new()), 17, 0)
 		shop.custom_minimum_size = Vector2(0, 38)
 		wallet.add_child(shop)
