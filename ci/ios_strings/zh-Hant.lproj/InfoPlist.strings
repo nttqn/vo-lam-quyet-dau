@@ -1,0 +1,3 @@
+/* Localized Info.plist keys (merged into the .ipa by .github/workflows/ios.yml) */
+CFBundleDisplayName = "武林決鬥";
+NSUserTrackingUsageDescription = "此識別碼僅用於為你顯示更相關的廣告。";

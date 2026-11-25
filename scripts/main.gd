@@ -270,6 +270,8 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			Game.goto(cs)
 			cs._pick.call_deferred(sect if sect != "thieu_lam" else "nga_mi")
 		"hub":
+			if "--notoast" in args:
+				Titles.refresh(Game.hero)   # store shots: no "new title" toast
 			var hub := HubScreen.new()
 			Game.goto(hub)
 			if "--turntest" in args:

@@ -1,0 +1,3 @@
+/* Localized Info.plist keys (merged into the .ipa by .github/workflows/ios.yml) */
+CFBundleDisplayName = "무림결투";
+NSUserTrackingUsageDescription = "이 식별자는 더 관련성 높은 광고를 보여 드리는 데에만 사용됩니다.";

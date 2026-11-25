@@ -9,6 +9,8 @@ Assets in this folder:
 - `tablet-7in/`: 8 shots for 7" tablets, 1920×1200.
 - `tablet-10in/`: 8 shots for 10" tablets, 2560×1600.
 
+- `zh_Hant/`, `ko/`, `en/`: the same 8 shots in that language, one folder per size (phone, tablet-7in, tablet-10in, iphone-6.3, ipad-13); made with `bash tools/store_shots.sh <lang> <WxH> <dir>` (iPad: capture 2544x1908, then scale to 2752x2064).
+
 All shots are landscape. Vovinam (the hidden sect) stays hidden in every shot.
 
 ## Tiếng Việt

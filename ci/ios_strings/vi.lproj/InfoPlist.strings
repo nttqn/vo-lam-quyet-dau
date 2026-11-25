@@ -1,0 +1,2 @@
+/* Localized Info.plist keys (merged into the .ipa by .github/workflows/ios.yml) */
+NSUserTrackingUsageDescription = "Mã nhận dạng này chỉ dùng để hiển thị quảng cáo phù hợp hơn với bạn.";

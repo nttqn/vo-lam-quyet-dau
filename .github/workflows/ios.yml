@@ -137,6 +137,33 @@ jobs:
             /usr/libexec/PlistBuddy -c 'Print :GADApplicationIdentifier' "$app/Info.plist" || echo "::warning::no GADApplicationIdentifier (no ads)"
           fi
 
+      # Godot only localizes the app name, so the ATT prompt would be
+      # Vietnamese everywhere. Put ci/ios_strings/<lang>.lproj/InfoPlist.strings
+      # (name + NSUserTrackingUsageDescription) into the signed .app, then
+      # re-sign the app bundle with the same identity and entitlements.
+      - name: Localize Info.plist strings
+        if: steps.signing.outputs.configured == 'true'
+        shell: bash
+        run: |
+          set -e
+          rm -rf ipa_l && mkdir ipa_l && unzip -q build/ios/vo-lam-quyet-dau.ipa -d ipa_l
+          app=$(ls -d ipa_l/Payload/*.app)
+          for d in ci/ios_strings/*.lproj; do
+            mkdir -p "$app/$(basename "$d")"
+            cp "$d/InfoPlist.strings" "$app/$(basename "$d")/InfoPlist.strings"
+            plutil -lint "$app/$(basename "$d")/InfoPlist.strings"
+          done
+          codesign -d --entitlements :- "$app" > ent.plist 2>/dev/null
+          plutil -lint ent.plist
+          identity=$(codesign -dvv "$app" 2>&1 | sed -n 's/^Authority=\(Apple Distribution.*\)$/\1/p' | head -1)
+          echo "Re-signing with: $identity"
+          codesign -f -s "$identity" --entitlements ent.plist --generate-entitlement-der "$app"
+          codesign --verify --strict --verbose=2 "$app"
+          ls "$app" | grep lproj | paste -sd ' ' - | sed 's/^/::warning::lproj: /'
+          rm build/ios/vo-lam-quyet-dau.ipa
+          (cd ipa_l && zip -qry ../build/ios/vo-lam-quyet-dau.ipa .)
+          ls -la build/ios/vo-lam-quyet-dau.ipa
+
       - uses: actions/upload-artifact@v4
         if: steps.signing.outputs.configured == 'true'
         with:

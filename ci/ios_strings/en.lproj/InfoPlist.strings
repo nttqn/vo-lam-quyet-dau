@@ -1,0 +1,2 @@
+/* Localized Info.plist keys (merged into the .ipa by .github/workflows/ios.yml) */
+NSUserTrackingUsageDescription = "This identifier is only used to show you more relevant ads.";
