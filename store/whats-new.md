@@ -2,6 +2,34 @@
 
 Play: ≤ 500 ký tự mỗi ngôn ngữ. App Store: ô "What's New in This Version" của từng localization.
 
+## 1.5.0 (18)
+
+Cùng một nội dung cho Google Play và App Store.
+
+**vi-VN / Vietnamese**
+• Môn Phái Tranh Hùng: mỗi trận thắng góp công cho môn phái. Hết tuần, phái có Uy Danh cao nhất nhận thưởng lớn và +10% kinh nghiệm, vàng cả tuần sau.
+• Kỳ Ngộ: cao nhân ẩn thế, kẻ trộm bí kíp, tượng đá canh giữ bảo tàng, ma đầu xuất hiện trên đường Hành Tẩu. Thắng để lĩnh ngộ chiêu, nhận Bí kíp và nguyên liệu quý.
+• Xem lại trận: xem lại trận vừa đấu, lưu tới 12 trận đáng nhớ.
+• 3 danh hiệu mới.
+
+**en-US / English (U.S.)**
+• Sect Rivalry: every win earns merit for your sect. At the end of the week, the sect with the most Prestige gets big rewards and +10% EXP and gold all next week.
+• Chance Encounters: hidden masters, manual thieves, treasure guardians and demonic cultists appear on your Journey. Beat them for insight, Manuals and rare materials.
+• Replays: watch your last fight again and keep up to 12 memorable ones.
+• 3 new titles.
+
+**zh-TW / Chinese (Traditional)**
+• 門派爭雄：每場勝利都為門派貢獻功績。每週結束時，威名最高的門派獲得豐厚獎勵，下週全週經驗與金幣 +10%。
+• 奇遇：隱世高人、盜笈賊、寶藏守衛、魔頭會出現在行走江湖途中。擊敗他們即可領悟招式、獲得秘笈與珍貴材料。
+• 對戰回放：重看剛才的對戰，最多儲存 12 場精彩對決。
+• 新增 3 個稱號。
+
+**ko-KR / Korean**
+• 문파쟁웅: 승리할 때마다 문파에 공적을 쌓습니다. 주가 끝나면 위명이 가장 높은 문파가 큰 보상과 다음 주 내내 경험치·금화 +10%를 받습니다.
+• 기연: 은세고인, 비급 도둑, 보물 수호자, 마두가 강호행 길에 나타납니다. 물리치면 깨달음, 비급, 귀한 재료를 얻습니다.
+• 다시보기: 방금 한 대전을 다시 보고, 기억에 남는 대전을 최대 12개 저장합니다.
+• 새 칭호 3개.
+
 ## 1.4.0 (17)
 
 ### Google Play

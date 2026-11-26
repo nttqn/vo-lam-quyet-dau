@@ -3,14 +3,17 @@ extends Screen
 ## Post-fight summary with rewards.
 
 var out: Dictionary
+var _again := false   # shown again after Xem lại: no jingles, no prompts
 
 func _init(p_out: Dictionary) -> void:
 	out = p_out
+	_again = out.get("_shown", false)
+	out["_shown"] = true
 
 func _ready() -> void:
 	var h := Game.hero
 	var theme := "temple"
-	if out.mode == "stage":
+	if out.mode == "stage" or out.mode == "kyngo":
 		theme = Journey.REGIONS[out.r].theme
 	elif out.mode == "dungeon":
 		theme = Dungeon.LIST[int(out.i)].theme
@@ -26,7 +29,7 @@ func _ready() -> void:
 		show.hold[0] = {"clip": "b/Idle_No", "frac": -1.0}
 	shade(false, 0.6, 0.9)
 	Game.music("menu")
-	if out.won and out.mode == "stage" and int(h.wins) >= 1:
+	if out.won and out.mode == "stage" and int(h.wins) >= 1 and not _again:
 		# first won duel: a good moment for the Android 13+ reminder prompt (once)
 		get_tree().create_timer(1.5).timeout.connect(Notify.ask_once)
 	var right := UI.vbox(12)
@@ -78,6 +81,14 @@ func _ready() -> void:
 		body.add_child(UI.label(L.f("Tháp Thí Luyện — Tầng %d", int(out.f)) + (" · vượt tầng mới!" if out.won and int(out.f) == Tower.best(h) else ""), 26, UI.GOLD, UI.bold))
 	elif out.mode == "arena":
 		body.add_child(UI.label(L.f("Lôi Đài — liên thắng %d trận", int(out.streak)), 26, UI.GOLD, UI.bold))
+	elif out.mode == "kyngo":
+		body.add_child(UI.label(L.f("Kỳ Ngộ · %s — %s", [KyNgo.title(str(out.kind)), out.foe]), 24, Color(0.6, 0.9, 1.0), UI.bold))
+		if out.won:
+			body.add_child(UI.label("Kỳ ngộ đã thành. Giang hồ rộng lớn, ngày mai biết đâu lại gặp người mới.", 19, Color(0.85, 0.82, 0.76)))
+		elif int(out.get("tries_left", 0)) > 0:
+			body.add_child(UI.label(L.f("Người lạ vẫn chờ. Còn %d lần thử.", int(out.tries_left)), 20, Color(1, 0.85, 0.5)))
+		else:
+			body.add_child(UI.label("Người lạ đã rời đi. Kỳ ngộ khác sẽ đến vào ngày mai.", 20, Color(0.8, 0.75, 0.75)))
 	elif out.mode == "dungeon":
 		var dg: Dictionary = Dungeon.LIST[int(out.i)]
 		body.add_child(UI.label(L.f("%s · %s — Ải %d/%d", [dg.name, Dungeon.DIFFS[int(out.d)][0], int(out.k) + 1, Dungeon.FIGHTS]), 24, UI.GOLD, UI.bold))
@@ -91,6 +102,16 @@ func _ready() -> void:
 			body.add_child(UI.label("Thất bại không tốn lượt. Cường hóa trang bị rồi thử lại!", 20, Color(0.85, 0.8, 0.7)))
 	var res: Dictionary = out.res
 	body.add_child(UI.label(L.f("Liên kích cao nhất: %d   ·   Thời gian: %ds", [int(res.max_combo), int(res.seconds)]), 18, Color(0.85, 0.82, 0.76)))
+	if not Replay.last.is_empty():
+		var rrow := UI.hbox(10)
+		body.add_child(rrow)
+		rrow.add_child(UI.button("▶ Xem lại trận", _watch, 19, 200))
+		var sv := UI.button("Lưu trận", func(): pass, 19, 150)
+		sv.pressed.connect(_save_replay.bind(sv))
+		if Replay.last.has("saved_id"):
+			sv.text = "Đã lưu"
+			sv.disabled = true
+		rrow.add_child(sv)
 	var rw: Dictionary = out.get("rewards", {})
 	var rp := UI.panel(Color(0.08, 0.05, 0.04, 0.85))
 	var rv := UI.vbox(6)
@@ -103,6 +124,18 @@ func _ready() -> void:
 		wrow.add_child(UI.label(L.f("Vàng +%d", int(rw.gold)), 22, UI.GOLD))
 	if int(rw.get("jade", 0)) > 0:
 		wrow.add_child(UI.label(L.f("Ngọc +%d", int(rw.jade)), 22, Color(0.5, 1.0, 0.8)))
+	if rw.get("buff", false):
+		rv.add_child(UI.label(L.f("Đã gồm +%d%% của Đệ Nhất Môn Phái", int(MonPhai.BUFF * 100)), 17, Color(0.6, 1.0, 0.65)))
+	if out.has("mp") and MonPhai.unlocked(h):
+		var got := int(out.mp)
+		var mtxt := L.f("Môn phái +%d công trạng  (hôm nay %d/%d)", [got, MonPhai.today(h), MonPhai.DAY_CAP]) if got > 0 \
+			else L.f("Đã đủ %d công trạng hôm nay cho môn phái", MonPhai.DAY_CAP)
+		rv.add_child(UI.label(mtxt, 18, Hero.sect(h).elem.lightened(0.2) if got > 0 else Color(0.8, 0.75, 0.7), UI.bold))
+	if out.has("taught"):
+		var tm := Insight.skill_of(str(out.taught[0]))
+		var tl := UI.label(L.f("Cao nhân truyền thụ: %s +%d điểm lĩnh ngộ", [str(tm.get("name", "")), int(out.taught[1])]), 20, Color(0.6, 0.85, 1.0), UI.bold)
+		tl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		rv.add_child(tl)
 	var mats: Dictionary = rw.get("mats", {})
 	if not mats.is_empty():
 		var mrow := HFlowContainer.new()
@@ -144,9 +177,19 @@ func _ready() -> void:
 		var us := UI.label(L.f("Phái ẩn %s đã mở! Tạo nhân vật mới để bái sư.", Sects.get_sect(str(out.unlocked_sect)).name), 22, Color(0.5, 0.75, 1.0), UI.bold)
 		us.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		rv.add_child(us)
+	if out.get("kn_new", false):
+		var kc := KyNgo.current(h)
+		if not kc.is_empty():
+			var kl := UI.label(L.f("✦ Kỳ ngộ! %s xuất hiện ở %s — mở Hành Tẩu để gặp.", [KyNgo.title(str(kc.kind)), KyNgo.region_name(kc)]), 21, Color(0.6, 0.9, 1.0), UI.bold)
+			kl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			rv.add_child(kl)
 	body.add_child(rp)
 	# rewarded ad: double the experience and gold of a won fight
-	if (out.won or out.mode == "wboss") and (int(rw.get("exp", 0)) > 0 or int(rw.get("gold", 0)) > 0):
+	if out.get("doubled", "") != "":
+		var dl := UI.label(str(out.doubled), 19, Color(0.6, 1.0, 0.6))
+		dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		rp.get_child(0).add_child(dl)
+	elif (out.won or out.mode == "wboss") and (int(rw.get("exp", 0)) > 0 or int(rw.get("gold", 0)) > 0):
 		var dbl := UI.gold_button("▶ Xem quảng cáo: x2 kinh nghiệm & vàng", func(): pass, 19)
 		dbl.disabled = not Ads.is_ready()
 		dbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -159,7 +202,8 @@ func _ready() -> void:
 		var lv := UI.label(L.f("Thăng cấp! Đạt cấp %d  (+%d điểm tiềm năng, +%d điểm võ công)", [int(h.level), int(out.levels) * Build.POINTS_PER_LEVEL, int(out.levels)]), 22, Color(0.6, 1.0, 0.6), UI.bold)
 		lv.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		body.add_child(lv)
-		Game.sfx("levelup")
+		if not _again:
+			Game.sfx("levelup")
 	if out.has("unlock"):
 		body.add_child(UI.label(L.f("Mở khóa vùng mới: %s", out.unlock), 22, UI.GOLD, UI.bold))
 	if not out.won and out.mode == "stage":
@@ -199,6 +243,14 @@ func _ready() -> void:
 		if WBoss.left(h) > 0:
 			row.add_child(UI.gold_button(L.f("Đánh tiếp (%d)", WBoss.left(h)), Flow.start_wboss, 24, 210))
 		row.add_child(UI.button("Về Boss", func(): Game.goto(WBossScreen.new()), 24, 160))
+	elif out.mode == "kyngo":
+		if not out.won and int(out.get("tries_left", 0)) > 0:
+			row.add_child(UI.gold_button("Đấu lại", Flow.start_kyngo, 24, 160))
+		row.add_child(UI.button("Bản đồ", func():
+			MapScreen.last_nm = false
+			MapScreen.last_region = int(out.r)
+			Game.goto(MapScreen.new()), 24, 150))
+		row.add_child(UI.button("Về sảnh", func(): Game.goto(HubScreen.new()), 24, 170))
 	elif out.mode == "tower":
 		if out.won:
 			row.add_child(UI.gold_button("Tầng kế", func(): Flow.start_tower(int(out.f) + 1), 24, 170))
@@ -215,10 +267,11 @@ func _ready() -> void:
 			rv_b.pressed.connect(_revive)
 			row.add_child(rv_b)
 		row.add_child(UI.button("Về sảnh", func(): Game.goto(HubScreen.new()), 24, 170))
-	if out.won:
+	if out.won and not _again:
 		Game.sfx("coin")
 	if Game.autoplay:
 		print("FLOWTEST result: mode=%s won=%s stars=%s rewards=%s level=%d daily=%s" % [out.mode, out.won, out.get("stars", 0), out.get("rewards", {}), int(h.level), h.get("daily", {}).get("prog", {})])
+		print("FLOWTEST 1.5: mp=%s mp_today=%d kn=%s replay=%s books=%s taught=%s" % [out.get("mp", "-"), MonPhai.today(h), h.get("kn", {}), not Replay.last.is_empty(), h.get("books", {}), out.get("taught", "-")])
 		get_tree().create_timer(0.5).timeout.connect(get_tree().quit)
 
 func back() -> void:
@@ -233,13 +286,27 @@ func _double(dbl: Button, rw: Dictionary) -> void:
 
 func _doubled(dbl: Button, rw: Dictionary) -> void:
 	var extra := {"exp": int(rw.get("exp", 0)), "gold": int(rw.get("gold", 0))}
-	var lv_up := Flow._grant(extra)
+	var lv_up := Flow._grant(extra, false)
 	Game.save()
 	refresh_wallet()
+	out["doubled"] = L.f("Đã nhân đôi: +%d kinh nghiệm, +%d vàng", [extra.exp, extra.gold])
 	if is_instance_valid(dbl):
-		dbl.text = L.f("Đã nhân đôi: +%d kinh nghiệm, +%d vàng", [extra.exp, extra.gold])
+		dbl.text = out.doubled
 	if lv_up > 0:
 		toast(L.f("Thăng cấp! Đạt cấp %d", int(Game.hero.level)), Color(0.6, 1.0, 0.6))
+
+## Xem lại trận: watch the fight just played, then come back to this summary.
+func _watch() -> void:
+	var o := out
+	Flow.watch(Replay.last, func(_res: Dictionary): Game.goto(ResultScreen.new(o)))
+
+func _save_replay(b: Button) -> void:
+	if Replay.save(Replay.last):
+		b.text = "Đã lưu"
+		b.disabled = true
+		toast(L.f("Đã lưu — xem ở «Trận Đã Lưu» ngoài sảnh (%d/%d)", [Replay.count(), Replay.KEEP]), Color(0.6, 1, 0.7))
+	else:
+		toast(L.f("Kho đã đủ %d trận — xóa bớt ở «Trận Đã Lưu» ngoài sảnh", Replay.KEEP), Color(1, 0.7, 0.5))
 
 func _revive() -> void:
 	if not Ads.show_rewarded(func(): Flow.start_arena(int(out.n), true), Callable(), "arena"):

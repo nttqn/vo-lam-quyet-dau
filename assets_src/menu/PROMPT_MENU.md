@@ -48,3 +48,12 @@ Dán PHẦN CHUNG rồi thay câu đầu bằng "A single game menu icon" và th
 One icon centered: World boss: a huge horned demon silhouette towering over a tiny swordsman on a cliff, glowing red eyes, crimson storm clouds and lightning behind, deep red and gold.
 ```
 Cắt: `godot --headless --path . --script res://tools/icon_cut.gd -- menu_4` → `assets/ui/menu/wboss.png`.
+
+## Tấm 5 — `menu_5.png` (2 icon cho 1.5.0, canvas 1536x1024)
+Dán PHẦN CHUNG rồi thay câu đầu bằng "2 game menu icons side by side in one row" và thêm:
+```
+2 icons in one row, left to right:
+1) Sect rivalry: five small sect banners on poles planted around a stone summit, the tallest banner in the middle with a golden crown emblem, warm gold and crimson.
+2) Chance encounter: an old hermit in plain robes meditating under a twisted pine on a misty cliff, a single leaf split in two in front of him, cool teal and silver.
+```
+Cắt: `godot --headless --path . --script res://tools/icon_cut.gd -- menu_5` → `assets/ui/menu/monphai.png`, `assets/ui/menu/kyngo.png`. Chưa có ảnh thì sảnh dùng huy hiệu chữ cái.

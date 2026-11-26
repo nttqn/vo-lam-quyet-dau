@@ -547,6 +547,28 @@ func sum_field(collection: String, field: String) -> int:
 			return int(_fs_plain(res.get("aggregateFields", {}).get("s", {})))
 	return -1
 
+## Sum of `sum_of` and the document count over the documents whose `field`
+## equals v (single-field index, no setup): {sum, n}, or {} on error.
+## Môn Phái Tranh Hùng: one call per sect.
+func sum_count_eq(collection: String, field: String, v, sum_of: String) -> Dictionary:
+	if not await _ensure_token():
+		return {}
+	var body := {"structuredAggregationQuery": {
+		"structuredQuery": {"from": [{"collectionId": collection}],
+			"where": {"fieldFilter": {"field": {"fieldPath": field}, "op": "EQUAL", "value": _fs_value(v)}}},
+		"aggregations": [{"alias": "s", "sum": {"field": {"fieldPath": sum_of}}}, {"alias": "n", "count": {}}]}}
+	var url := "https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents:runAggregationQuery" % project_id
+	var r := await _req(HTTPClient.METHOD_POST, url, JSON.stringify(body), true)
+	if r.code != 200:
+		last_error = "HTTP %d" % r.code
+		return {}
+	for row in r.get("list", []):
+		var res = (row as Dictionary).get("result")
+		if res is Dictionary:
+			var af: Dictionary = res.get("aggregateFields", {})
+			return {"sum": int(_fs_plain(af.get("s", {}))), "n": int(_fs_plain(af.get("n", {})))}
+	return {}
+
 ## Documents of a collection ordered by `order_field` (descending, or
 ## ascending with `asc`), optionally with order_field between lo and hi.
 ## `after`: a row from a previous page (same query); the page continues

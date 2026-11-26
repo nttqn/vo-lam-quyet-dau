@@ -15,8 +15,11 @@ func _ready() -> void:
 	shade(false, 0.55, 0.85)
 	shade(true, 0.3, 0.55)
 	enable_turn(DOCK_H)
+	if KyNgo.daily(h):   # the day's stranger turns up on the Hành Tẩu map
+		Game.save()
 	_header(h, s)
 	_right(h)
+	_left(h)
 	_dock(h, s)
 	Ban.check()   # khóa tài khoản: throttled read of ban/{uid}
 	Iap.deliver_queue.call_deferred()
@@ -151,6 +154,42 @@ func _right(h: Dictionary) -> void:
 	row2.add_child(wb)
 	if WBoss.unlocked(h) and (wb_left > 0 or WBoss.claimable(h)):
 		_glow(wb)
+
+## Bottom-left, above the dock: Môn Phái Tranh Hùng, a waiting Kỳ Ngộ and
+## the saved fights (1.5.0).
+func _left(h: Dictionary) -> void:
+	var col := UI.vbox(8)
+	col.anchor_top = 1.0
+	col.anchor_bottom = 1.0
+	col.offset_left = 24
+	col.offset_right = 404
+	col.offset_bottom = -DOCK_H - 12
+	col.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	col.alignment = BoxContainer.ALIGNMENT_END
+	ui.add_child(col)
+	var kc := KyNgo.current(h)
+	if not kc.is_empty():
+		var kb := _tile("Kỳ Ngộ", L.f("%s · %s", [KyNgo.title(str(kc.kind)), KyNgo.region_name(kc)]), "kyngo",
+			Color(0.15, 0.42, 0.55), func():
+				MapScreen.last_nm = false
+				MapScreen.last_region = int(kc.r)
+				Game.goto(MapScreen.new()), 78, 18)
+		col.add_child(kb)
+		_glow(kb)
+	var mp := MonPhai.ensure(h)
+	var msub := L.f("Cấp %d mở", 5)
+	if MonPhai.unlocked(h):
+		msub = "Nhận thưởng tuần trước!" if MonPhai.claimable(h) else L.f("Công tuần %d · hôm nay %d/%d", [int(mp.pts), int(mp.today), MonPhai.DAY_CAP])
+	var mt := _tile("Môn Phái Tranh Hùng", msub, "monphai", Hero.sect(h).elem.darkened(0.35), func(): Game.goto(MonPhaiScreen.new()), 78, 18)
+	col.add_child(mt)
+	if MonPhai.claimable(h):
+		_glow(mt)
+	var n := Replay.count()
+	if n > 0:
+		var rb := UI.button(L.f("▶ Trận Đã Lưu (%d)", n), func(): Game.goto(ReplayScreen.new()), 17, 0)
+		rb.custom_minimum_size = Vector2(0, 40)
+		rb.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		col.add_child(rb)
 
 func _next_stage(h: Dictionary) -> Array:
 	for r in Journey.REGIONS.size():

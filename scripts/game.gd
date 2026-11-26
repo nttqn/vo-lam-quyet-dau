@@ -254,6 +254,7 @@ func delete_slot(i: int) -> void:
 	park_slot(i)
 	Cloud.delete_slot(i)
 	Ranks.remove(i)
+	MonPhai.remove(i)   # a new hero in this slot starts its own week row
 
 ## Cloud pull: replace a slot's file with data from the server.
 func write_slot(i: int, data: Dictionary) -> void:

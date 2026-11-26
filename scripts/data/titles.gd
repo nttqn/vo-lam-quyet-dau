@@ -20,6 +20,9 @@ const LIST := {
 	"diet_ma": ["Diệt Ma Anh Hùng", Color(1.0, 0.4, 0.4), "Gây 20.000 sát thương lên Boss Thế Giới trong một ngày"],
 	"than_binh": ["Thần Binh Chủ", Color(1.0, 0.85, 0.3), "Cường hóa một món trang bị lên +15"],
 	"bach_chien": ["Bách Chiến Bách Thắng", Color(1.0, 0.7, 0.5), "Thắng tổng cộng 300 trận"],
+	"cong_than": ["Công Thần Môn Phái", Color(0.95, 0.75, 0.45), "Góp 500 công trạng cho môn phái trong một tuần"],
+	"de_nhat_phai": ["Đệ Nhất Môn Phái", Color(1.0, 0.82, 0.25), "Môn phái của bạn đứng đầu một tuần Tranh Hùng"],
+	"ky_duyen": ["Kỳ Duyên Giang Hồ", Color(0.6, 0.9, 1.0), "Vượt qua 10 Kỳ Ngộ"],
 }
 
 static func met(h: Dictionary, id: String) -> bool:
@@ -41,6 +44,9 @@ static func met(h: Dictionary, id: String) -> bool:
 			return maxi(int(w.get("dmg", 0)), int(w.get("best", 0))) >= 20000
 		"than_binh": return Achieve.max_plus(h) >= 15
 		"bach_chien": return int(h.get("wins", 0)) >= 300
+		"cong_than": return int(Dictionary(h.get("mp", {})).get("best", 0)) >= 500
+		"de_nhat_phai": return int(Dictionary(h.get("mp", {})).get("wins", 0)) >= 1
+		"ky_duyen": return int(Dictionary(h.get("kn", {})).get("done", 0)) >= 10
 	return false
 
 ## Adds newly met titles to h.titles; returns their ids.

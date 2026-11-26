@@ -65,6 +65,26 @@ service cloud.firestore {
         && d.level is int && d.tries is int && d.tries >= 1 && d.tries <= 4
         && d.dmg is int && d.dmg >= 0 && d.dmg <= d.tries * 50000;
     }
+    // Môn Phái Tranh Hùng (1.5.0): mp_<yyyy>w<ww>/{uid}_{slot} = that hero's
+    // công this week (MonPhai.gd). 10..900 (120 a day), only grows, the sect
+    // never changes; sect totals = sum / count per sect (aggregation).
+    match /{coll}/{id} {
+      allow read: if request.auth != null && coll.matches('mp_[0-9]{4}w[0-9]{2}');
+      allow delete: if request.auth != null && coll.matches('mp_[0-9]{4}w[0-9]{2}') && myHero(id);
+      allow create: if request.auth != null && coll.matches('mp_[0-9]{4}w[0-9]{2}') && myHero(id)
+        && goodMp(request.resource.data) && !banned();
+      allow update: if request.auth != null && coll.matches('mp_[0-9]{4}w[0-9]{2}') && myHero(id)
+        && goodMp(request.resource.data)
+        && request.resource.data.pts >= resource.data.pts
+        && request.resource.data.sect == resource.data.sect && !banned();
+    }
+    function goodMp(d) {
+      return d.keys().hasOnly(['name', 'sect', 'level', 'pts'])
+        && d.name is string && d.name.size() <= 24
+        && d.sect in ['thieu_lam', 'vo_dang', 'nga_mi', 'cai_bang', 'duong_mon', 'vovinam']
+        && d.level is int && d.level >= 1 && d.level <= 80
+        && d.pts is int && d.pts >= 10 && d.pts <= 900;
+    }
     // tuning read by the game, written in the console (config/wboss {pool})
     match /config/{id} {
       allow read: if request.auth != null;

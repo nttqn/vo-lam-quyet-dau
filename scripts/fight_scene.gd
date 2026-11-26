@@ -44,10 +44,29 @@ var _frame_ms := 0            # last _process tick (ms): a long gap = the app wa
 var _fps_t := 0.0
 var _fps_n := 0
 var _first_fight := false     # the phone's hero has never finished a fight
+# Xem lại trận (scripts/data/replay.gd): every recordable fight keeps its
+# starting cfg and both input streams; cfg.replay plays one back.
+var _cfg0 := {}               # deep copy of the cfg as the fight starts
+var _rec := [[], []]          # input streams being recorded (player, foe)
+var _recording := false
+var _play := {}               # the replay being watched ({} = a real fight)
+var _cur: Array = []          # Replay.Cursor per side while watching
+var _speed := 1               # sim ticks per physics frame while watching
+var _end_hp := [0.0, 0.0]     # both fighters' hp when the match was decided
+var _end_frame := 0
 
 func _init(p_cfg: Dictionary) -> void:
 	cfg = p_cfg
 	_born_ms = Time.get_ticks_msec()
+	_play = cfg.get("replay", {})
+	if _play.is_empty():
+		_cfg0 = cfg.duplicate(true)
+	else:
+		_cur = [Replay.Cursor.new(_play.p), Replay.Cursor.new(_play.e)]
+
+## Watching a replay (no touch controls, no rewards).
+func watching() -> bool:
+	return not _play.is_empty()
 
 static func make_fighter(side: Dictionary) -> Fighter:
 	var f := Fighter.new()
@@ -147,6 +166,8 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--shot="):
 			_shot = a.substr(7)
+		if a.begins_with("--rpshot=") and watching():   # --replaytest: capture the replay only
+			_shot = a.substr(9)
 		if a.begins_with("--shotat="):
 			for s in a.substr(9).split(","): _shot_frames.append(int(s))
 			_quit_after_shot = true
@@ -159,6 +180,13 @@ func _ready() -> void:
 					elif k == "fwd": d["mx"] = 1
 					else: d["btn"] = k
 				_script[int(p[0])] = d
+	if watching():
+		pad.visible = false
+		pad.show_buttons = false
+		_replay_bar(root)
+		Game.music("fight")
+		return
+	_recording = not cfg.get("training", false) and not cfg.get("tutorial", false) and _script.is_empty()
 	if cfg.get("tutorial", false):
 		tut = Tutorial.new(self)
 		root.add_child(tut)
@@ -170,6 +198,39 @@ func _ready() -> void:
 		Game.settings["in_fight"] = int(Game.hero.get("fights", 0))
 		Game.save_settings()
 	Game.music("fight")
+
+## Watching a replay: a "Xem lại" seal, the speed switch and the way out,
+## where the touch controls would be.
+func _replay_bar(root: Control) -> void:
+	var bar := UI.hbox(14)
+	bar.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	bar.offset_left = -330
+	bar.offset_right = 330
+	bar.offset_top = -86
+	bar.offset_bottom = -22
+	bar.alignment = BoxContainer.ALIGNMENT_CENTER
+	root.add_child(bar)
+	var tag := UI.label("◉ Xem lại", 26, Color(1.0, 0.45, 0.35), UI.bold)
+	tag.add_theme_color_override("font_outline_color", Color.BLACK)
+	tag.add_theme_constant_override("outline_size", 6)
+	tag.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bar.add_child(tag)
+	var sp := UI.button("Tốc độ ×1", func(): pass, 22, 190)
+	sp.name = "Speed"
+	sp.pressed.connect(func():
+		_speed = {1: 2, 2: 4, 4: 1}[_speed]
+		sp.text = L.f("Tốc độ ×%d", _speed))
+	bar.add_child(sp)
+	bar.add_child(UI.gold_button("Thoát", func(): _forfeit(), 22, 160))
+	if str(_play.get("ver", "")) != Replay.version():
+		var old := UI.label("Trận lưu ở bản cũ — có thể diễn lại không đúng hẳn.", 17, Color(1, 0.8, 0.5))
+		old.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+		old.offset_left = -400
+		old.offset_right = 400
+		old.offset_top = -116
+		old.offset_bottom = -90
+		old.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		root.add_child(old)
 
 func _shadow(v: FighterView) -> void:
 	var mi := Arena.blob()
@@ -233,6 +294,9 @@ func _show_pause() -> void:
 	h.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(h)
 	v.add_child(UI.gold_button("Tiếp tục", toggle_pause, 28, 320))
+	if watching():
+		v.add_child(UI.button("Thoát xem lại", func(): _forfeit(), 24, 320))
+		return
 	v.add_child(UI.button("Hướng dẫn điều khiển", _show_help, 24, 320))
 	v.add_child(UI.button("Bỏ cuộc", func(): _forfeit(), 24, 320))
 
@@ -253,25 +317,38 @@ func _forfeit() -> void:
 	_finish(false, true)
 
 func _physics_process(_delta: float) -> void:
-	if paused or _done and _end_t > 2.5:
-		return
-	var inp := pad.poll()
-	if ai_p:
-		inp = ai_p.decide(sim)
-	var ein := ai.decide(sim)
-	if tut:
-		ein = tut.enemy_input(ein)
-		tut.before_tick()
-	if not _script.is_empty():
-		inp = _script.get(_frames, {})
-		ein = {}
-	if "--fullen" in OS.get_cmdline_user_args():   # test: skills always affordable
-		sim.f[0].en = Fighter.EN_MAX
+	for _i in (_speed if watching() else 1):
+		if paused or _done and _end_t > 2.5:
+			return
+		_tick_once()
+
+func _tick_once() -> void:
+	var inp: Dictionary
+	var ein: Dictionary
+	if watching():
+		inp = _cur[0].input(_frames)
+		ein = _cur[1].input(_frames)
+	else:
+		inp = pad.poll()
+		if ai_p:
+			inp = ai_p.decide(sim)
+		ein = ai.decide(sim)
+		if tut:
+			ein = tut.enemy_input(ein)
+			tut.before_tick()
+		if not _script.is_empty():
+			inp = _script.get(_frames, {})
+			ein = {}
+		if "--fullen" in OS.get_cmdline_user_args():   # test: skills always affordable
+			sim.f[0].en = Fighter.EN_MAX
+	if _recording:
+		Replay.push(_rec[0], _frames, inp)
+		Replay.push(_rec[1], _frames, ein)
 	sim.tick(inp, ein)
 	if tut:
 		tut.after_tick(inp)
 	if cfg.get("rule", "") == "regen" and sim.phase == FightSim.FIGHT and not sim.f[1].dead:
-		sim.f[1].hp = minf(sim.f[1].st.hp_max, sim.f[1].hp + sim.f[1].st.hp_max * 0.012 / 60.0)
+		sim.f[1].hp = minf(sim.f[1].st.hp_max, sim.f[1].hp + sim.f[1].st.hp_max * float(cfg.get("regen", 0.012)) / 60.0)   # cfg.regen: Kỳ Ngộ ma đầu
 	if cfg.get("training", false):
 		sim.timer = FightSim.ROUND_FRAMES
 		for ff in sim.f:
@@ -419,6 +496,8 @@ func _events() -> void:
 				Game.sfx("ko")
 			"match_end":
 				_done = true
+				_end_hp = [sim.f[0].hp, sim.f[1].hp]
+				_end_frame = sim.frame
 				var won: bool = e.winner == 0
 				if cfg.get("wboss", false):
 					hud.banner("Hạ Gục Boss!" if won else "Kết Thúc", L.f("Sát thương: %s", UI.fmt(sim.f[0].stats_dealt)), 3.0, UI.GOLD)
@@ -574,6 +653,20 @@ func _voice(i: int, kind: String, chance := 1.0) -> void:
 	Game.sfx(name, 0.05, 0.9)
 
 func _finish(won: bool, forfeit := false) -> void:
+	if watching():
+		Engine.time_scale = 1.0
+		# the same fight again, to the frame: same winner, same health left
+		var same: bool = not forfeit and sim.winner == int(_play.get("winner", -2)) \
+			and int(_play.get("end_frame", -1)) == _end_frame \
+			and absf(float(_play.hp[0]) - float(_end_hp[0])) < 0.01 and absf(float(_play.hp[1]) - float(_end_hp[1])) < 0.01
+		finished.emit({"won": won, "forfeit": forfeit, "watched": true, "same": same})
+		return
+	if _recording and not forfeit and sim.winner >= 0:
+		Replay.last = {"ver": Replay.version(), "cfg": _cfg0, "p": _rec[0], "e": _rec[1],
+			"winner": sim.winner, "end_frame": _end_frame, "hp": _end_hp.duplicate(),
+			"meta": Replay.meta_for(_cfg0, str(cfg.get("mode", "")), won, sim.frame / 60.0)}
+	else:
+		Replay.last = {}
 	var fp: Fighter = sim.f[0]
 	var res := {
 		"won": won, "forfeit": forfeit, "rounds_won": sim.wins[0], "rounds_lost": sim.wins[1],

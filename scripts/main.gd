@@ -127,6 +127,9 @@ func _ready() -> void:
 	if "--backtest" in args:
 		_back_test()
 		return
+	if "--replaytest" in args:
+		_replay_test(0, 0)
+		return
 	if "--flowtest" in args:
 		Game.autoplay = true
 		Game.slot = 2
@@ -147,6 +150,14 @@ func _ready() -> void:
 			Flow.start_wboss()
 		elif "--duel" in args:
 			Flow.start_duel(Duel.bots(Game.hero, 1)[0])
+		elif _arg(args, "--kyngo=") != "":   # --kyngo=cao_nhan|bi_kip|bao_tang|ma_dau
+			Hero.add_exp(Game.hero, 20000)
+			Game.hero.stars["0_5"] = 3
+			var kc := KyNgo.spawn(Game.hero, _arg(args, "--kyngo="))
+			if "--fakewin" in args:   # the win path without a fight
+				Flow._kyngo_done(kc, {"won": true, "max_combo": 5, "seconds": 30.0, "hp_left": 0.5, "insight": {}})
+			else:
+				Flow.start_kyngo()
 		elif tw > 0:
 			Flow.start_tower(tw)
 		elif _arg(args, "--nm=") != "" or _arg(args, "--stage=") != "":
@@ -320,6 +331,72 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			Game.goto(rs2)
 			(func(): rs2.ui.add_child(ProfilePanel.new(rs2.fake_rows[0], func(): Game.goto(RankScreen.new())))).call_deferred()
 		"char": Game.goto(CharacterScreen.new())
+		# 1.5.0: Môn Phái Tranh Hùng / Kỳ Ngộ / Trận Đã Lưu demo screens
+		"monphai", "monphaiboard", "monphaireward":
+			var h := Game.hero
+			Hero.add_exp(h, 20000)
+			MonPhai.ensure(h)
+			h.mp.pts = 186
+			h.mp.today = 42
+			if "--claim" in args:
+				h.mp.prev = {"week": "2000w01", "pts": 300, "sect": str(h.sect)}
+			if "--buff" in args:
+				h.mp.buff = Duel.season()
+			var mps := MonPhaiScreen.new()
+			var demo := [["thieu_lam", 61420, 412], ["nga_mi", 48810, 298], ["vo_dang", 52110, 377], ["cai_bang", 30240, 231], ["duong_mon", 27720, 246], ["vovinam", 6200, 41]]
+			for d in demo:
+				mps.fake_rows.append({"sect": d[0], "sum": d[1], "n": d[2], "score": MonPhai.score(d[1], d[2])})
+			mps.fake_rows.sort_custom(func(a, b): return a.score > b.score)
+			var names := ["Tiêu Dao Khách", "Nguyệt Ảnh", "Bạch Vân", "", "Thiết Quyền", "Hàn Băng", "Phi Yến", "Cuồng Đao"]
+			for n in 12:
+				mps.fake_board.append({"_id": "f%d" % n, "name": names[n % names.size()], "sect": Sects.IDS[n % 5], "level": 62 - n * 3, "pts": 840 - n * 41})
+			Game.goto(mps)
+			if screen == "monphaiboard":
+				mps._board.call_deferred()
+			elif screen == "monphaireward":
+				mps._rewards.call_deferred()
+		"hubkn", "mapkn":
+			var h := Game.hero
+			Hero.add_exp(h, 20000)
+			for s2 in 6:
+				h.stars[Journey.stage_id(0, s2)] = 3
+				h.stars[Journey.stage_id(1, s2)] = 2
+			h.kn = {}
+			KyNgo.spawn(h, _arg(args, "--kind=", "cao_nhan"), 4242)
+			h.kn.cur.r = 1
+			MonPhai.ensure(h)
+			h.mp.pts = 64
+			h.mp.today = 18
+			if screen == "mapkn":
+				MapScreen.last_nm = false
+				MapScreen.last_region = 1
+				Game.goto(MapScreen.new())
+			else:
+				Titles.refresh(h)
+				Game.goto(HubScreen.new())
+		"kndialog":
+			var h := Game.hero
+			Hero.add_exp(h, 20000)
+			h.stars["0_5"] = 3
+			h.kn = {}
+			var kc := KyNgo.spawn(h, _arg(args, "--kind=", "cao_nhan"), 4242)
+			Game.goto(DialogScreen.new(int(kc.r), "", KyNgo.side(h, kc), func(): pass, KyNgo.lines(kc)))
+		"knresult":
+			var h := Game.hero
+			Hero.add_exp(h, 20000)
+			MonPhai.ensure(h)
+			h.mp.today = 30
+			var kc := KyNgo.spawn(h, "cao_nhan", 4242)
+			Replay.last = {"cfg": {}, "p": [], "e": []}
+			Game.goto(ResultScreen.new({"mode": "kyngo", "won": true, "res": {"max_combo": 11, "seconds": 41.0}, "kind": "cao_nhan",
+				"foe": kc.name, "r": 0, "rewards": KyNgo.rewards(h, "cao_nhan"), "levels": 0, "mp": 8, "taught": [KyNgo.insight_key(kc), KyNgo.INSIGHT], "kn_new": false}))
+		"replays":
+			for k in 3:
+				var m := {"mode": ["duel", "wboss", "kyngo"][k], "p": "Kiểm Thử", "e": ["Tiêu Dao Khách", "Đồng Giáp La Hán", "Bạch Vân Lão Nhân"][k],
+					"ps": "vo_dang", "es": ["nga_mi", "thieu_lam", "duong_mon"][k], "pl": 32, "el": [33, 32, 34][k], "won": k != 1, "secs": [74, 90, 41][k],
+					"t": int(Time.get_unix_time_from_system()) - k * 7200, "title": ""}
+				Replay.save({"ver": Replay.version(), "cfg": {"p": {}, "e": {}}, "p": [], "e": [], "meta": m})
+			Game.goto(ReplayScreen.new())
 		"wbossresult":
 			var wr := {"max_combo": 9, "seconds": 90.0}
 			WBoss.ensure(Game.hero).dmg = 2480
@@ -537,6 +614,99 @@ func _rank_live_test() -> void:
 	var dn: Array = await Cloud.query(Ranks.COLLECTION, "power", 2, null, v)
 	print("LIVE around v=%d up(asc)=%s down=%s above=%d err=%s" % [v, ids.call(up), ids.call(dn), await Cloud.count_above(Ranks.COLLECTION, "power", v), Cloud.last_error])
 	get_tree().quit()
+
+## -- --replaytest [--n=N]: plays N fights of different kinds with the AI on
+## both sides, keeps each through Replay.save / load_one (the file format),
+## plays it back and checks the replay ends on the same frame with the same
+## health. Also checks Môn Phái / Kỳ Ngộ bookkeeping. Prints REPLAYTEST lines.
+func _replay_test(i: int, bad: int) -> void:
+	var args := OS.get_cmdline_user_args()
+	var n := int(_arg(args, "--n=", "8"))
+	if i == 0:
+		Game.autoplay = true
+		Game.slot = 2
+		var sects: Array = Sects.IDS
+		Game.hero = Hero.create("Kiểm Thử", sects[randi() % sects.size()])
+		Hero.add_exp(Game.hero, 60000)
+		Game.hero.stars["0_5"] = 3
+		Game.hero.stars["1_5"] = 3
+		_mp_ky_checks()
+	if i >= n:
+		print("REPLAYTEST done: %d/%d replays matched" % [n - bad, n])
+		get_tree().quit(1 if bad > 0 else 0)
+		return
+	var h := Game.hero
+	var cfg: Dictionary
+	match (i % 6) if not "--only3" in args else 3:
+		0: cfg = {"p": Hero.side(h), "e": Duel.side(Duel.bots(h, 1)[0]), "theme": "temple", "rounds": 2, "seed": randi(), "mode": "duel"}
+		1:
+			var f := 9 + 3 * (i / 6)   # floors with rules (no_skill / time / regen ...)
+			cfg = {"p": Hero.side(h), "e": Tower.side(f), "theme": "peak", "rounds": 1, "seed": randi(), "rule": Tower.rule(f), "mode": "tower"}
+		2: cfg = {"p": Hero.side(h), "e": Dungeon.side(0, 1, 2), "theme": "temple", "rounds": 1, "seed": randi(), "p_hp": 0.6, "mode": "dungeon"}
+		3: cfg = {"p": Hero.side(h), "e": WBoss.side(h), "theme": "snow", "rounds": 1, "seed": randi(), "time": 20, "wboss": true, "mode": "wboss"}
+		4:
+			var kc := KyNgo.spawn(h, ["cao_nhan", "bi_kip", "bao_tang", "ma_dau"][(i / 6) % 4])
+			cfg = {"p": Hero.side(h), "e": KyNgo.side(h, kc), "theme": "bamboo", "rounds": 1, "seed": randi(), "rule": KyNgo.rule(str(kc.kind)), "mode": "kyngo"}
+		5: cfg = {"p": Hero.side(h), "e": Journey.stage_side(3, 5), "theme": "snow", "rounds": 2, "seed": randi(), "mode": "stage"}
+	var fs := FightScene.new(cfg)
+	fs.finished.connect(func(res: Dictionary):
+		var rp: Dictionary = Replay.last
+		if rp.is_empty():
+			print("REPLAYTEST %d %s: NO REPLAY" % [i, cfg.mode])
+			_replay_test.call_deferred(i + 1, bad + 1)
+			return
+		# through the file format, like a saved fight
+		var ok_save := Replay.save(rp) if not "--nofile" in args else false
+		var back := Replay.load_one(str(rp.get("saved_id", ""))) if ok_save else rp
+		Replay.delete(str(rp.get("saved_id", "")))
+		print("REPLAYTEST %d %s: won=%s frames=%d inputs=%d+%d saved=%s" % [i, cfg.mode, res.won, int(rp.end_frame), rp.p.size(), rp.e.size(), ok_save])
+		Flow.watch(back, func(wr: Dictionary):
+			print("REPLAYTEST %d %s: replay same=%s" % [i, cfg.mode, wr.get("same", false)])
+			_replay_test.call_deferred(i + 1, bad + (0 if wr.get("same", false) else 1))))
+	Game.goto(fs)
+
+func _mp_ky_checks() -> void:
+	var h := Game.hero
+	var fails := []
+	var got := 0
+	for k in 30:
+		got += MonPhai.add(h, 6)
+	if got != MonPhai.DAY_CAP or MonPhai.today(h) != MonPhai.DAY_CAP: fails.append("day cap %d" % got)
+	h.mp.week = "2000w01"   # a new week: last week's total becomes claimable
+	MonPhai.ensure(h)
+	if int(h.mp.prev.pts) != MonPhai.DAY_CAP or not MonPhai.claimable(h) or MonPhai.pts(h) != 0: fails.append("week roll %s" % h.mp)
+	h.mp.day = "2000-01-01"
+	if MonPhai.add(h, 6) != 6: fails.append("new day")
+	if MonPhai.score(300, 5) != 30 or MonPhai.score(0, 0) != 0: fails.append("score")
+	var rw := {"exp": 100, "gold": 50}
+	h.mp.buff = Duel.season()
+	Flow._grant(rw)
+	if int(rw.exp) != 110 or int(rw.gold) != 55: fails.append("buff %s" % rw)
+	var rw2 := {"exp": 100, "gold": 50}
+	Flow._grant(rw2, false)
+	if int(rw2.exp) != 100: fails.append("no buff on x2")
+	h.mp.buff = ""
+	h.kn = {}
+	if not KyNgo.daily(h) or KyNgo.daily(h): fails.append("daily spawn")
+	var kc := KyNgo.current(h)
+	if not int(kc.r) in [0, 1] or str(kc.sect) == str(h.sect): fails.append("spawn place %s" % kc)
+	if KyNgo.after_win(h, 0.0): fails.append("spawn while one waits")
+	h.kn.cur = {}
+	if not KyNgo.after_win(h, 0.0) or int(h.kn.n) != 2: fails.append("after win")
+	h.kn.cur = {}
+	if KyNgo.after_win(h, 0.0): fails.append("day max")
+	for kind in KyNgo.KINDS:
+		var c := KyNgo.spawn(h, kind)
+		var e := KyNgo.side(h, c)
+		if e.is_empty() or KyNgo.lines(c).size() != 3 or KyNgo.promise(c) == "": fails.append("kind " + kind)
+		if kind == "cao_nhan":
+			var names: Array = e.skills.filter(func(x): return x != null).map(func(x): return x.name)
+			if not Insight.skill_of(KyNgo.insight_key(c)).name in names: fails.append("master lacks his technique")
+	var k := KyNgo.insight_key(KyNgo.spawn(h, "cao_nhan"))
+	var before := Insight.points(h, k)
+	Insight.grant(h, k, KyNgo.INSIGHT)
+	if Insight.points(h, k) != before + KyNgo.INSIGHT: fails.append("insight grant")
+	print("REPLAYTEST checks: %s" % ("ok" if fails.is_empty() else ", ".join(fails)))
 
 ## Value of a "--key=value" test flag (or `default`).
 func _arg(args: PackedStringArray, key: String, default := "") -> String:

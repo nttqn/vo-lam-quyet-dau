@@ -13,12 +13,14 @@ var _name: Label
 var _text: Label
 var _shown := 0.0
 
-func _init(p_r: int, p_part: String, p_foe: Dictionary, p_done: Callable) -> void:
+## p_lines: lines of their own (Kỳ Ngộ) instead of the region's story part;
+## those are not marked as seen.
+func _init(p_r: int, p_part: String, p_foe: Dictionary, p_done: Callable, p_lines := []) -> void:
 	r = p_r
 	part = p_part
 	foe = p_foe
 	on_done = p_done
-	_lines = Story.lines(r, part)
+	_lines = p_lines if not p_lines.is_empty() else Story.lines(r, part)
 
 func _ready() -> void:
 	var h := Game.hero
@@ -99,8 +101,9 @@ func _process(delta: float) -> void:
 func _finish() -> void:
 	if not on_done.is_valid():
 		return
-	Story.mark(Game.hero, r, part)
-	Game.save()
+	if part != "":
+		Story.mark(Game.hero, r, part)
+		Game.save()
 	var cb := on_done
 	on_done = Callable()
 	cb.call()

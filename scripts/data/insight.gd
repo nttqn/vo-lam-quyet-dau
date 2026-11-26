@@ -58,6 +58,17 @@ static func apply(h: Dictionary, gained: Dictionary) -> Array:
 	h.insight = ins
 	return out
 
+## Points given outside a fight (Kỳ Ngộ: a master teaches the technique), no
+## per-fight cap. Returns [key, tier] when a tầng was reached, else [].
+static func grant(h: Dictionary, k: String, n: int) -> Array:
+	if skill_of(k).is_empty() or n <= 0:
+		return []
+	var ins: Dictionary = h.get("insight", {})
+	var before := int(ins.get(k, 0))
+	ins[k] = before + n
+	h.insight = ins
+	return [k, tier(before + n)] if tier(before + n) > tier(before) else []
+
 ## Learned foreign skills, best first: [[key, tier, pts], ...]
 static func learned(h: Dictionary) -> Array:
 	var out := []

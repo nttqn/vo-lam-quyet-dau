@@ -108,6 +108,9 @@ func _build() -> void:
 			else:
 				b.text += L.f("\n     ★ %d/18   ·   Cấp %d+", [Journey.region_stars(h, r), reg.lvl])
 			b.custom_minimum_size.y = 76
+		if not nm and seen and int(KyNgo.current(h).get("r", -1)) == r:
+			b.text = L.f("%d. %s", [r + 1, reg.name]) + "  ✦" + b.text.substr(L.f("%d. %s", [r + 1, reg.name]).length())
+			b.add_theme_color_override("font_color", Color(0.6, 0.9, 1.0))
 		_tabs.add_child(b)
 	var reg2: Dictionary = Journey.REGIONS[region]
 	_title.text = reg2.name
@@ -118,8 +121,34 @@ func _build() -> void:
 	if nm and not _region_ok(h, region):
 		_list.add_child(UI.label(Journey.nm_lock(h, region, 0), 22, Color(0.8, 0.75, 0.7)))
 		return
+	var kc := KyNgo.current(h)
+	if not nm and not kc.is_empty() and int(kc.r) == region:
+		_list.add_child(_kyngo_card(kc))
 	for s in 6:
 		_list.add_child(_stage_card(region, s))
+
+## Kỳ Ngộ waiting in this region: who, the twist, the prize.
+func _kyngo_card(kc: Dictionary) -> Control:
+	var col := Color(0.6, 0.9, 1.0)
+	var p := UI.panel(Color(0.04, 0.1, 0.14, 0.92), col)
+	var row := UI.hbox(14)
+	p.add_child(row)
+	var info := UI.vbox(2)
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(info)
+	info.add_child(UI.label(L.f("✦ Kỳ Ngộ: %s — %s", [kc.name, KyNgo.title(str(kc.kind))]), 23, col, UI.bold))
+	var lvl := mini(Hero.MAX_LEVEL + 5, int(Game.hero.level) + int(KyNgo.KINDS[str(kc.kind)][2]))
+	var sub := L.f("Võ công %s  ·  Cấp %d", [Sects.get_sect(str(kc.sect)).name, lvl])
+	if int(kc.get("tries", 0)) > 0:
+		sub += "  ·  " + L.f("còn %d lần thử", KyNgo.TRIES - int(kc.tries))
+	info.add_child(UI.label(sub, 18, Color(0.85, 0.9, 0.95)))
+	var pr := UI.label(KyNgo.promise(kc), 16, Color(0.8, 0.85, 0.85))
+	pr.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.add_child(pr)
+	var b := UI.gold_button("Gặp gỡ", Flow.start_kyngo, 22, 170)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(b)
+	return p
 
 func _set_mode(want: bool) -> void:
 	if want == nm:
