@@ -25,6 +25,10 @@ func _ready() -> void:
 	Iap.deliver_queue.call_deferred()
 	_new_titles.call_deferred(h)
 	_maybe_checkin.call_deferred(h)
+	if GameClock.day_held():   # offline past the last day the server confirmed
+		get_tree().create_timer(2.5).timeout.connect(func():
+			if is_inside_tree():
+				toast("Kết nối mạng để nhận quà và lượt của ngày mới", Color(1, 0.8, 0.5)))
 
 # ------------------------------------------------------------------ header
 func _header(h: Dictionary, s: Dictionary) -> void:

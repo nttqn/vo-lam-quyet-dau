@@ -17,7 +17,7 @@ static func create(name: String, sect_id: String) -> Dictionary:
 		"gear": {}, "bag": [], "mats": {}, "insight": {}, "foreign": {},
 		"stars": {}, "nstars": {}, "region": 0,
 		"arena_best": 0, "wins": 0, "losses": 0, "fights": 0,
-		"color": 0, "rename_at": 0, "created": Time.get_unix_time_from_system(),
+		"color": 0, "rename_at": 0, "created": GameClock.now(),
 		"appearance": Appearance.default_for(sect_id, sect_id == "nga_mi"),
 	}
 	var s := Sects.get_sect(sect_id)
@@ -32,7 +32,7 @@ const NAME_MAX := 16
 
 ## Seconds until this hero may rename again (0 = now).
 static func rename_left(h: Dictionary) -> float:
-	return maxf(0.0, float(h.get("rename_at", 0)) + RENAME_GAP - Time.get_unix_time_from_system())
+	return maxf(0.0, float(h.get("rename_at", 0)) + RENAME_GAP - GameClock.now())
 
 ## A typed name made tidy: one line, single spaces, at most NAME_MAX chars.
 static func tidy_name(raw: String) -> String:

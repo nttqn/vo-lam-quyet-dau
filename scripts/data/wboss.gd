@@ -54,7 +54,13 @@ static func ensure(h: Dictionary) -> Dictionary:
 		w["prev"] = {"date": "", "dmg": 0}
 		w["claimed"] = ""
 	var today := Daily.today()
-	if w.get("date", "") != today:
+	var c := Daily.cmp(str(w.get("date", "")), today)
+	if c > 0:
+		# ran ahead: that day's tries count for today, its damage never reached a board
+		w["date"] = today
+		w["dmg"] = 0
+		w["best"] = 0
+	elif c < 0:
 		if int(w.get("dmg", 0)) > 0:
 			w["prev"] = {"date": str(w.date), "dmg": int(w.dmg)}
 		w["date"] = today
@@ -83,7 +89,7 @@ static func add_ad_try(h: Dictionary) -> void:
 static func claimable(h: Dictionary) -> bool:
 	var w := ensure(h)
 	var p: Dictionary = w.prev
-	return str(p.date) != "" and int(p.dmg) > 0 and str(w.claimed) != str(p.date)
+	return str(p.date) != "" and int(p.dmg) > 0 and str(w.claimed) != str(p.date) and str(p.date) < Daily.today()
 
 ## Fight side of today's boss for this hero: a normal boss of the hero's level
 ## (+3), much more health, harder blows, a little slower, giant and poised.

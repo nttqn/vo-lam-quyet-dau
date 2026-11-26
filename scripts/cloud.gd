@@ -60,6 +60,45 @@ func _ready() -> void:
 	_timer.one_shot = true
 	_timer.timeout.connect(_flush)
 	add_child(_timer)
+	if enabled():
+		sync_time.call_deferred()
+
+# ------------------------------------------------------------- server time
+## GameClock: the server's time from the Date header of a tiny Google answer
+## (at launch and each time the app comes back; every other request's Date
+## header keeps it fresh too). Off in tests (enabled() is false there).
+var _skew_sent := false
+
+func sync_time() -> void:
+	if not enabled():
+		return
+	var h := HTTPRequest.new()
+	h.timeout = 10.0
+	add_child(h)
+	if h.request("https://www.google.com/generate_204") != OK:
+		h.queue_free()
+		return
+	var res: Array = await h.request_completed
+	h.queue_free()
+	if res[0] == HTTPRequest.RESULT_SUCCESS:
+		_take_date(res[2], true)
+
+## keep: also store the trusted time as the offline floor (launch / resume).
+func _take_date(headers: PackedStringArray, keep := false) -> void:
+	for line in headers:
+		if line.to_lower().begins_with("date:"):
+			var t := GameClock.parse_http_date(line.substr(5))
+			if t > 0.0:
+				var first := not GameClock.trusted()
+				GameClock.synced(t)
+				if first or keep:
+					Game.settings["clock_floor"] = GameClock.get_floor()
+					Game.save_settings()
+					# phones set a day or more ahead (counted once a launch)
+					if GameClock.skew() > 20 * 3600 and not _skew_sent:
+						_skew_sent = true
+						Funnel.event("clock_ahead")
+			return
 
 func enabled() -> bool:
 	return api_key != "" and project_id != ""
@@ -738,6 +777,8 @@ func _req(method: int, url: String, body := "", auth := false, form := false) ->
 		return {"code": 0, "body": {}}
 	var res: Array = await h.request_completed
 	h.queue_free()
+	if res[0] == HTTPRequest.RESULT_SUCCESS:
+		_take_date(res[2])
 	var code: int = res[1] if res[0] == HTTPRequest.RESULT_SUCCESS else 0
 	var txt := (res[3] as PackedByteArray).get_string_from_utf8()
 	if code >= 400:

@@ -265,7 +265,7 @@ func _rename(raw: String, dim: Control) -> void:
 func _renamed(n: String) -> void:
 	var h := Game.hero
 	h.name = n
-	h.rename_at = Time.get_unix_time_from_system()
+	h.rename_at = GameClock.now()
 	Game.save()   # also republishes the Bảng Xếp Hạng row
 	if is_inside_tree():
 		toast(L.t("Đã đổi danh xưng: ") + n, Color(0.6, 1, 0.7))

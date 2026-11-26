@@ -34,7 +34,10 @@ static func ensure(h: Dictionary) -> Dictionary:
 	var d: Dictionary = h.get("dungeon", {})
 	if not d.has("best"):
 		d["best"] = {}
-	if d.get("date", "") != Daily.today():
+	var c := Daily.cmp(str(d.get("date", "")), Daily.today())
+	if c > 0:
+		d["date"] = Daily.today()   # ran ahead: keep what that day used
+	elif c < 0:
 		d["date"] = Daily.today()
 		d["used"] = 0
 		d["ads"] = 0

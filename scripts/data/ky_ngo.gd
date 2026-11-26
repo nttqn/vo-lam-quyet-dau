@@ -37,7 +37,10 @@ static func ensure(h: Dictionary) -> Dictionary:
 	var k: Dictionary = h.get("kn", {})
 	if k.is_empty():
 		k = {"day": "", "n": 0, "cur": {}, "done": 0}
-	if str(k.get("day", "")) != Daily.today():
+	var c := Daily.cmp(str(k.get("day", "")), Daily.today())
+	if c > 0:
+		k["day"] = Daily.today()
+	elif c < 0:
 		k["day"] = Daily.today()
 		k["n"] = 0
 	h.kn = k

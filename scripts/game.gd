@@ -21,6 +21,7 @@ func _ready() -> void:
 	get_tree().node_added.connect(_touch_scroll)
 	get_tree().node_added.connect(_lite_node)
 	_load_settings()
+	GameClock.set_floor(float(settings.get("clock_floor", 0.0)))   # latest trusted time (offline day hold)
 	_init_lang()
 	Gfx.set_level(settings.get("gfx", -1))
 	Gfx.apply(get_tree())
@@ -65,6 +66,7 @@ func _notification(what: int) -> void:
 		Notify.on_background()
 	elif what == NOTIFICATION_APPLICATION_RESUMED:
 		Notify.on_foreground()
+		Cloud.sync_time()   # GameClock: ask the server's time again after a pause
 
 func _input(event: InputEvent) -> void:
 	var k := event as InputEventKey

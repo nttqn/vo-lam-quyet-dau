@@ -29,7 +29,7 @@ static func active() -> bool:
 	if s.is_empty():
 		return false
 	var u := until()
-	return u == 0 or u > int(Time.get_unix_time_from_system())
+	return u == 0 or u > int(GameClock.now())
 
 ## One paragraph for the board screens and chat.
 static func text() -> String:

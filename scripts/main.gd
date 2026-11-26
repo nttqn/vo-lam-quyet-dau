@@ -127,6 +127,9 @@ func _ready() -> void:
 	if "--backtest" in args:
 		_back_test()
 		return
+	if "--clocktest" in args:
+		_clock_test()
+		return
 	if "--replaytest" in args:
 		_replay_test(0, 0)
 		return
@@ -664,6 +667,72 @@ func _replay_test(i: int, bad: int) -> void:
 			print("REPLAYTEST %d %s: replay same=%s" % [i, cfg.mode, wr.get("same", false)])
 			_replay_test.call_deferred(i + 1, bad + (0 if wr.get("same", false) else 1))))
 	Game.goto(fs)
+
+## -- --clocktest: GameClock (server time, offline day hold) and the daily
+## resets against phones set ahead, plus the old double check-in.
+func _clock_test() -> void:
+	var fails := []
+	var ok := func(cond: bool, what: String):
+		if not cond:
+			fails.append(what)
+	ok.call(GameClock.parse_http_date(" Thu, 26 Nov 2026 10:01:07 GMT") == 1795687267.0, "http date")
+	ok.call(GameClock.parse_http_date("garbage") < 0.0, "bad http date")
+	var real := 1795687267.0   # 2026-11-26 10:01 UTC
+	var real_day := Time.get_date_string_from_unix_time(int(real) + GameClock.bias_s())
+	# never online: the phone's clock
+	GameClock.reset()
+	GameClock.device_override = real + 9 * 86400
+	ok.call(GameClock.today() != real_day and not GameClock.day_held(), "never online uses phone")
+	# offline after a trusted time: the day holds
+	GameClock.reset()
+	GameClock.set_floor(real)
+	GameClock.device_override = real + 9 * 86400
+	ok.call(GameClock.today() == real_day and GameClock.day_held(), "offline day hold")
+	GameClock.device_override = real - 3 * 86400
+	ok.call(GameClock.now() >= real and GameClock.today() == real_day, "never back before the floor")
+	# online: the server's time whatever the phone says
+	GameClock.reset()
+	GameClock.device_override = real + 9 * 86400
+	GameClock.synced(real)
+	ok.call(GameClock.today() == real_day and absf(GameClock.skew() - 9 * 86400) < 5, "server time")
+	ok.call(Duel.season() == Duel.season(real), "season by server time")
+	# the pasted top player's check-in: both old fields, claimed today
+	var h := Hero.create("Kiểm Thử", "duong_mon")
+	Hero.add_exp(h, 60000)
+	h.checkin = {"day": real_day, "last": real_day, "n": 19}
+	ok.call(not Checkin.can_claim(h) and not h.checkin.has("last"), "old check-in merged")
+	h.checkin = {"day": "2026-11-20", "last": real_day, "n": 5}
+	ok.call(not Checkin.can_claim(h), "old screen's claim counts today")
+	h.checkin = {"day": "2026-11-25", "n": 5}
+	ok.call(Checkin.can_claim(h) and not Checkin.claim(h).is_empty() and Checkin.claim(h).is_empty() and Checkin.days(h) == 6, "one claim a day")
+	# saved while the phone ran ahead
+	h.checkin = {"day": "2026-12-09", "n": 30}
+	ok.call(not Checkin.can_claim(h) and str(h.checkin.day) == real_day, "future check-in day")
+	h.daily = {"date": "2026-12-09", "ids": ["fight"], "prog": {"fight": 3}, "claimed": ["fight"], "chest": true}
+	Daily.ensure(h)
+	ok.call(h.daily.date == real_day and h.daily.claimed == ["fight"] and h.daily.chest, "future missions kept")
+	h.dungeon = {"best": {}, "date": "2026-12-09", "used": 4, "ads": 0}
+	var used_left := Dungeon.left(h)
+	h.dungeon = {"best": {}, "date": real_day, "used": 4, "ads": 0}
+	ok.call(used_left == Dungeon.left(h), "future dungeon entries stay used")
+	h.duel = {"season": "2099w01", "score": 1900, "tickets": 0, "day": "2026-12-09", "wins": 40, "losses": 0, "last_season": "2099w00", "last_score": 1500, "paid": ""}
+	var d := Duel.ensure(h)
+	ok.call(int(d.score) == Duel.START and int(d.tickets) == 0 and Duel.season_reward(h) == 0, "future duel season void")
+	h.wboss = {"date": "2026-12-09", "tries": 4, "ads": 1, "dmg": 90000, "best": 20000, "prev": {"date": "2026-12-08", "dmg": 80000}, "claimed": ""}
+	WBoss.ensure(h)
+	ok.call(WBoss.left(h) == 0 and int(h.wboss.dmg) == 0 and not WBoss.claimable(h), "future boss day")
+	h.mp = {"week": "2099w01", "pts": 700, "day": "2026-12-09", "today": 120, "prev": {"week": "2099w00", "pts": 500, "sect": "duong_mon"}, "claimed": "", "buff": "", "best": 0, "wins": 0}
+	MonPhai.ensure(h)
+	ok.call(MonPhai.pts(h) == 0 and MonPhai.today(h) == MonPhai.DAY_CAP and not MonPhai.claimable(h), "future sect week")
+	h.kn = {"day": "2026-12-09", "n": 2, "cur": {}, "done": 0}
+	h.stars["0_5"] = 3
+	ok.call(not KyNgo.daily(h) and not KyNgo.after_win(h, 0.0), "future encounter day")
+	# a real new day after all that
+	GameClock.synced(real + 86400)
+	ok.call(Checkin.can_claim(h) and Dungeon.left(h) > 0 and WBoss.left(h) > 0 and int(Duel.ensure(h).tickets) == Duel.TICKETS, "next real day opens")
+	GameClock.reset()
+	print("CLOCKTEST %s" % ("ALL PASS" if fails.is_empty() else "FAIL: " + ", ".join(fails)))
+	get_tree().quit(0 if fails.is_empty() else 1)
 
 func _mp_ky_checks() -> void:
 	var h := Game.hero

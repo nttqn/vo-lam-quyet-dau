@@ -18,13 +18,25 @@ const CYCLE := [
 static func state(h: Dictionary) -> Dictionary:
 	if not (h.get("checkin") is Dictionary):
 		h.checkin = {"day": "", "n": 0}
-	return h.checkin
+	var st: Dictionary = h.checkin
+	# up to 1.4: the Nhiệm Vụ screen had a check-in of its own writing "last"
+	# into the same dict; whichever was claimed later counts as today's
+	if st.has("last"):
+		if str(st.last) > str(st.get("day", "")):
+			st["day"] = str(st.last)
+		st.erase("last")
+	if not st.has("day"):
+		st["day"] = ""
+	# saved while the phone's clock ran ahead: that day counts as today
+	if Daily.cmp(str(st.day), Daily.today()) > 0:
+		st.day = Daily.today()
+	return st
 
 static func days(h: Dictionary) -> int:
 	return int(state(h).get("n", 0))
 
 static func can_claim(h: Dictionary) -> bool:
-	return str(state(h).get("day", "")) != Daily.today()
+	return Daily.cmp(str(state(h).day), Daily.today()) < 0
 
 ## Index 0..6 of the day that is (or was today) being claimed.
 static func cycle_day(h: Dictionary) -> int:

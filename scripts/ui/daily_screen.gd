@@ -60,14 +60,16 @@ func _build() -> void:
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 8)
 	_left.add_child(grid)
-	var next := Daily.checkin_day(h)
-	var ready := Daily.checkin_ready(h)
-	var n_all := int(Dictionary(h.get("checkin", {})).get("n", 0))
+	# the one check-in (data/checkin.gd, same as the hub's Điểm danh panel; 1.5.0
+	# dropped this screen's own older check-in, which let a day be claimed twice)
+	var ready := Checkin.can_claim(h)
+	var next := Checkin.cycle_day(h)
+	var n_all := Checkin.days(h)
 	var cnt := n_all % 7
 	if n_all > 0 and cnt == 0 and not ready:
 		cnt = 7   # day 7 claimed today: show the whole week done
-	for d in Daily.CHECKIN.size():
-		var rw: Dictionary = Daily.CHECKIN[d]
+	for d in Checkin.CYCLE.size():
+		var rw: Dictionary = Checkin.reward(h, d)
 		var got := d < cnt
 		var is_next := d == next and ready
 		var cell := UI.panel(Color(0.12, 0.09, 0.08, 0.95) if not got else Color(0.08, 0.12, 0.08, 0.95), UI.GOLD if is_next else UI.GOLD_D)
@@ -75,7 +77,7 @@ func _build() -> void:
 		var cv := UI.vbox(2)
 		cell.add_child(cv)
 		cv.add_child(UI.label(L.f("Ngày %d", (d + 1)), 17, UI.GOLD if is_next else UI.PAPER, UI.bold))
-		var rl := UI.label(_rw_text(rw).replace("  ·  ", "\n"), 15, Color(0.6, 1, 0.6) if got else Color(0.9, 0.87, 0.8))
+		var rl := UI.label(Checkin.text(rw).replace(" · ", "\n"), 15, Color(0.6, 1, 0.6) if got else Color(0.9, 0.87, 0.8))
 		rl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cv.add_child(rl)
 		if got:
@@ -122,14 +124,11 @@ func _build() -> void:
 	_right.add_child(UI.label("Nhiệm vụ mới mỗi ngày lúc 0 giờ.", 15, Color(0.7, 0.68, 0.62)))
 
 func _checkin() -> void:
-	var rw := Daily.claim_checkin(Game.hero)
+	var rw := Checkin.claim(Game.hero)
 	if rw.is_empty():
 		return
 	Game.sfx("coin")
-	var t := _rw_text(rw)
-	if rw.has("drop"):
-		t = t.replace(L.f("Trang bị %s", Items.RARITY[int(rw.item)]), Items.item_name(rw.drop, Hero.sect(Game.hero).style) + " (%s)" % Items.RARITY[int(rw.item)])
-	toast(L.f("Điểm danh: %s", t))
+	toast(L.f("Điểm danh: %s", Checkin.text(rw)))
 	Game.save()
 	refresh_wallet()
 	_build()

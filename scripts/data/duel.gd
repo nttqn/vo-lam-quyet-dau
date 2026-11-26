@@ -12,7 +12,7 @@ const AI := 0.75
 
 static func season(t := -1.0) -> String:
 	# ISO-like week number, counted from Monday
-	var now := Time.get_unix_time_from_system() if t < 0.0 else t
+	var now := GameClock.day_now() if t < 0.0 else t
 	var d := Time.get_datetime_dict_from_unix_time(int(now))
 	var monday := int(now) - ((int(d.weekday) + 6) % 7) * 86400
 	var md := Time.get_datetime_dict_from_unix_time(monday)
@@ -24,7 +24,7 @@ static func collection(s := "") -> String:
 
 ## Days left in the season (until next Monday).
 static func days_left() -> int:
-	var d := Time.get_datetime_dict_from_system()
+	var d := Time.get_datetime_dict_from_unix_time(int(GameClock.day_now()))
 	return 7 - (int(d.weekday) + 6) % 7
 
 ## Brings h.duel up to date: new day refills tickets, new season resets the
@@ -34,10 +34,20 @@ static func ensure(h: Dictionary) -> Dictionary:
 	if d.is_empty():
 		d = {"season": season(), "score": START, "tickets": TICKETS, "day": Daily.today(), "wins": 0, "losses": 0, "last_season": "", "last_score": 0, "paid": ""}
 		h.duel = d
-	if d.get("day", "") != Daily.today():
+	var dc := Daily.cmp(str(d.get("day", "")), Daily.today())
+	if dc > 0:
+		d.day = Daily.today()   # ran ahead: today's tickets are already the ones used
+	elif dc < 0:
 		d.day = Daily.today()
 		d.tickets = TICKETS
-	if d.get("season", "") != season():
+	var sc := Daily.cmp(str(d.get("season", "")), season())
+	if sc > 0:
+		# a week reached by setting the phone ahead: start this one afresh, no reward for it
+		d.season = season()
+		d.score = START
+		d.wins = 0
+		d.losses = 0
+	elif sc < 0:
 		if int(d.wins) + int(d.losses) > 0:
 			d.last_season = d.season
 			d.last_score = int(d.score)
@@ -58,7 +68,7 @@ static func tier(score: int) -> Array:
 ## Season reward for the previous season, once.
 static func season_reward(h: Dictionary) -> int:
 	var d := ensure(h)
-	if d.last_season == "" or d.get("paid", "") == d.last_season:
+	if d.last_season == "" or d.get("paid", "") == d.last_season or str(d.last_season) >= season():
 		return 0
 	return int(tier(int(d.last_score))[2])
 
@@ -89,7 +99,7 @@ static func snapshot(h: Dictionary) -> Dictionary:
 static func fields(h: Dictionary) -> Dictionary:
 	var d := ensure(h)
 	return {"data": JSON.stringify(snapshot(h)), "score": int(d.score), "name": str(h.name), "sect": str(h.sect),
-		"level": int(h.level), "power": Hero.power(h), "t": int(Time.get_unix_time_from_system())}
+		"level": int(h.level), "power": Hero.power(h), "t": int(GameClock.now())}
 
 ## Fighter side for a shadow (doc from Cloud.query, or a bot).
 static func side(doc: Dictionary) -> Dictionary:

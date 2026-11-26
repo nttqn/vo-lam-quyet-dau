@@ -46,12 +46,19 @@ static func ensure(h: Dictionary) -> Dictionary:
 		m = {"week": Duel.season(), "pts": 0, "day": "", "today": 0, "prev": {"week": "", "pts": 0, "sect": ""},
 			"claimed": "", "buff": "", "best": 0, "wins": 0}
 	var wk := Duel.season()
-	if str(m.get("week", "")) != wk:
+	var wc := Daily.cmp(str(m.get("week", "")), wk)
+	if wc > 0:
+		m["week"] = wk   # a week reached by setting the phone ahead: its công is void
+		m["pts"] = 0
+	elif wc < 0:
 		if int(m.get("pts", 0)) > 0:
 			m["prev"] = {"week": str(m.week), "pts": int(m.pts), "sect": str(h.get("sect", ""))}
 		m["week"] = wk
 		m["pts"] = 0
-	if str(m.get("day", "")) != Daily.today():
+	var dc := Daily.cmp(str(m.get("day", "")), Daily.today())
+	if dc > 0:
+		m["day"] = Daily.today()
+	elif dc < 0:
 		m["day"] = Daily.today()
 		m["today"] = 0
 	h.mp = m
@@ -144,7 +151,7 @@ static func board(week := "", n := 30) -> Array:
 static func claimable(h: Dictionary) -> bool:
 	var m := ensure(h)
 	var p: Dictionary = m.prev
-	return str(p.week) != "" and int(p.pts) >= MIN_CLAIM and str(m.claimed) != str(p.week)
+	return str(p.week) != "" and int(p.pts) >= MIN_CLAIM and str(m.claimed) != str(p.week) and str(p.week) < Duel.season()
 
 static func place_rewards(place: int) -> Dictionary:
 	return PLACE[clampi(place, 1, PLACE.size()) - 1].duplicate(true)
@@ -162,6 +169,8 @@ static func claim(h: Dictionary) -> Dictionary:
 	if not claimable(h):   # double tap meanwhile
 		return {}
 	var place := place_of(rows, str(p.sect))
+	if int(rows[0].sum) <= 0:
+		place = PLACE.size()   # nobody's công reached the server that week: no real standing
 	var rw := place_rewards(place)
 	m.claimed = str(p.week)
 	h.jade = int(h.jade) + int(rw.get("jade", 0))

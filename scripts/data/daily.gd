@@ -1,8 +1,8 @@
 class_name Daily
 extends RefCounted
-## Daily missions (4 a day, picked by date) and the 7-day check-in.
-## State lives in the hero: h.daily = {date, ids, prog, claimed, chest},
-## h.checkin = {n: days claimed so far (cycle of 7), last: date}.
+## Daily missions (4 a day, picked by date). State lives in the hero:
+## h.daily = {date, ids, prog, claimed, chest}. (The 7-day check-in is
+## data/checkin.gd; this file had an older one of its own until 1.5.0.)
 
 const PER_DAY := 4
 const CHEST_JADE := 5
@@ -23,24 +23,23 @@ const POOL := {
 	"dungeon": ["Vượt Phó Bản %d lần (đánh hoặc quét)", 2, 3],
 }
 
-## 7-day check-in: {gold, jade, item rarity (-1 none)}
-const CHECKIN := [
-	{"gold": 150, "jade": 0, "item": -1},
-	{"gold": 0, "jade": 5, "item": -1},
-	{"gold": 300, "jade": 0, "item": -1},
-	{"gold": 0, "jade": 8, "item": -1},
-	{"gold": 0, "jade": 0, "item": 2},
-	{"gold": 500, "jade": 0, "item": -1},
-	{"gold": 0, "jade": 15, "item": 3},
-]
-
+## Today's date by GameClock (server time when known; scripts/clock.gd).
 static func today() -> String:
-	return Time.get_date_string_from_system()
+	return GameClock.today()
+
+## A stored day / week ("YYYY-MM-DD", "YYYYwWW": both sort as text) against
+## the current one: -1 before it (a new day has come), 0 same, 1 after it
+## (saved while the phone's clock ran ahead: nothing new until it is reached).
+static func cmp(stored: String, cur: String) -> int:
+	return -1 if stored < cur else (1 if stored > cur else 0)
 
 ## Rolls a new set of missions when the date changed.
 static func ensure(h: Dictionary) -> Dictionary:
 	var d: Dictionary = h.get("daily", {})
-	if d.get("date", "") != today():
+	var c := cmp(str(d.get("date", "")), today())
+	if c > 0:
+		d.date = today()   # ran ahead: keep that day's missions and progress
+	if c < 0:
 		var lv := int(h.level)
 		var ids: Array = []
 		for id in POOL:
@@ -121,35 +120,10 @@ static func claim_chest(h: Dictionary) -> bool:
 	h.jade = int(h.jade) + CHEST_JADE
 	return true
 
-# ------------------------------------------------------------- check-in
-static func checkin_ready(h: Dictionary) -> bool:
-	return Dictionary(h.get("checkin", {})).get("last", "") != today()
-
-## Index (0..6) of the day the next claim gives.
-static func checkin_day(h: Dictionary) -> int:
-	return int(Dictionary(h.get("checkin", {})).get("n", 0)) % CHECKIN.size()
-
-static func claim_checkin(h: Dictionary) -> Dictionary:
-	if not checkin_ready(h):
-		return {}
-	var day := checkin_day(h)
-	var rw: Dictionary = CHECKIN[day].duplicate()
-	h.gold = int(h.gold) + int(rw.gold)
-	h.jade = int(h.jade) + int(rw.jade)
-	if int(rw.item) >= 0:
-		var rng := RandomNumberGenerator.new()
-		rng.randomize()
-		var slot: String = Items.SLOTS[rng.randi_range(0, Items.SLOTS.size() - 1)]
-		var it := Items.drop(slot, clampi(1 + int((int(h.level) - 1) / 5.5), 1, 7), int(rw.item))
-		h.bag.append(it)
-		rw.drop = it
-	h.checkin = {"n": int(Dictionary(h.get("checkin", {})).get("n", 0)) + 1, "last": today()}
-	return rw
-
 ## Things waiting to be collected (hub badge).
 static func pending(h: Dictionary) -> int:
 	var d := ensure(h)
-	var n := 1 if checkin_ready(h) else 0
+	var n := 0
 	for id in d.ids:
 		if done(h, id) and not id in d.claimed:
 			n += 1
