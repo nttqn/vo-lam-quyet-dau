@@ -1347,5 +1347,10 @@
  "Chưa ai đánh Boss hôm nay. Hãy là người đầu tiên!": "今天還沒有人挑戰首領，來當第一個吧！",
  "Máy đang chạy chưa mượt. Chuyển đồ họa sang Thấp để trận đấu mượt hơn? (Đổi lại trong Cài đặt)": "手機運行不夠流暢。要將畫質切換為「低」讓戰鬥更順暢嗎？（可在設定中改回）",
  "Chuyển Thấp": "切換為低",
- "Đã chuyển đồ họa Thấp": "畫質已切換為低"
+ "Đã chuyển đồ họa Thấp": "畫質已切換為低",
+ "Siêu nhẹ": "極簡",
+ "Cho máy yếu nhất: 30 FPS, độ phân giải rất thấp, nhân vật giản lược, đấu trường chỉ còn nền và tranh phông, ít hiệu ứng.": "適合最弱的手機：30 FPS、極低解析度、簡化角色，場地只保留地面與背景畫，特效較少。",
+ "Máy vẫn chạy chưa mượt. Chuyển đồ họa sang Siêu nhẹ (đấu trường và nhân vật giản lược) để trận đấu mượt hơn? (Đổi lại trong Cài đặt)": "手機仍不夠流暢。要將畫質切換為「極簡」（簡化場地與角色）讓戰鬥更順暢嗎？（可在設定中改回）",
+ "Chuyển Siêu nhẹ": "切換為極簡",
+ "Đã chuyển đồ họa Siêu nhẹ": "畫質已切換為極簡"
 }

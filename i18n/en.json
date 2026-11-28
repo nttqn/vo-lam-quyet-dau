@@ -1347,5 +1347,10 @@
  "Chưa ai đánh Boss hôm nay. Hãy là người đầu tiên!": "No one has fought the Boss today. Be the first!",
  "Máy đang chạy chưa mượt. Chuyển đồ họa sang Thấp để trận đấu mượt hơn? (Đổi lại trong Cài đặt)": "Your phone is struggling. Switch graphics to Low for smoother fights? (You can change it back in Settings)",
  "Chuyển Thấp": "Switch to Low",
- "Đã chuyển đồ họa Thấp": "Graphics set to Low"
+ "Đã chuyển đồ họa Thấp": "Graphics set to Low",
+ "Siêu nhẹ": "Ultra Low",
+ "Cho máy yếu nhất: 30 FPS, độ phân giải rất thấp, nhân vật giản lược, đấu trường chỉ còn nền và tranh phông, ít hiệu ứng.": "For the weakest phones: 30 FPS, very low resolution, simplified fighters, arenas reduced to floor and painted backdrop, fewer effects.",
+ "Máy vẫn chạy chưa mượt. Chuyển đồ họa sang Siêu nhẹ (đấu trường và nhân vật giản lược) để trận đấu mượt hơn? (Đổi lại trong Cài đặt)": "Your phone is still struggling. Switch graphics to Ultra Low (simplified arenas and fighters) for smoother fights? (You can change it back in Settings)",
+ "Chuyển Siêu nhẹ": "Switch to Ultra Low",
+ "Đã chuyển đồ họa Siêu nhẹ": "Graphics set to Ultra Low"
 }

@@ -658,7 +658,7 @@ func _finish(won: bool, forfeit := false) -> void:
 		Gfx.save_scale(Game.settings)
 		Game.save_settings()
 		if Perf.struggling:
-			Funnel.device("fq_%s_l%d_floor" % [Gfx.gpu_family(), Gfx.level()])
+			Funnel.device("fq_%s_l%d_floor" % [Gfx.gpu_family(), Gfx.choice()])
 	if watching():
 		Engine.time_scale = 1.0
 		# the same fight again, to the frame: same winner, same health left
@@ -687,7 +687,7 @@ func _finish(won: bool, forfeit := false) -> void:
 		Game.save_settings()
 	if _first_fight:
 		# fq_<gpu family>_l<gfx level>_...: which GPUs lag / give up on the first fight
-		var fq := "fq_%s_l%d_" % [Gfx.gpu_family(), Gfx.level()]
+		var fq := "fq_%s_l%d_" % [Gfx.gpu_family(), Gfx.choice()]   # l3 = Siêu nhẹ
 		if forfeit:
 			Funnel.device("f_quit1")
 			Funnel.device(fq + "quit")

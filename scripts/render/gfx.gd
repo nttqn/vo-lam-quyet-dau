@@ -1,5 +1,7 @@
 class_name Gfx
-## Graphics quality: 0 Thấp, 1 Thường, 2 Cao (Game.settings["gfx"]).
+## Graphics quality: 0 Thấp, 1 Thường, 2 Cao, 3 Siêu nhẹ (Game.settings["gfx"]).
+## Siêu nhẹ runs as level 0 plus ultra(): every level() check that
+## means Thấp still holds, and the extra cuts ask ultra() themselves.
 ## Thường is the look the game shipped with. Glow/adjustment stay desktop-only
 ## at every level (driver leak on Mali, see Arena._environment); Cao fakes the
 ## bloom with additive halo sprites instead.
@@ -10,13 +12,40 @@ const HINTS := [
 	"Cân bằng: 60 FPS, khử răng cưa 2x.",
 	"Đẹp nhất: FPS theo màn hình, khử răng cưa 4x, bóng đổ nét, thêm hạt, hào quang và vệt chém dài.",
 ]
+const ULTRA_NAME := "Siêu nhẹ"
+const ULTRA_HINT := "Cho máy yếu nhất: 30 FPS, độ phân giải rất thấp, nhân vật giản lược, đấu trường chỉ còn nền và tranh phông, ít hiệu ứng."
+## Settings buttons in screen order: settings["gfx"] value, name.
+const CHOICES := [[3, ULTRA_NAME], [0, "Thấp"], [1, "Thường"], [2, "Cao"]]
 
 ## Chosen level, -1 = auto. Game copies settings["gfx"] here on load (kept
 ## off the Game autoload so tool scripts can use Gfx too).
 static var _lv := -1
+## Siêu nhẹ: 1 chosen, 0 not (another level chosen), -1 auto (auto_ultra).
+static var _ultra := -1
 
 static func set_level(v) -> void:
-	_lv = -1 if v == null else clampi(int(v), -1, 2)
+	var n := -1 if v == null else clampi(int(v), -1, 3)
+	_lv = 0 if n == 3 else n
+	_ultra = 1 if n == 3 else (-1 if n < 0 else 0)
+
+## Siêu nhẹ on top of Thấp: no scenery props, one-piece floor, flat sky, no
+## fog or lamp lights, half-resolution 3D, coarsest LODs, fewer particles.
+static func ultra() -> bool:
+	if level() != 0:
+		return false
+	return auto_ultra() if _ultra < 0 else _ultra == 1
+
+## Auto: PowerVR phones. The 1.5.0 funnel had none of them at 27 FPS or better
+## on Thấp (13 first fights, 8 under 15 FPS).
+static func auto_ultra() -> bool:
+	return OS.has_feature("mobile") and gpu_family() == "powervr"
+
+## The settings value of what is in effect (3 = Siêu nhẹ): funnel tags, buttons.
+static func choice() -> int:
+	return 3 if ultra() else level()
+
+static func choice_hint() -> String:
+	return ULTRA_HINT if ultra() else HINTS[level()]
 
 static func level() -> int:
 	return auto_level() if _lv < 0 else _lv
@@ -81,11 +110,11 @@ static func weak_gpu_name(name: String) -> bool:
 
 ## Particle-count multiplier for Fx.
 static func particles() -> float:
-	return [0.5, 1.0, 1.8][level()]
+	return 0.25 if ultra() else [0.5, 1.0, 1.8][level()]
 
 ## Weapon trail length in frames.
 static func trail_len() -> int:
-	return [6, 9, 16][level()]
+	return 4 if ultra() else [6, 9, 16][level()]
 
 ## True while a FightScene is the current screen (Game.goto sets it).
 static var _in_fight := false
@@ -117,7 +146,13 @@ static func fight_fps() -> float:
 
 ## The level's 3D render scale; Perf only ever goes below it.
 static func base_scale() -> float:
+	if ultra():
+		return 0.5
 	return 0.75 if level() == 0 else 1.0
+
+## Lowest scale Perf may go to.
+static func min_scale() -> float:
+	return 0.4 if ultra() else 0.5
 
 ## Dynamic 3D render scale chosen by Perf (-1 = the level's base), and the
 ## level it was learned on: settings["gfx_scale"] = {"lv", "s"}.
@@ -125,14 +160,14 @@ static var _dyn := -1.0
 static var _dyn_lv := -1
 
 static func render_scale() -> float:
-	if _dyn < 0.0 or _dyn_lv != level():
+	if _dyn < 0.0 or _dyn_lv != choice():
 		return base_scale()
 	return minf(_dyn, base_scale())
 
 ## Sets the dynamic scale now (Perf). Saved by save_scale() after the fight.
 static func set_render_scale(s: float) -> void:
 	_dyn = s
-	_dyn_lv = level()
+	_dyn_lv = choice()
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree:
 		tree.root.scaling_3d_scale = render_scale()
@@ -165,7 +200,8 @@ static func apply(tree: SceneTree) -> void:
 	vp.scaling_3d_scale = render_scale()
 	# Meshy models carry auto LODs: Thấp switches to the coarse ones much earlier
 	# (fighters and scenery are 20–50k triangles each; Adreno 5xx chokes on them)
-	vp.mesh_lod_threshold = 6.0 if lv == 0 else 1.0
+	# Siêu nhẹ: about 25k instead of 40k triangles for both fighters (desktop count)
+	vp.mesh_lod_threshold = (200.0 if ultra() else 6.0) if lv == 0 else 1.0
 	Engine.max_fps = max_fps()
 	RenderingServer.directional_shadow_atlas_set_size([1024, 2048, 4096][lv], true)
 	RenderingServer.directional_soft_shadow_filter_set_quality(
@@ -181,6 +217,8 @@ static func shadows() -> bool:
 static func prop_cap(name: String) -> int:
 	if level() > 0:
 		return -1
+	if ultra():
+		return 0
 	return {"pine": 4, "tree": 4, "rock": 3}.get(name, -1)
 
 ## Thấp: light per vertex instead of per pixel. The fragment shader then only

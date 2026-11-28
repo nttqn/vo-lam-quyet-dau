@@ -11,13 +11,13 @@ extends RefCounted
 ## The scale is saved after the fight (settings "gfx_scale"), so the next one
 ## starts where this one ended. Slow while already at the floor →
 ## `struggling`, and the result screen offers Thấp (Thường/Cao only).
+## Floor: Gfx.min_scale() (0.5, Siêu nhẹ 0.4).
 ## Phones only: desktop runs are tests and screenshots. No Game/Funnel here
 ## (tools/perf_check.gd runs without autoloads): FightScene saves and reports.
 
 const WIN := 2.0          # seconds of live fight per judged window
 const STEP_DOWN := 0.15
 const STEP_UP := 0.1
-const FLOOR := 0.5
 
 static var _t := 0.0
 static var _n := 0
@@ -76,8 +76,8 @@ static func tick(delta: float) -> void:
 		_good = 0
 		if _since_up <= 2:
 			_locked = true
-		if s > FLOOR + 0.01:
-			Gfx.set_render_scale(maxf(FLOOR, s - STEP_DOWN))
+		if s > Gfx.min_scale() + 0.01:
+			Gfx.set_render_scale(maxf(Gfx.min_scale(), s - STEP_DOWN))
 			lowered = true
 		else:
 			_floor_bad += 1

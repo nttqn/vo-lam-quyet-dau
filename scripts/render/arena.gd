@@ -35,6 +35,10 @@ func m(col: Color, rough := 0.9) -> StandardMaterial3D:
 	return mm
 
 func _mesh(mesh: Mesh, mat: Material, pos: Vector3, rot := Vector3.ZERO, scl := Vector3.ONE, shadow := true) -> MeshInstance3D:
+	# Thấp / Siêu nhẹ: default spheres are 64x32 (~4k triangles); 16x8 reads the same
+	if mesh is SphereMesh and Gfx.lite() and (mesh as SphereMesh).radial_segments > 16:
+		(mesh as SphereMesh).radial_segments = 16
+		(mesh as SphereMesh).rings = 8
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	mi.material_override = mat
@@ -100,11 +104,16 @@ func _environment(th: Dictionary) -> void:
 	sm.ground_bottom_color = (th.ground as Color).darkened(0.3)
 	sm.sun_angle_max = 20.0
 	sky.sky_material = sm
-	env.background_mode = Environment.BG_COLOR if Diag.on("no_sky") else Environment.BG_SKY
+	# Siêu nhẹ: no procedural sky pass (the painted backdrop covers most of it)
+	var flat := Diag.on("no_sky") or Gfx.ultra()
+	env.background_mode = Environment.BG_COLOR if flat else Environment.BG_SKY
+	env.background_color = th.sky_hor
 	env.sky = sky
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR if Diag.on("no_ambient_sky") else Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_color = th.sky_top
-	env.ambient_light_energy = th.amb * 0.55
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR if Diag.on("no_ambient_sky") or flat else Environment.AMBIENT_SOURCE_SKY
+	# a flat colour stands in for the sky: mix top and horizon like the sky light does
+	env.ambient_light_color = (th.sky_top as Color).lerp(th.sky_hor, 0.6) if flat else th.sky_top
+	# the sky light is brighter than one flat colour: lift it to match (Siêu nhẹ)
+	env.ambient_light_energy = th.amb * 0.55 * (2.5 if flat else 1.0)
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
 	env.tonemap_exposure = 0.78
 	# Glow / adjustment add a post-process pass that leaks ~11 MB/s of driver
@@ -113,7 +122,7 @@ func _environment(th: Dictionary) -> void:
 	env.adjustment_enabled = post
 	env.adjustment_contrast = 1.08
 	env.adjustment_saturation = 1.06
-	env.fog_enabled = not Diag.on("no_fog")
+	env.fog_enabled = not Diag.on("no_fog") and not Gfx.ultra()
 	env.fog_light_color = th.fog
 	env.fog_density = 0.0028
 	env.fog_sky_affect = 0.0
@@ -172,7 +181,29 @@ func _ground(th: Dictionary) -> void:
 	gm.uv1_scale = Vector3(8, 6, 1)
 	_mesh(pm, gm, Vector3(0, -0.01, -10), Vector3.ZERO, Vector3.ONE, false)   # just under the floor slabs
 	# fighting floor: stone slabs / platform for most themes
-	if theme in ["temple", "peak", "demon", "night"] and not Diag.on("no_floor"):
+	if theme in ["temple", "peak", "demon", "night"] and not Diag.on("no_floor") and Gfx.ultra():
+		# Siêu nhẹ: one platform instead of 95 slabs (one draw call, not 95)
+		# the slabs' checker as a 2x2 texture, one texel per 2 m slab; greyed a
+		# little since the flat ambient lacks the sky's cool light on stone
+		var c1: Color = (g.darkened(0.02) if theme != "demon" else Color(0.3, 0.22, 0.2)).lerp(Color(0.78, 0.78, 0.8), 0.3)
+		var c2: Color = (g.darkened(0.1) if theme != "demon" else Color(0.24, 0.18, 0.17)).lerp(Color(0.7, 0.7, 0.72), 0.3)
+		var img := Image.create(2, 2, false, Image.FORMAT_RGB8)
+		img.set_pixel(0, 0, c1)
+		img.set_pixel(1, 1, c1)
+		img.set_pixel(1, 0, c2)
+		img.set_pixel(0, 1, c2)
+		var plat := StandardMaterial3D.new()   # not m(): that one is shared by colour
+		plat.roughness = 0.8
+		plat.albedo_texture = ImageTexture.create_from_image(img)
+		plat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		plat.uv1_scale = Vector3(9.5, 2.5, 1)
+		# subdivided so per-vertex light keeps the sun sheen the small slabs had
+		var pm2 := PlaneMesh.new()
+		pm2.size = Vector2(38.0, 10.0)
+		pm2.subdivide_width = 18
+		pm2.subdivide_depth = 4
+		_mesh(pm2, plat, Vector3(0, 0.005, -1.5), Vector3.ZERO, Vector3.ONE, false)
+	elif theme in ["temple", "peak", "demon", "night"] and not Diag.on("no_floor"):
 		var slab := m(g.darkened(0.02) if theme != "demon" else Color(0.3, 0.22, 0.2), 0.8)
 		var slab2 := m(g.darkened(0.1) if theme != "demon" else Color(0.24, 0.18, 0.17), 0.8)
 		for ix in range(-9, 10):
@@ -264,7 +295,8 @@ func pine(pos: Vector3, s := 1.0, snow := false) -> void:
 func lantern(pos: Vector3, col := Color(0.95, 0.3, 0.15), light := false) -> void:
 	if not _prop("lantern", pos, 2.8, 0.0):
 		_lantern_shape(pos, col)
-	if light and not Diag.on("no_lights"):
+	# each lamp light draws everything in its range again (Compatibility renderer)
+	if light and not Diag.on("no_lights") and not Gfx.ultra():
 		var l := OmniLight3D.new()
 		l.light_color = col
 		l.light_energy = 1.5
@@ -351,6 +383,9 @@ func _temple() -> void:
 		_mesh(cyl(0.5, 0.35, 0.7, 8), m(Color(0.35, 0.3, 0.2), 0.5), Vector3(-6.5, 0.35, -5.5))
 
 func _bamboo() -> void:
+	# Siêu nhẹ keeps every third stalk. The random
+	# draws stay in the same order, so each level keeps the same grove.
+	var leaf := SphereMesh.new()   # _mesh makes it 16x8 on Thấp
 	for i in 140:
 		var x := rng.randf_range(-30, 30)
 		var z := rng.randf_range(-24, -5)
@@ -358,9 +393,13 @@ func _bamboo() -> void:
 			continue
 		var h := rng.randf_range(6, 12)
 		var col := Color(0.35, 0.55, 0.25).lerp(Color(0.6, 0.7, 0.35), rng.randf())
-		var stalk := _mesh(cyl(0.07, 0.09, h, 6), m(col, 0.6), Vector3(x, h * 0.5, z), Vector3(rng.randf_range(-4, 4), 0, rng.randf_range(-4, 4)))
-		if rng.randf() < 0.5:
-			_mesh(SphereMesh.new(), m(Color(0.3, 0.5, 0.22)), Vector3(x, h - 0.5, z), Vector3.ZERO, Vector3(1.6, 0.6, 1.6), false)
+		var tilt := Vector3(rng.randf_range(-4, 4), 0, rng.randf_range(-4, 4))
+		var clump := rng.randf() < 0.5
+		if Gfx.ultra() and i % 3 != 0:
+			continue
+		var stalk := _mesh(cyl(0.07, 0.09, h, 6), m(col, 0.6), Vector3(x, h * 0.5, z), tilt)
+		if clump:
+			_mesh(leaf, m(Color(0.3, 0.5, 0.22)), Vector3(x, h - 0.5, z), Vector3.ZERO, Vector3(1.6, 0.6, 1.6), false)
 		_sway.append(stalk)
 	for i in 8:
 		rock(Vector3(rng.randf_range(-14, 14), 0.2, rng.randf_range(-6, -3)), rng.randf_range(0.4, 0.8))
@@ -395,7 +434,7 @@ func _snow() -> void:
 		rock(Vector3(rng.randf_range(-12, 12), 0.2, rng.randf_range(-6, -3)), rng.randf_range(0.5, 1.0), Color(0.75, 0.78, 0.85))
 	pagoda(Vector3(4, 0, -18), 2, 0.8, Color(0.45, 0.2, 0.18), Color(0.85, 0.88, 0.93))
 	var p := CPUParticles3D.new()
-	p.amount = 300
+	p.amount = maxi(40, int(300 * minf(1.0, Gfx.particles())))   # Thấp 150, Siêu nhẹ 75
 	p.lifetime = 6.0
 	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
 	p.emission_box_extents = Vector3(18, 0.5, 8)
@@ -439,7 +478,7 @@ func _demon() -> void:
 		if not _prop("brazier", Vector3(x, 0, -5), 1.2, 0.0):
 			_mesh(cyl(0.6, 0.8, 1.0, 8), m(Color(0.2, 0.18, 0.18)), Vector3(x, 0.5, -5))
 		var f := CPUParticles3D.new()
-		f.amount = 40
+		f.amount = maxi(10, int(40 * minf(1.0, Gfx.particles())))
 		f.lifetime = 0.8
 		f.position = Vector3(x, 1.0, -5)
 		f.direction = Vector3.UP

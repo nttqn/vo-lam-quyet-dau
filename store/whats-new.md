@@ -2,6 +2,30 @@
 
 Play: ≤ 500 ký tự mỗi ngôn ngữ. App Store: ô "What's New in This Version" của từng localization.
 
+## 1.5.2 (20)
+
+Cùng một nội dung cho Google Play và App Store.
+
+**vi-VN / Vietnamese**
+• Đồ họa Siêu nhẹ mới cho máy yếu nhất: đấu trường và nhân vật giản lược, trận đấu mượt hơn nhiều. Máy dùng chip đồ họa PowerVR tự bật chế độ này.
+• Đồ họa Thấp nhẹ hơn nữa ở Trúc Lâm Thâm Xứ.
+• Máy vẫn chưa mượt ở đồ họa Thấp sẽ được gợi ý chuyển sang Siêu nhẹ.
+
+**en-US / English (U.S.)**
+• New Ultra Low graphics for the weakest phones: simplified arenas and fighters for much smoother fights. Phones with PowerVR graphics switch to it automatically.
+• Low graphics is lighter still in Deep Bamboo Forest.
+• Phones still struggling on Low are offered Ultra Low.
+
+**zh-TW / Chinese (Traditional)**
+• 新增「極簡」畫質，適合最弱的手機：簡化場地與角色，戰鬥更流暢。使用 PowerVR 圖形晶片的手機會自動啟用。
+• 「低」畫質在竹林深處更加輕量。
+• 在「低」畫質下仍不流暢的手機會收到切換為「極簡」的建議。
+
+**ko-KR / Korean**
+• 가장 약한 기기를 위한 새 초저사양 그래픽: 경기장과 캐릭터를 단순화해 전투가 훨씬 부드럽습니다. PowerVR 그래픽 칩 기기는 자동으로 적용됩니다.
+• 죽림 심처에서 낮음 그래픽이 더 가벼워졌습니다.
+• 낮음 그래픽에서도 버벅이는 기기에는 초저사양을 권장합니다.
+
 ## 1.5.1 (19)
 
 Cùng một nội dung cho Google Play và App Store.

@@ -1347,5 +1347,10 @@
  "Chưa ai đánh Boss hôm nay. Hãy là người đầu tiên!": "오늘 아직 아무도 보스와 싸우지 않았습니다. 첫 번째가 되어 보세요!",
  "Máy đang chạy chưa mượt. Chuyển đồ họa sang Thấp để trận đấu mượt hơn? (Đổi lại trong Cài đặt)": "기기에서 게임이 버벅입니다. 그래픽을 낮음으로 바꿔 전투를 더 부드럽게 할까요? (설정에서 다시 바꿀 수 있습니다)",
  "Chuyển Thấp": "낮음으로 변경",
- "Đã chuyển đồ họa Thấp": "그래픽을 낮음으로 변경했습니다"
+ "Đã chuyển đồ họa Thấp": "그래픽을 낮음으로 변경했습니다",
+ "Siêu nhẹ": "초저사양",
+ "Cho máy yếu nhất: 30 FPS, độ phân giải rất thấp, nhân vật giản lược, đấu trường chỉ còn nền và tranh phông, ít hiệu ứng.": "가장 약한 기기용: 30 FPS, 매우 낮은 해상도, 단순화된 캐릭터, 바닥과 배경 그림만 남은 경기장, 적은 효과.",
+ "Máy vẫn chạy chưa mượt. Chuyển đồ họa sang Siêu nhẹ (đấu trường và nhân vật giản lược) để trận đấu mượt hơn? (Đổi lại trong Cài đặt)": "기기에서 여전히 버벅입니다. 그래픽을 초저사양(경기장과 캐릭터 단순화)으로 바꿔 전투를 더 부드럽게 할까요? (설정에서 다시 바꿀 수 있습니다)",
+ "Chuyển Siêu nhẹ": "초저사양으로 변경",
+ "Đã chuyển đồ họa Siêu nhẹ": "그래픽을 초저사양으로 변경했습니다"
 }

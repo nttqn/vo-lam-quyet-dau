@@ -280,25 +280,32 @@ func back() -> void:
 	Game.goto(HubScreen.new())
 
 ## After the screen is built: the fight still lagged at the lowest render
-## scale (Perf) → offer Thấp, at most every 10 fights; otherwise a smooth won
-## fight may ask for a Play review (Review.due).
+## scale (Perf) → offer one level down (Thường/Cao → Thấp, Thấp → Siêu
+## nhẹ), at most every 10 fights; otherwise a smooth won fight may ask for a
+## Play review (Review.due).
 func _perf_prompts() -> void:
 	var res: Dictionary = out.get("res", {})
 	var h := Game.hero
-	if res.get("perf_low", false) and Gfx.level() > 0 \
+	var to := 0 if Gfx.level() > 0 else (3 if not Gfx.ultra() else -1)
+	if res.get("perf_low", false) and to >= 0 \
 			and int(h.get("fights", 0)) >= int(Game.settings.get("gfx_ask_after", 0)):
 		Game.settings["gfx_ask_after"] = int(h.get("fights", 0)) + 10
 		Game.save_settings()
-		Funnel.device("f_gfx_ask")
+		var tag := "" if to == 0 else "_u"
+		Funnel.device("f_gfx_ask" + tag)
+		var ask := "Máy đang chạy chưa mượt. Chuyển đồ họa sang Thấp để trận đấu mượt hơn? (Đổi lại trong Cài đặt)"
+		if to == 3:
+			ask = "Máy vẫn chạy chưa mượt. Chuyển đồ họa sang Siêu nhẹ (đấu trường và nhân vật giản lược) để trận đấu mượt hơn? (Đổi lại trong Cài đặt)"
 		get_tree().create_timer(0.8).timeout.connect(func():
-			confirm("Máy đang chạy chưa mượt. Chuyển đồ họa sang Thấp để trận đấu mượt hơn? (Đổi lại trong Cài đặt)", func():
-				Game.settings["gfx"] = 0
-				Gfx.set_level(0)
+			confirm(ask, func():
+				Game.settings["gfx"] = to
+				Gfx.set_level(to)
 				Gfx.reset_scale(Game.settings)
 				Game.save_settings()
 				Gfx.apply(get_tree())
-				Funnel.device("f_gfx_yes")
-				toast("Đã chuyển đồ họa Thấp", Color(0.6, 1.0, 0.6)), "Chuyển Thấp"))
+				Funnel.device("f_gfx_yes" + tag)
+				toast("Đã chuyển đồ họa Thấp" if to == 0 else "Đã chuyển đồ họa Siêu nhẹ", Color(0.6, 1.0, 0.6)),
+				"Chuyển Thấp" if to == 0 else "Chuyển Siêu nhẹ"))
 		return
 	if out.won and Review.due(h):
 		get_tree().create_timer(1.5).timeout.connect(Review.ask)

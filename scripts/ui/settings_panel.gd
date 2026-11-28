@@ -58,22 +58,23 @@ func _gfx_row() -> Control:
 	var l := UI.label("Đồ họa", 22)
 	l.custom_minimum_size.x = 140
 	h.add_child(l)
-	var hint := UI.label(Gfx.HINTS[Gfx.level()], 16, Color(0.75, 0.72, 0.66))
+	var hint := UI.label(Gfx.choice_hint(), 16, Color(0.75, 0.72, 0.66))
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.custom_minimum_size.x = 560
 	var group := ButtonGroup.new()
-	for i in Gfx.NAMES.size():
-		var b := UI.button(Gfx.NAMES[i], func():
+	for c in Gfx.CHOICES:
+		var i: int = c[0]
+		var b := UI.button(c[1], func():
 			Game.settings["gfx"] = i
 			Gfx.set_level(i)
 			Gfx.reset_scale(Game.settings)
 			Game.save_settings()
 			Gfx.apply(get_tree())
-			hint.text = Gfx.HINTS[i]
+			hint.text = Gfx.choice_hint()
 			Game.sfx("click"), 20, 120)
 		b.toggle_mode = true
 		b.button_group = group
-		b.button_pressed = Gfx.level() == i
+		b.button_pressed = Gfx.choice() == i
 		b.custom_minimum_size.y = 44
 		# the theme's pressed look is darker than normal: dim the others instead
 		b.toggled.connect(func(on: bool): b.modulate = Color.WHITE if on else Color(0.55, 0.55, 0.55))
