@@ -511,7 +511,7 @@ func _demo_screen(screen: String, args: PackedStringArray) -> void:
 			t.ui.add_child.call_deferred(HelpPanel.new())
 		"result":
 			Game.goto(ResultScreen.new({"mode": "stage", "r": 1, "s": 5, "won": true, "stars": 2,
-				"res": {"max_combo": 7, "seconds": 74}, "rewards": {"exp": 420, "gold": 380, "jade": 3},
+				"res": {"max_combo": 7, "seconds": 74, "perf_low": "--perflow" in args}, "rewards": {"exp": 420, "gold": 380, "jade": 3},
 				"levels": 1, "book": "manh", "drop": Items.make("weapon", 3, 2, 0), "unlock": "Trường Giang Độ Khẩu"}))
 
 func _process(_d: float) -> void:

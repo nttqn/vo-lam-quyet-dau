@@ -25,4 +25,5 @@ dependencies {
     compileOnly 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
     compileOnly 'androidx.core:core:1.13.1'
     compileOnly 'com.google.firebase:firebase-analytics:22.5.0'
+    compileOnly 'com.google.android.play:review:2.0.2'
 }

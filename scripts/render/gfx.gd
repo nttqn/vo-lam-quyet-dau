@@ -60,13 +60,18 @@ static func weak_gpu() -> bool:
 
 ## Entry-level mobile GPUs: every PowerVR (GE8xxx, IMG on Unisoc), Mali-4xx /
 ## T-series / G31 / G51 / G52, Adreno 3xx–5xx and 610–619. Test: tools/gpu_check.gd
+## 1.5.0: also Mali-G57 / G71 / G72 and two-core G6xx (G615 MC2…): the funnel
+## had 21 of 34 Mali phones on Thường under 27 FPS in their first fight, most
+## of them Mali-G57 MC2 (Helio G99, Dimensity 6100).
 static func weak_gpu_name(name: String) -> bool:
 	var g := name.to_lower()
 	if g == "":
 		return false
 	if gpu_family(g) == "powervr":
 		return true
-	if RegEx.create_from_string("mali-(4\\d\\d|t\\d+|g31|g51|g52)\\b").search(g) != null:
+	if RegEx.create_from_string("mali-(4\\d\\d|t\\d+|g31|g51|g52|g57|g71|g72)\\b").search(g) != null:
+		return true
+	if RegEx.create_from_string("mali-g6\\d+\\s*m[cp][12]\\b").search(g) != null:
 		return true
 	var a := RegEx.create_from_string("adreno[^0-9]*(\\d{3})").search(g)
 	if a != null:
@@ -82,17 +87,86 @@ static func particles() -> float:
 static func trail_len() -> int:
 	return [6, 9, 16][level()]
 
+## True while a FightScene is the current screen (Game.goto sets it).
+static var _in_fight := false
+
+## Menus on phones run at 30 FPS (Cao: 60): the hub and the other menus draw a
+## full 3D arena with skinned fighters every frame, and a phone that heats up
+## in the menus throttles in the next fight. Fights keep the level's cap.
+static func max_fps() -> int:
+	var lv := level()
+	if not _in_fight and OS.has_feature("mobile"):
+		return 60 if lv >= 2 else 30
+	return [30, 60, 0][lv]
+
+static func set_in_fight(on: bool) -> void:
+	if on == _in_fight:
+		return
+	_in_fight = on
+	Engine.max_fps = max_fps()
+
+## Frame rate a fight aims for (Cao follows the screen, counted as at most 60).
+static func fight_fps() -> float:
+	var lv := level()
+	if lv == 0:
+		return 30.0
+	if lv == 1:
+		return 60.0
+	var hz := DisplayServer.screen_get_refresh_rate()
+	return 60.0 if hz <= 0.0 else clampf(hz, 30.0, 60.0)
+
+## The level's 3D render scale; Perf only ever goes below it.
+static func base_scale() -> float:
+	return 0.75 if level() == 0 else 1.0
+
+## Dynamic 3D render scale chosen by Perf (-1 = the level's base), and the
+## level it was learned on: settings["gfx_scale"] = {"lv", "s"}.
+static var _dyn := -1.0
+static var _dyn_lv := -1
+
+static func render_scale() -> float:
+	if _dyn < 0.0 or _dyn_lv != level():
+		return base_scale()
+	return minf(_dyn, base_scale())
+
+## Sets the dynamic scale now (Perf). Saved by save_scale() after the fight.
+static func set_render_scale(s: float) -> void:
+	_dyn = s
+	_dyn_lv = level()
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree:
+		tree.root.scaling_3d_scale = render_scale()
+
+## Restores the scale learned in an earlier session (Game start-up).
+static func load_scale(d) -> void:
+	if d is Dictionary:
+		_dyn = float(d.get("s", -1.0))
+		_dyn_lv = int(d.get("lv", -1))
+
+static func save_scale(settings: Dictionary) -> void:
+	if _dyn < 0.0:
+		settings.erase("gfx_scale")
+	else:
+		settings["gfx_scale"] = {"lv": _dyn_lv, "s": snappedf(_dyn, 0.01)}
+
+## The player picked a level: start again from its own base scale.
+static func reset_scale(settings: Dictionary) -> void:
+	_dyn = -1.0
+	_dyn_lv = -1
+	settings.erase("gfx_scale")
+
 ## Applies the window-wide settings. Call at start-up and after a change.
 static func apply(tree: SceneTree) -> void:
 	var lv := level()
 	var vp := tree.root
 	vp.msaa_3d = [Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X][lv]
-	# weak phones are fill-rate bound (the menu lagged too): fewer 3D pixels
-	vp.scaling_3d_scale = 0.75 if lv == 0 else 1.0
+	# weak phones are fill-rate bound (the menu lagged too): fewer 3D pixels;
+	# Perf may lower it further while a fight runs slow
+	vp.scaling_3d_scale = render_scale()
 	# Meshy models carry auto LODs: Thấp switches to the coarse ones much earlier
 	# (fighters and scenery are 20–50k triangles each; Adreno 5xx chokes on them)
 	vp.mesh_lod_threshold = 6.0 if lv == 0 else 1.0
-	Engine.max_fps = [30, 60, 0][lv]
+	Engine.max_fps = max_fps()
 	RenderingServer.directional_shadow_atlas_set_size([1024, 2048, 4096][lv], true)
 	RenderingServer.directional_soft_shadow_filter_set_quality(
 		[RenderingServer.SHADOW_QUALITY_HARD, RenderingServer.SHADOW_QUALITY_SOFT_LOW, RenderingServer.SHADOW_QUALITY_SOFT_HIGH][lv])

@@ -26,6 +26,7 @@ class VLGoogleAuthExport extends EditorExportPlugin:
 			"androidx.credentials:credentials-play-services-auth:1.5.0",
 			"com.google.android.libraries.identity.googleid:googleid:1.1.1",
 			"com.google.firebase:firebase-analytics:22.5.0",
+			"com.google.android.play:review:2.0.2",   # VLReview: Play in-app review
 		])
 
 	func _get_name() -> String:

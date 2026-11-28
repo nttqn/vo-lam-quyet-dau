@@ -2,6 +2,30 @@
 
 Play: ≤ 500 ký tự mỗi ngôn ngữ. App Store: ô "What's New in This Version" của từng localization.
 
+## 1.5.1 (19)
+
+Cùng một nội dung cho Google Play và App Store.
+
+**vi-VN / Vietnamese**
+• Mượt hơn trên máy cấu hình thấp: game tự giảm độ phân giải khi trận đấu bị giật, và gợi ý chuyển đồ họa Thấp nếu vẫn chưa mượt.
+• Nhiều dòng máy Mali (Helio G99, Dimensity 6100…) tự dùng đồ họa Thấp.
+• Các màn hình menu chạy nhẹ hơn, đỡ nóng máy và tốn pin.
+
+**en-US / English (U.S.)**
+• Smoother on low-end phones: the game lowers its resolution when a fight stutters, and suggests Low graphics if it still isn't smooth.
+• Many Mali phones (Helio G99, Dimensity 6100…) now start on Low graphics.
+• Lighter menus: less heat and battery drain.
+
+**zh-TW / Chinese (Traditional)**
+• 低階手機更流暢：戰鬥卡頓時自動降低解析度，仍不順暢時建議切換為低畫質。
+• 多款 Mali 手機（Helio G99、Dimensity 6100…）預設使用低畫質。
+• 選單更輕量，減少發熱與耗電。
+
+**ko-KR / Korean**
+• 저사양 기기에서 더 부드럽게: 전투가 끊기면 해상도를 자동으로 낮추고, 그래도 끊기면 낮음 그래픽을 권장합니다.
+• 여러 Mali 기기(Helio G99, Dimensity 6100…)가 낮음 그래픽으로 시작합니다.
+• 메뉴가 가벼워져 발열과 배터리 소모가 줄었습니다.
+
 ## 1.5.0 (18)
 
 Cùng một nội dung cho Google Play và App Store.

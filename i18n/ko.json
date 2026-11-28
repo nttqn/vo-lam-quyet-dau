@@ -1344,5 +1344,8 @@
  "Bảng Sát Thương — %s": "피해 랭킹 — %s",
  "Thưởng theo hạng (nhận hôm sau)": "순위 보상 (다음 날 수령)",
  "Boss bị hạ: mọi người thêm %s": "보스 격파: 모두 추가 %s",
- "Chưa ai đánh Boss hôm nay. Hãy là người đầu tiên!": "오늘 아직 아무도 보스와 싸우지 않았습니다. 첫 번째가 되어 보세요!"
+ "Chưa ai đánh Boss hôm nay. Hãy là người đầu tiên!": "오늘 아직 아무도 보스와 싸우지 않았습니다. 첫 번째가 되어 보세요!",
+ "Máy đang chạy chưa mượt. Chuyển đồ họa sang Thấp để trận đấu mượt hơn? (Đổi lại trong Cài đặt)": "기기에서 게임이 버벅입니다. 그래픽을 낮음으로 바꿔 전투를 더 부드럽게 할까요? (설정에서 다시 바꿀 수 있습니다)",
+ "Chuyển Thấp": "낮음으로 변경",
+ "Đã chuyển đồ họa Thấp": "그래픽을 낮음으로 변경했습니다"
 }

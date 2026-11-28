@@ -4,7 +4,10 @@ func _init() -> void:
 	var cases := {
 		"PowerVR Rogue GE8320": true, "PowerVR Rogue GE8322": true, "IMG GE8322": true,
 		"Mali-G52 MC2": true, "Mali-G52": true, "Mali-T830 MP1": true, "Mali-450 MP": true,
-		"Mali-G57 MC2": false, "Mali-G68 MC4": false, "Mali-G520": false,
+		"Mali-G57 MC2": true, "Mali-G57": true, "Mali-G72 MP3": true, "Mali-G71": true,
+		"Mali-G615 MC2": true, "Mali-G68 MC2": true, "Mali-G615 MC6": false,
+		"Mali-G68 MC4": false, "Mali-G520": false, "Mali-G76 MC4": false, "Mali-G710 MC10": false,
+		"Mali-G925-Immortalis MC12": false, "Mali-G1-Ultra MC12": false,
 		"Adreno (TM) 506": true, "Adreno (TM) 610": true, "Adreno (TM) 618": true,
 		"Adreno (TM) 619": true, "Adreno (TM) 642L": false, "Adreno (TM) 730": false,
 	}

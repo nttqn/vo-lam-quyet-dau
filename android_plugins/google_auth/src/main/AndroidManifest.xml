@@ -12,6 +12,9 @@
         <meta-data
             android:name="org.godotengine.plugin.v2.VLNotify"
             android:value="com.trungsmail.vlauth.VLNotify" />
+        <meta-data
+            android:name="org.godotengine.plugin.v2.VLReview"
+            android:value="com.trungsmail.vlauth.VLReview" />
         <receiver
             android:name="com.trungsmail.vlauth.NotifyReceiver"
             android:exported="false" />

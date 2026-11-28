@@ -269,6 +269,8 @@ func _ready() -> void:
 		row.add_child(UI.button("Về sảnh", func(): Game.goto(HubScreen.new()), 24, 170))
 	if out.won and not _again:
 		Game.sfx("coin")
+	if not _again and not Game.autoplay:
+		_perf_prompts()
 	if Game.autoplay:
 		print("FLOWTEST result: mode=%s won=%s stars=%s rewards=%s level=%d daily=%s" % [out.mode, out.won, out.get("stars", 0), out.get("rewards", {}), int(h.level), h.get("daily", {}).get("prog", {})])
 		print("FLOWTEST 1.5: mp=%s mp_today=%d kn=%s replay=%s books=%s taught=%s" % [out.get("mp", "-"), MonPhai.today(h), h.get("kn", {}), not Replay.last.is_empty(), h.get("books", {}), out.get("taught", "-")])
@@ -276,6 +278,30 @@ func _ready() -> void:
 
 func back() -> void:
 	Game.goto(HubScreen.new())
+
+## After the screen is built: the fight still lagged at the lowest render
+## scale (Perf) → offer Thấp, at most every 10 fights; otherwise a smooth won
+## fight may ask for a Play review (Review.due).
+func _perf_prompts() -> void:
+	var res: Dictionary = out.get("res", {})
+	var h := Game.hero
+	if res.get("perf_low", false) and Gfx.level() > 0 \
+			and int(h.get("fights", 0)) >= int(Game.settings.get("gfx_ask_after", 0)):
+		Game.settings["gfx_ask_after"] = int(h.get("fights", 0)) + 10
+		Game.save_settings()
+		Funnel.device("f_gfx_ask")
+		get_tree().create_timer(0.8).timeout.connect(func():
+			confirm("Máy đang chạy chưa mượt. Chuyển đồ họa sang Thấp để trận đấu mượt hơn? (Đổi lại trong Cài đặt)", func():
+				Game.settings["gfx"] = 0
+				Gfx.set_level(0)
+				Gfx.reset_scale(Game.settings)
+				Game.save_settings()
+				Gfx.apply(get_tree())
+				Funnel.device("f_gfx_yes")
+				toast("Đã chuyển đồ họa Thấp", Color(0.6, 1.0, 0.6)), "Chuyển Thấp"))
+		return
+	if out.won and Review.due(h):
+		get_tree().create_timer(1.5).timeout.connect(Review.ask)
 
 func _double(dbl: Button, rw: Dictionary) -> void:
 	dbl.disabled = true

@@ -24,6 +24,7 @@ func _ready() -> void:
 	GameClock.set_floor(float(settings.get("clock_floor", 0.0)))   # latest trusted time (offline day hold)
 	_init_lang()
 	Gfx.set_level(settings.get("gfx", -1))
+	Gfx.load_scale(settings.get("gfx_scale"))
 	Gfx.apply(get_tree())
 	_load_audio()
 	Notify.on_foreground()
@@ -45,6 +46,7 @@ func goto(node: Node) -> void:
 		_current.queue_free()
 	_current = node
 	Engine.time_scale = 1.0
+	Gfx.set_in_fight(node is FightScene)   # menus run at 30 FPS on phones
 	root.add_child(node)
 	var sc: Script = node.get_script()
 	Analytics.screen(sc.get_global_name() if sc else node.name)

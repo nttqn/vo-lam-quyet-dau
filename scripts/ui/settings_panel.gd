@@ -65,8 +65,9 @@ func _gfx_row() -> Control:
 	for i in Gfx.NAMES.size():
 		var b := UI.button(Gfx.NAMES[i], func():
 			Game.settings["gfx"] = i
-			Game.save_settings()
 			Gfx.set_level(i)
+			Gfx.reset_scale(Game.settings)
+			Game.save_settings()
 			Gfx.apply(get_tree())
 			hint.text = Gfx.HINTS[i]
 			Game.sfx("click"), 20, 120)

@@ -1344,5 +1344,8 @@
  "Bảng Sát Thương — %s": "Damage Board — %s",
  "Thưởng theo hạng (nhận hôm sau)": "Rank rewards (claimed next day)",
  "Boss bị hạ: mọi người thêm %s": "Boss downed: everyone gets %s",
- "Chưa ai đánh Boss hôm nay. Hãy là người đầu tiên!": "No one has fought the Boss today. Be the first!"
+ "Chưa ai đánh Boss hôm nay. Hãy là người đầu tiên!": "No one has fought the Boss today. Be the first!",
+ "Máy đang chạy chưa mượt. Chuyển đồ họa sang Thấp để trận đấu mượt hơn? (Đổi lại trong Cài đặt)": "Your phone is struggling. Switch graphics to Low for smoother fights? (You can change it back in Settings)",
+ "Chuyển Thấp": "Switch to Low",
+ "Đã chuyển đồ họa Thấp": "Graphics set to Low"
 }

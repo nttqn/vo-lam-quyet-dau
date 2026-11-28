@@ -80,6 +80,7 @@ static func make_fighter(side: Dictionary) -> Fighter:
 	return f
 
 func _ready() -> void:
+	Perf.begin_fight()
 	var fp := make_fighter(cfg.p)
 	var fe := make_fighter(cfg.e)
 	sim = FightSim.new(fp, fe, cfg.get("seed", 0))
@@ -653,6 +654,11 @@ func _voice(i: int, kind: String, chance := 1.0) -> void:
 	Game.sfx(name, 0.05, 0.9)
 
 func _finish(won: bool, forfeit := false) -> void:
+	if Perf.on():   # keep the learned render scale for the next fight
+		Gfx.save_scale(Game.settings)
+		Game.save_settings()
+		if Perf.struggling:
+			Funnel.device("fq_%s_l%d_floor" % [Gfx.gpu_family(), Gfx.level()])
 	if watching():
 		Engine.time_scale = 1.0
 		# the same fight again, to the frame: same winner, same health left
@@ -673,6 +679,7 @@ func _finish(won: bool, forfeit := false) -> void:
 		"hp_left": fp.hp / fp.st.hp_max, "max_combo": fp.max_combo, "seconds": sim.frame / 60.0,
 		"perfect": won and sim.wins[1] == 0, "skills": _skills_used, "ults": _ults_used,
 		"insight": _insight, "dmg": fp.stats_dealt,
+		"perf_low": Perf.struggling,
 	}
 	Engine.time_scale = 1.0
 	if Game.settings.has("in_fight"):
@@ -706,6 +713,7 @@ func _process(delta: float) -> void:
 	elif sim.phase == FightSim.FIGHT and not paused and Engine.time_scale == 1.0:
 		_fps_t += delta
 		_fps_n += 1
+		Perf.tick(delta)
 		if _first_fight and _fps_n == 1:
 			Funnel.device("f_go1")   # the duel is on screen and playable
 	if _slowmo > 0:
